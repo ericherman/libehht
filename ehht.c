@@ -157,3 +157,21 @@ void *ehht_put(struct ehht_s *table, const char *key, unsigned int key_len,
 	}
 	return old_val;
 }
+
+void ehht_foreach_element(struct ehht_s *table,
+			  void (*func) (const char *each_key,
+					unsigned int each_key_len,
+					void *each_val, void *arg), void *arg)
+{
+
+	unsigned int i;
+	struct ehht_element_s *element;
+
+	for (i = 0; i < table->num_buckets; ++i) {
+		for (element = table->buckets[i];
+		     element != NULL; element = element->next) {
+			(*func) (element->key, element->key_len, element->val,
+				 arg);
+		}
+	}
+}

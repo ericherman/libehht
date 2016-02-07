@@ -69,12 +69,56 @@ int test_ehht_put_get()
 	return failures;
 }
 
+void foreach_thing(const char *each_key, unsigned int each_key_len,
+		   void *each_val, void *arg)
+{
+
+	unsigned int *i;
+	const char *val;
+
+	i = (unsigned int *)arg;
+	val = (const char *)each_val;
+
+	if (each_key_len > 2) {
+		*i += (strlen(each_key) + strlen(val));
+	}
+}
+
+int test_ehht_foreach_element()
+{
+	int failures = 0;
+	struct ehht_s *table;
+	unsigned int actual, expected, num_buckets = 5;
+
+	table = ehht_new(num_buckets);
+
+	if (table == NULL) {
+		++failures;
+	}
+
+	ehht_put(table, "g", 1, "wiz");
+	ehht_put(table, "foo", 3, "bar");
+	ehht_put(table, "whiz", 4, "bang");
+	ehht_put(table, "love", 4, "backend development");
+
+	expected = 3 + 3 + 4 + 4 + 4 + 19;
+	actual = 0;
+
+	ehht_foreach_element(table, foreach_thing, &actual);
+
+	failures += check_unsigned_long_m(actual, expected, "foreach");
+
+	ehht_free(table);
+	return failures;
+}
+
 int main(void)
 {				/* int argc, char *argv[]) */
 	int failures = 0;
 
 	failures += test_ehht_new();
 	failures += test_ehht_put_get();
+	failures += test_ehht_foreach_element();
 
 	if (failures) {
 		fprintf(stderr, "%d failures in total\n", failures);
