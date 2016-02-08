@@ -13,11 +13,15 @@ void *ehht_get(struct ehht_s *table, const char *key, unsigned int key_len);
 void *ehht_put(struct ehht_s *table, const char *key,
 	       unsigned int key_len, void *val);
 
+void *ehht_remove(struct ehht_s *table, const char *key, unsigned int key_len);
+
 void ehht_foreach_element(struct ehht_s *table,
 			  void (*func) (const char *each_key,
 					unsigned int each_key_len,
 					void *each_val, void *arg), void *arg);
 
 unsigned int ehht_size(struct ehht_s *table);
+
+void ehht_to_string(struct ehht_s *table, char *buf, unsigned int buf_len);
 
 #endif /* EHHT_H */

@@ -158,6 +158,36 @@ void *ehht_put(struct ehht_s *table, const char *key, unsigned int key_len,
 	return old_val;
 }
 
+void *ehht_remove(struct ehht_s *table, const char *key, unsigned int key_len)
+{
+	struct ehht_element_s *previous_element, *element;
+	void *old_val;
+	unsigned int hashcode, bucket_num;
+
+	element = ehht_get_element(table, key, key_len);
+	if (element == NULL) {
+		return NULL;
+	}
+
+	old_val = element->val;
+
+	hashcode = ehht_hash_code_str(key, key_len);
+	bucket_num = hashcode % table->num_buckets;
+
+	previous_element = table->buckets[bucket_num];
+	if (previous_element == element) {
+		table->buckets[bucket_num] = element->next;
+	} else {
+		while (previous_element->next != element) {
+			previous_element = previous_element->next;
+			/* assert(previous_element != NULL); */
+		}
+		previous_element->next = element->next;
+	}
+	free(element);
+	return old_val;
+}
+
 void ehht_foreach_element(struct ehht_s *table,
 			  void (*func) (const char *each_key,
 					unsigned int each_key_len,
@@ -194,4 +224,50 @@ unsigned int ehht_size(struct ehht_s *table)
 	ehht_foreach_element(table, foreach_count, &i);
 
 	return i;
+}
+
+struct str_buf_s {
+	char *buf;
+	unsigned int buf_len;
+	unsigned int buf_pos;
+};
+
+static void to_string_each(const char *each_key, unsigned int each_key_len,
+			   void *each_val, void *arg)
+{
+
+	struct str_buf_s *str_buf;
+	char *buf;
+	int bytes_written;
+
+	str_buf = (struct str_buf_s *)arg;
+	buf = str_buf->buf + str_buf->buf_pos;
+
+	bytes_written =
+	    sprintf(buf, "'%s' => %p, ", each_key_len ? each_key : "",
+		    each_val);
+
+	if (bytes_written > 0) {
+		str_buf->buf_pos += ((unsigned int)bytes_written);
+	}
+}
+
+void ehht_to_string(struct ehht_s *table, char *buf, unsigned int buf_len)
+{
+	struct str_buf_s str_buf;
+	int bytes_written;
+
+	str_buf.buf = buf;
+	str_buf.buf_len = buf_len;
+	str_buf.buf_pos = 0;
+
+	bytes_written = sprintf(buf, "{ ");
+	if (bytes_written > 0) {
+		str_buf.buf_pos += ((unsigned int)bytes_written);
+	}
+	ehht_foreach_element(table, to_string_each, &str_buf);
+	bytes_written = sprintf(str_buf.buf + str_buf.buf_pos, "}");
+	if (bytes_written > 0) {
+		str_buf.buf_pos += ((unsigned int)bytes_written);
+	}
 }
