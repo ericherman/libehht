@@ -18,4 +18,6 @@ void ehht_foreach_element(struct ehht_s *table,
 					unsigned int each_key_len,
 					void *each_val, void *arg), void *arg);
 
+unsigned int ehht_size(struct ehht_s *table);
+
 #endif /* EHHT_H */

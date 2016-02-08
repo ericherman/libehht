@@ -175,3 +175,23 @@ void ehht_foreach_element(struct ehht_s *table,
 		}
 	}
 }
+
+static void foreach_count(const char *each_key, unsigned int each_key_len,
+			  void *each_val, void *arg)
+{
+	if (0) {		/* [-Werror=unused-parameter] */
+		fprintf(stderr, "key: %s (len: %u), val: %p", each_key,
+			each_key_len, each_val);
+	}
+
+	*((unsigned int *)arg) += 1;
+}
+
+unsigned int ehht_size(struct ehht_s *table)
+{
+	unsigned int i = 0;
+
+	ehht_foreach_element(table, foreach_count, &i);
+
+	return i;
+}

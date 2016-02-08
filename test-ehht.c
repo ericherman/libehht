@@ -17,9 +17,7 @@ int test_ehht_new()
 		++failures;
 	}
 
-	/* TODO
-	   failures += check_unsigned_int_m(ehht_size(table), 0, "test_ehht_new ehht_size");
-	 */
+	failures += check_unsigned_int_m(ehht_size(table), 0, "ehht_size");
 
 	ehht_free(table);
 	return failures;
@@ -107,6 +105,8 @@ int test_ehht_foreach_element()
 	ehht_foreach_element(table, foreach_thing, &actual);
 
 	failures += check_unsigned_long_m(actual, expected, "foreach");
+
+	failures += check_unsigned_int_m(ehht_size(table), 4, "ehht_size");
 
 	ehht_free(table);
 	return failures;
