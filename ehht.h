@@ -24,6 +24,7 @@ void ehht_foreach_element(struct ehht_s *table,
 					unsigned int each_key_len,
 					void *each_val, void *arg), void *arg);
 
-void ehht_to_string(struct ehht_s *table, char *buf, unsigned int buf_len);
+unsigned int ehht_to_string(struct ehht_s *table, char *buf,
+			    unsigned int buf_len);
 
 #endif /* EHHT_H */

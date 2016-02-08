@@ -258,7 +258,8 @@ static void to_string_each(const char *each_key, unsigned int each_key_len,
 	}
 }
 
-void ehht_to_string(struct ehht_s *table, char *buf, unsigned int buf_len)
+unsigned int ehht_to_string(struct ehht_s *table, char *buf,
+			    unsigned int buf_len)
 {
 	struct str_buf_s str_buf;
 	int bytes_written;
@@ -276,4 +277,5 @@ void ehht_to_string(struct ehht_s *table, char *buf, unsigned int buf_len)
 	if (bytes_written > 0) {
 		str_buf.buf_pos += ((unsigned int)bytes_written);
 	}
+	return str_buf.buf_pos;
 }
