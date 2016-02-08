@@ -160,6 +160,29 @@ int test_ehht_foreach_element()
 	return failures;
 }
 
+int test_ehht_clear()
+{
+	int failures = 0;
+	struct ehht_s *table;
+	unsigned int num_buckets = 5;
+
+	table = ehht_new(num_buckets);
+
+	ehht_put(table, "g", 1, "wiz");
+	ehht_put(table, "foo", 3, "bar");
+	ehht_put(table, "whiz", 4, "bang");
+	ehht_put(table, "love", 4, "backend development");
+
+	failures += check_unsigned_int_m(ehht_size(table), 4, "ehht_size");
+
+	ehht_clear(table);
+
+	failures += check_unsigned_int_m(ehht_size(table), 0, "clear");
+
+	ehht_free(table);
+	return failures;
+}
+
 int main(void)
 {				/* int argc, char *argv[]) */
 	int failures = 0;
@@ -167,6 +190,7 @@ int main(void)
 	failures += test_ehht_new();
 	failures += test_ehht_put_get_remove();
 	failures += test_ehht_foreach_element();
+	failures += test_ehht_clear();
 
 	if (failures) {
 		fprintf(stderr, "%d failures in total\n", failures);

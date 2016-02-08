@@ -40,14 +40,10 @@ struct ehht_s *ehht_new(unsigned int num_buckets)
 	return table;
 }
 
-void ehht_free(struct ehht_s *table)
+void ehht_clear(struct ehht_s *table)
 {
 	unsigned int i;
 	struct ehht_element_s *element;
-
-	if (table == NULL) {
-		return;
-	}
 
 	for (i = 0; i < table->num_buckets; ++i) {
 		while ((element = table->buckets[i]) != NULL) {
@@ -55,6 +51,16 @@ void ehht_free(struct ehht_s *table)
 			free(element);
 		}
 	}
+}
+
+void ehht_free(struct ehht_s *table)
+{
+	if (table == NULL) {
+		return;
+	}
+
+	ehht_clear(table);
+
 	free(table->buckets);
 	free(table);
 }
