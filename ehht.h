@@ -10,9 +10,11 @@ void ehht_free(struct ehht_s *table);
 
 void *ehht_get(struct ehht_s *table, const char *key, unsigned int key_len);
 
-void *ehht_put(struct ehht_s *table, const char *key,
-	       unsigned int key_len, void *val);
+/* returns the previous value or NULL */
+void *ehht_put(struct ehht_s *table, const char *key, unsigned int key_len,
+	       void *val);
 
+/* returns the previous value or NULL */
 void *ehht_remove(struct ehht_s *table, const char *key, unsigned int key_len);
 
 unsigned int ehht_size(struct ehht_s *table);
@@ -24,6 +26,8 @@ void ehht_foreach_element(struct ehht_s *table,
 					unsigned int each_key_len,
 					void *each_val, void *arg), void *arg);
 
+/* returns the number of characters written to "buf"
+   (excluding the null byte terminator) */
 unsigned int ehht_to_string(struct ehht_s *table, char *buf,
 			    unsigned int buf_len);
 
