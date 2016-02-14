@@ -1,5 +1,4 @@
 #include "ehht.h"
-#include <stdint.h>		/* SIZE_MAX */
 #include <stdlib.h>		/* malloc */
 #include <string.h>		/* memcpy */
 #include <stdio.h>		/* fprintf */
@@ -91,7 +90,7 @@ static struct ehht_element_s *ehht_new_element(const char *key,
 		return NULL;
 	}
 
-	key_copy = malloc(key_len < SIZE_MAX ? key_len + 1 : key_len);
+	key_copy = malloc(key_len + 1);
 	if (!key_copy) {
 		ehht_free_element(element);
 		return NULL;
