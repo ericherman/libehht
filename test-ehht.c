@@ -8,7 +8,7 @@ int test_ehht_new()
 {
 	int failures = 0;
 	struct ehht_s *table;
-	unsigned int num_buckets = 35;
+	size_t num_buckets = 35;
 
 	/* msg = "test_ehht_new"; */
 	table = ehht_new(num_buckets, NULL);
@@ -28,7 +28,7 @@ int test_ehht_put_get_remove()
 	int failures = 0;
 	struct ehht_s *table;
 	const char *key;
-	unsigned int num_buckets = 3;
+	size_t num_buckets = 3;
 	void *val, *old_val;
 	char buf[1000];
 
@@ -115,7 +115,7 @@ int test_ehht_put_get_remove()
 	return failures;
 }
 
-void foreach_thing(const char *each_key, unsigned int each_key_len,
+void foreach_thing(const char *each_key, size_t each_key_len,
 		   void *each_val, void *arg)
 {
 
@@ -164,7 +164,7 @@ int test_ehht_clear()
 {
 	int failures = 0;
 	struct ehht_s *table;
-	unsigned int num_buckets = 5;
+	size_t num_buckets = 5;
 
 	table = ehht_new(num_buckets, NULL);
 

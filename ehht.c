@@ -4,22 +4,22 @@
 
 struct ehht_element_s {
 	const char *key;
-	unsigned int key_len;
+	size_t key_len;
 	void *val;
 	struct ehht_element_s *next;
 };
 
 struct ehht_s {
-	unsigned int num_buckets;
+	size_t num_buckets;
 	struct ehht_element_s **buckets;
-	unsigned int (*hash_func) (const char *str, unsigned int str_len);
+	unsigned int (*hash_func) (const char *str, size_t str_len);
 };
 
-static unsigned int ehht_hash_code_str(const char *str, unsigned int str_len);
+static unsigned int ehht_hash_code_str(const char *str, size_t str_len);
 
-struct ehht_s *ehht_new(unsigned int num_buckets,
+struct ehht_s *ehht_new(size_t num_buckets,
 			unsigned int (*hash_func) (const char *str,
-						   unsigned int str_len))
+						   size_t str_len))
 {
 	struct ehht_s *table;
 	unsigned int i;
@@ -73,7 +73,7 @@ void ehht_free(struct ehht_s *table)
 }
 
 static struct ehht_element_s *ehht_new_element(const char *key,
-					       unsigned int key_len, void *val)
+					       size_t key_len, void *val)
 {
 	struct ehht_element_s *element = malloc(sizeof(struct ehht_element_s));
 	if (element == NULL) {
@@ -88,7 +88,7 @@ static struct ehht_element_s *ehht_new_element(const char *key,
 	return element;
 }
 
-static unsigned int ehht_hash_code_str(const char *str, unsigned int str_len)
+static unsigned int ehht_hash_code_str(const char *str, size_t str_len)
 {
 	unsigned int i, hash;
 
@@ -102,8 +102,7 @@ static unsigned int ehht_hash_code_str(const char *str, unsigned int str_len)
 }
 
 static struct ehht_element_s *ehht_get_element(struct ehht_s *table,
-					       const char *key,
-					       unsigned int key_len)
+					       const char *key, size_t key_len)
 {
 	struct ehht_element_s *element;
 	unsigned int i, mismatch, hashcode, bucket_num;
@@ -128,15 +127,14 @@ static struct ehht_element_s *ehht_get_element(struct ehht_s *table,
 	return NULL;
 }
 
-void *ehht_get(struct ehht_s *table, const char *key, unsigned int key_len)
+void *ehht_get(struct ehht_s *table, const char *key, size_t key_len)
 {
 	struct ehht_element_s *element;
 	element = ehht_get_element(table, key, key_len);
 	return (element == NULL) ? NULL : element->val;
 }
 
-void *ehht_put(struct ehht_s *table, const char *key, unsigned int key_len,
-	       void *val)
+void *ehht_put(struct ehht_s *table, const char *key, size_t key_len, void *val)
 {
 	struct ehht_element_s *element;
 	void *old_val;
@@ -171,7 +169,7 @@ void *ehht_put(struct ehht_s *table, const char *key, unsigned int key_len,
 	return old_val;
 }
 
-void *ehht_remove(struct ehht_s *table, const char *key, unsigned int key_len)
+void *ehht_remove(struct ehht_s *table, const char *key, size_t key_len)
 {
 	struct ehht_element_s *previous_element, *element;
 	void *old_val;
@@ -203,7 +201,7 @@ void *ehht_remove(struct ehht_s *table, const char *key, unsigned int key_len)
 
 void ehht_foreach_element(struct ehht_s *table,
 			  void (*func) (const char *each_key,
-					unsigned int each_key_len,
+					size_t each_key_len,
 					void *each_val, void *arg), void *arg)
 {
 
@@ -219,18 +217,18 @@ void ehht_foreach_element(struct ehht_s *table,
 	}
 }
 
-static void foreach_count(const char *each_key, unsigned int each_key_len,
+static void foreach_count(const char *each_key, size_t each_key_len,
 			  void *each_val, void *arg)
 {
 	if (0) {		/* [-Werror=unused-parameter] */
 		fprintf(stderr, "key: %s (len: %u), val: %p", each_key,
-			each_key_len, each_val);
+			(unsigned int)each_key_len, each_val);
 	}
 
 	*((unsigned int *)arg) += 1;
 }
 
-unsigned int ehht_size(struct ehht_s *table)
+size_t ehht_size(struct ehht_s *table)
 {
 	unsigned int i = 0;
 
@@ -241,11 +239,11 @@ unsigned int ehht_size(struct ehht_s *table)
 
 struct str_buf_s {
 	char *buf;
-	unsigned int buf_len;
+	size_t buf_len;
 	unsigned int buf_pos;
 };
 
-static void to_string_each(const char *each_key, unsigned int each_key_len,
+static void to_string_each(const char *each_key, size_t each_key_len,
 			   void *each_val, void *arg)
 {
 
@@ -265,8 +263,7 @@ static void to_string_each(const char *each_key, unsigned int each_key_len,
 	}
 }
 
-unsigned int ehht_to_string(struct ehht_s *table, char *buf,
-			    unsigned int buf_len)
+size_t ehht_to_string(struct ehht_s *table, char *buf, size_t buf_len)
 {
 	struct str_buf_s str_buf;
 	int bytes_written;
