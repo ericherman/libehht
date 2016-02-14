@@ -116,13 +116,13 @@ int test_ehht_put_get_remove()
 }
 
 void foreach_thing(const char *each_key, size_t each_key_len,
-		   void *each_val, void *arg)
+		   void *each_val, void *context)
 {
 
 	unsigned int *i;
 	const char *val;
 
-	i = (unsigned int *)arg;
+	i = (unsigned int *)context;
 	val = (const char *)each_val;
 
 	if (each_key_len > 2) {

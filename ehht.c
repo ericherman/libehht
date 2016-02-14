@@ -202,7 +202,8 @@ void *ehht_remove(struct ehht_s *table, const char *key, size_t key_len)
 void ehht_foreach_element(struct ehht_s *table,
 			  void (*func) (const char *each_key,
 					size_t each_key_len,
-					void *each_val, void *arg), void *arg)
+					void *each_val, void *context),
+			  void *context)
 {
 
 	unsigned int i;
@@ -212,20 +213,20 @@ void ehht_foreach_element(struct ehht_s *table,
 		for (element = table->buckets[i];
 		     element != NULL; element = element->next) {
 			(*func) (element->key, element->key_len, element->val,
-				 arg);
+				 context);
 		}
 	}
 }
 
 static void foreach_count(const char *each_key, size_t each_key_len,
-			  void *each_val, void *arg)
+			  void *each_val, void *context)
 {
 	if (0) {		/* [-Werror=unused-parameter] */
 		fprintf(stderr, "key: %s (len: %u), val: %p", each_key,
 			(unsigned int)each_key_len, each_val);
 	}
 
-	*((unsigned int *)arg) += 1;
+	*((unsigned int *)context) += 1;
 }
 
 size_t ehht_size(struct ehht_s *table)
@@ -244,14 +245,14 @@ struct str_buf_s {
 };
 
 static void to_string_each(const char *each_key, size_t each_key_len,
-			   void *each_val, void *arg)
+			   void *each_val, void *context)
 {
 
 	struct str_buf_s *str_buf;
 	char *buf;
 	int bytes_written;
 
-	str_buf = (struct str_buf_s *)arg;
+	str_buf = (struct str_buf_s *)context;
 	buf = str_buf->buf + str_buf->buf_pos;
 
 	bytes_written =

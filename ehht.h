@@ -29,7 +29,8 @@ void ehht_clear(struct ehht_s *table);
 void ehht_foreach_element(struct ehht_s *table,
 			  void (*func) (const char *each_key,
 					size_t each_key_len,
-					void *each_val, void *arg), void *arg);
+					void *each_val, void *context),
+			  void *context);
 
 /* returns the number of characters written to "buf"
    (excluding the null byte terminator) */
