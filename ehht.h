@@ -6,10 +6,10 @@
 
 #include <stddef.h>		/* size_t */
 
+typedef unsigned int (*ehht_hash_func) (const char *str, size_t str_len);
+
 /* if hash_func is NULL, a hashing function will be provided */
-struct ehht_s *ehht_new(size_t num_buckets,
-			unsigned int (*hash_func) (const char *str,
-						   size_t str_len));
+struct ehht_s *ehht_new(size_t num_buckets, ehht_hash_func hash_func);
 
 void ehht_free(struct ehht_s *table);
 
