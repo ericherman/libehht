@@ -22,7 +22,7 @@ struct ehht_s *ehht_new(size_t num_buckets,
 						   size_t str_len))
 {
 	struct ehht_s *table;
-	unsigned int i;
+	size_t i;
 
 	if (num_buckets == 0) {
 		num_buckets = 4096;
@@ -49,7 +49,7 @@ struct ehht_s *ehht_new(size_t num_buckets,
 
 void ehht_clear(struct ehht_s *table)
 {
-	unsigned int i;
+	size_t i;
 	struct ehht_element_s *element;
 
 	for (i = 0; i < table->num_buckets; ++i) {
@@ -119,8 +119,9 @@ static struct ehht_element_s *ehht_get_element(struct ehht_s *table,
 					++mismatch;
 				}
 			}
-			if (mismatch == 0)
+			if (mismatch == 0) {
 				return element;
+			}
 		}
 		element = element->next;
 	}
@@ -283,4 +284,22 @@ size_t ehht_to_string(struct ehht_s *table, char *buf, size_t buf_len)
 		str_buf.buf_pos += ((unsigned int)bytes_written);
 	}
 	return str_buf.buf_pos;
+}
+
+size_t ehht_distribution_report(struct ehht_s *table, size_t *sizes,
+				size_t sizes_len)
+{
+	size_t i;
+	struct ehht_element_s *element;
+
+	for (i = 0; i < table->num_buckets && i < sizes_len; ++i) {
+		sizes[i] = 0;
+		element = table->buckets[i];
+		while (element != NULL) {
+			sizes[i] += 1;
+			element = element->next;
+		}
+	}
+
+	return i;
 }

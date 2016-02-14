@@ -166,6 +166,9 @@ int test_ehht_clear()
 	struct ehht_s *table;
 	size_t num_buckets = 5;
 
+	size_t i, count, items_written;
+	size_t report[10];
+
 	table = ehht_new(num_buckets, NULL);
 
 	ehht_put(table, "g", 1, "wiz");
@@ -175,9 +178,26 @@ int test_ehht_clear()
 
 	failures += check_unsigned_int_m(ehht_size(table), 4, "ehht_size");
 
+	items_written = ehht_distribution_report(table, report, 10);
+	failures += check_size_t_m(items_written, num_buckets, "ehht_report 1");
+	count = 0;
+	for (i = 0; i < items_written; ++i) {
+		count += report[i];
+	}
+	failures += check_size_t_m(count, 4, "ehht_report 1");
+
 	ehht_clear(table);
 
 	failures += check_unsigned_int_m(ehht_size(table), 0, "clear");
+
+	items_written = ehht_distribution_report(table, report, 10);
+	failures +=
+	    check_size_t_m(items_written, num_buckets, "ehht_report full");
+	count = 0;
+	for (i = 0; i < items_written; ++i) {
+		count += report[i];
+	}
+	failures += check_size_t_m(count, 0, "ehht_report empty");
 
 	ehht_free(table);
 	return failures;

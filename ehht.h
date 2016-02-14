@@ -24,6 +24,9 @@ void *ehht_remove(struct ehht_s *table, const char *key, size_t key_len);
 
 size_t ehht_size(struct ehht_s *table);
 
+size_t ehht_distribution_report(struct ehht_s *table, size_t *sizes,
+				size_t sizes_len);
+
 void ehht_clear(struct ehht_s *table);
 
 void ehht_foreach_element(struct ehht_s *table,
