@@ -12,9 +12,14 @@ struct ehht_element_s {
 struct ehht_s {
 	unsigned int num_buckets;
 	struct ehht_element_s **buckets;
+	unsigned int (*hash_func) (const char *str, unsigned int str_len);
 };
 
-struct ehht_s *ehht_new(unsigned int num_buckets)
+static unsigned int ehht_hash_code_str(const char *str, unsigned int str_len);
+
+struct ehht_s *ehht_new(unsigned int num_buckets,
+			unsigned int (*hash_func) (const char *str,
+						   unsigned int str_len))
 {
 	struct ehht_s *table;
 	unsigned int i;
@@ -36,6 +41,8 @@ struct ehht_s *ehht_new(unsigned int num_buckets)
 	for (i = 0; i < table->num_buckets; ++i) {
 		table->buckets[i] = NULL;
 	}
+
+	table->hash_func = (hash_func == NULL) ? ehht_hash_code_str : hash_func;
 
 	return table;
 }
@@ -101,7 +108,7 @@ static struct ehht_element_s *ehht_get_element(struct ehht_s *table,
 	struct ehht_element_s *element;
 	unsigned int i, mismatch, hashcode, bucket_num;
 
-	hashcode = ehht_hash_code_str(key, key_len);
+	hashcode = table->hash_func(key, key_len);
 	bucket_num = hashcode % table->num_buckets;
 
 	element = table->buckets[bucket_num];
@@ -141,7 +148,7 @@ void *ehht_put(struct ehht_s *table, const char *key, unsigned int key_len,
 	if (element != NULL) {
 		element->val = val;
 	} else {
-		hashcode = ehht_hash_code_str(key, key_len);
+		hashcode = table->hash_func(key, key_len);
 		bucket_num = hashcode % table->num_buckets;
 		element = table->buckets[bucket_num];
 		if (element == NULL) {
@@ -177,7 +184,7 @@ void *ehht_remove(struct ehht_s *table, const char *key, unsigned int key_len)
 
 	old_val = element->val;
 
-	hashcode = ehht_hash_code_str(key, key_len);
+	hashcode = table->hash_func(key, key_len);
 	bucket_num = hashcode % table->num_buckets;
 
 	previous_element = table->buckets[bucket_num];

@@ -4,7 +4,10 @@
 
 /* a simple hash-table */
 
-struct ehht_s *ehht_new(unsigned int num_buckets);
+/* if hash_func is NULL, a hashing function will be provided */
+struct ehht_s *ehht_new(unsigned int num_buckets,
+			unsigned int (*hash_func) (const char *str,
+						   unsigned int str_len));
 
 void ehht_free(struct ehht_s *table);
 

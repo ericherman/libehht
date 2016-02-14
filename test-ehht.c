@@ -11,7 +11,7 @@ int test_ehht_new()
 	unsigned int num_buckets = 35;
 
 	/* msg = "test_ehht_new"; */
-	table = ehht_new(num_buckets);
+	table = ehht_new(num_buckets, NULL);
 
 	if (table == NULL) {
 		++failures;
@@ -32,7 +32,7 @@ int test_ehht_put_get_remove()
 	void *val, *old_val;
 	char buf[1000];
 
-	table = ehht_new(num_buckets);
+	table = ehht_new(num_buckets, NULL);
 
 	key = "key1";
 	val = ehht_get(table, key, strlen(key));
@@ -136,7 +136,7 @@ int test_ehht_foreach_element()
 	struct ehht_s *table;
 	unsigned int actual, expected, num_buckets = 5;
 
-	table = ehht_new(num_buckets);
+	table = ehht_new(num_buckets, NULL);
 
 	if (table == NULL) {
 		++failures;
@@ -166,7 +166,7 @@ int test_ehht_clear()
 	struct ehht_s *table;
 	unsigned int num_buckets = 5;
 
-	table = ehht_new(num_buckets);
+	table = ehht_new(num_buckets, NULL);
 
 	ehht_put(table, "g", 1, "wiz");
 	ehht_put(table, "foo", 3, "bar");
