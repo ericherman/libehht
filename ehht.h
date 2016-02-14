@@ -24,9 +24,6 @@ void *ehht_remove(struct ehht_s *table, const char *key, size_t key_len);
 
 size_t ehht_size(struct ehht_s *table);
 
-size_t ehht_distribution_report(struct ehht_s *table, size_t *sizes,
-				size_t sizes_len);
-
 void ehht_clear(struct ehht_s *table);
 
 void ehht_foreach_element(struct ehht_s *table,
@@ -38,5 +35,11 @@ void ehht_foreach_element(struct ehht_s *table,
 /* returns the number of characters written to "buf"
    (excluding the null byte terminator) */
 size_t ehht_to_string(struct ehht_s *table, char *buf, size_t buf_len);
+
+/* reports each of the bucket sizes
+   sizes_len should be equal to or greater than num_buckets of ehht_new
+   returns the number of size_t values written */
+size_t ehht_distribution_report(struct ehht_s *table, size_t *sizes,
+				size_t sizes_len);
 
 #endif /* EHHT_H */
