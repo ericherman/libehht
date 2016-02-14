@@ -1,9 +1,11 @@
 #include "ehht.h"
+#include <stdint.h>		/* SIZE_MAX */
 #include <stdlib.h>		/* malloc */
+#include <string.h>		/* memcpy */
 #include <stdio.h>		/* fprintf */
 
 struct ehht_element_s {
-	const char *key;
+	char *key;
 	size_t key_len;
 	void *val;
 	struct ehht_element_s *next;
@@ -47,6 +49,12 @@ struct ehht_s *ehht_new(size_t num_buckets,
 	return table;
 }
 
+static void ehht_free_element(struct ehht_element_s *element)
+{
+	free(element->key);
+	free(element);
+}
+
 void ehht_clear(struct ehht_s *table)
 {
 	size_t i;
@@ -55,7 +63,7 @@ void ehht_clear(struct ehht_s *table)
 	for (i = 0; i < table->num_buckets; ++i) {
 		while ((element = table->buckets[i]) != NULL) {
 			table->buckets[i] = element->next;
-			free(element);
+			ehht_free_element(element);
 		}
 	}
 }
@@ -75,12 +83,23 @@ void ehht_free(struct ehht_s *table)
 static struct ehht_element_s *ehht_new_element(const char *key,
 					       size_t key_len, void *val)
 {
-	struct ehht_element_s *element = malloc(sizeof(struct ehht_element_s));
+	char *key_copy;
+	struct ehht_element_s *element;
+
+	element = malloc(sizeof(struct ehht_element_s));
 	if (element == NULL) {
 		return NULL;
 	}
 
-	element->key = key;
+	key_copy = malloc(key_len < SIZE_MAX ? key_len + 1 : key_len);
+	if (!key_copy) {
+		ehht_free_element(element);
+		return NULL;
+	}
+	memcpy(key_copy, key, key_len);
+	key_copy[key_len] = '\0';
+
+	element->key = key_copy;
 	element->key_len = key_len;
 	element->val = val;
 	element->next = NULL;
@@ -196,7 +215,7 @@ void *ehht_remove(struct ehht_s *table, const char *key, size_t key_len)
 		}
 		previous_element->next = element->next;
 	}
-	free(element);
+	ehht_free_element(element);
 	return old_val;
 }
 
