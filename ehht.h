@@ -26,10 +26,10 @@ size_t ehht_size(struct ehht_s *table);
 
 void ehht_clear(struct ehht_s *table);
 
-void ehht_foreach_element(struct ehht_s *table,
-			  void (*func) (const char *each_key,
-					size_t each_key_len,
-					void *each_val, void *context),
+typedef void (*ehht_iterator) (const char *each_key, size_t each_key_len,
+			       void *each_val, void *context);
+
+void ehht_foreach_element(struct ehht_s *table, ehht_iterator func,
 			  void *context);
 
 /* returns the number of characters written to "buf"
