@@ -253,7 +253,7 @@ size_t ehht_size(struct ehht_s *table)
 	return i;
 }
 
-struct str_buf_s {
+struct ehht_str_buf_s {
 	char *buf;
 	size_t buf_len;
 	size_t buf_pos;
@@ -263,11 +263,11 @@ static void to_string_each(const char *each_key, size_t each_key_len,
 			   void *each_val, void *context)
 {
 
-	struct str_buf_s *str_buf;
+	struct ehht_str_buf_s *str_buf;
 	char *buf;
 	int bytes_written;
 
-	str_buf = (struct str_buf_s *)context;
+	str_buf = (struct ehht_str_buf_s *)context;
 	buf = str_buf->buf + str_buf->buf_pos;
 
 	bytes_written =
@@ -281,7 +281,7 @@ static void to_string_each(const char *each_key, size_t each_key_len,
 
 size_t ehht_to_string(struct ehht_s *table, char *buf, size_t buf_len)
 {
-	struct str_buf_s str_buf;
+	struct ehht_str_buf_s str_buf;
 	int bytes_written;
 
 	str_buf.buf = buf;
