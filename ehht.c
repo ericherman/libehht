@@ -311,3 +311,8 @@ size_t ehht_distribution_report(struct ehht_s *table, size_t *sizes,
 
 	return i;
 }
+
+size_t ehht_num_buckets(struct ehht_s *table)
+{
+	return table->num_buckets;
+}

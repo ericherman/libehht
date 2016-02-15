@@ -42,4 +42,6 @@ size_t ehht_to_string(struct ehht_s *table, char *buf, size_t buf_len);
 size_t ehht_distribution_report(struct ehht_s *table, size_t *sizes,
 				size_t sizes_len);
 
+size_t ehht_num_buckets(struct ehht_s *table);
+
 #endif /* EHHT_H */
