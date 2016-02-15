@@ -1,6 +1,6 @@
 #include "ehht.h"
 #include <stdlib.h>		/* malloc */
-#include <string.h>		/* memcpy */
+#include <string.h>		/* memcpy memcmp */
 #include <stdio.h>		/* fprintf */
 
 struct ehht_element_s {
@@ -124,8 +124,8 @@ static struct ehht_element_s *ehht_get_element(struct ehht_s *table,
 					       const char *key, size_t key_len)
 {
 	struct ehht_element_s *element;
-	unsigned int mismatch, hashcode;
-	size_t i, bucket_num;
+	unsigned int hashcode;
+	size_t bucket_num;
 
 	hashcode = table->hash_func(key, key_len);
 	bucket_num = hashcode % table->num_buckets;
@@ -133,13 +133,7 @@ static struct ehht_element_s *ehht_get_element(struct ehht_s *table,
 	element = table->buckets[bucket_num];
 	while (element != NULL) {
 		if (element->key_len == key_len) {
-			mismatch = 0;
-			for (i = 0; mismatch == 0 && i < key_len; ++i) {
-				if (key[i] != element->key[i]) {
-					++mismatch;
-				}
-			}
-			if (mismatch == 0) {
+			if (memcmp(key, element->key, key_len) == 0) {
 				return element;
 			}
 		}
