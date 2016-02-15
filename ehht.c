@@ -108,7 +108,8 @@ static struct ehht_element_s *ehht_new_element(const char *key,
 
 static unsigned int ehht_hash_code_str(const char *str, size_t str_len)
 {
-	unsigned int i, hash;
+	unsigned int hash;
+	size_t i;
 
 	hash = 0;
 	for (i = 0; i < str_len; ++i) {
@@ -123,7 +124,8 @@ static struct ehht_element_s *ehht_get_element(struct ehht_s *table,
 					       const char *key, size_t key_len)
 {
 	struct ehht_element_s *element;
-	unsigned int i, mismatch, hashcode, bucket_num;
+	unsigned int mismatch, hashcode;
+	size_t i, bucket_num;
 
 	hashcode = table->hash_func(key, key_len);
 	bucket_num = hashcode % table->num_buckets;
@@ -157,42 +159,37 @@ void *ehht_put(struct ehht_s *table, const char *key, size_t key_len, void *val)
 {
 	struct ehht_element_s *element;
 	void *old_val;
-	unsigned int hashcode, bucket_num;
+	unsigned int hashcode;
+	size_t bucket_num;
 
 	element = ehht_get_element(table, key, key_len);
 	old_val = (element == NULL) ? NULL : element->val;
 
 	if (element != NULL) {
 		element->val = val;
-	} else {
-		hashcode = table->hash_func(key, key_len);
-		bucket_num = hashcode % table->num_buckets;
-		element = table->buckets[bucket_num];
-		if (element == NULL) {
-			element = ehht_new_element(key, key_len, val);
-			if (element == NULL) {
-				/* TODO set errno */
-				fprintf(stderr,
-					"could not allocate '%s'\n",
-					"struct ehht_element_s");
-				return NULL;
-			}
-			table->buckets[bucket_num] = element;
-		} else {
-			while (element->next != NULL) {
-				element = element->next;
-			}
-			element->next = ehht_new_element(key, key_len, val);
-		}
+		return old_val;
 	}
-	return old_val;
+
+	hashcode = table->hash_func(key, key_len);
+	bucket_num = hashcode % table->num_buckets;
+	element = table->buckets[bucket_num];
+	table->buckets[bucket_num] = ehht_new_element(key, key_len, val);
+	if (table->buckets[bucket_num] == NULL) {
+		/* TODO set errno */
+		fprintf(stderr, "could not allocate struct ehht_element_s\n");
+		table->buckets[bucket_num] = element;
+	} else {
+		table->buckets[bucket_num]->next = element;
+	}
+	return NULL;
 }
 
 void *ehht_remove(struct ehht_s *table, const char *key, size_t key_len)
 {
 	struct ehht_element_s *previous_element, *element;
 	void *old_val;
-	unsigned int hashcode, bucket_num;
+	unsigned int hashcode;
+	size_t bucket_num;
 
 	element = ehht_get_element(table, key, key_len);
 	if (element == NULL) {
@@ -224,8 +221,7 @@ void ehht_foreach_element(struct ehht_s *table,
 					void *each_val, void *context),
 			  void *context)
 {
-
-	unsigned int i;
+	size_t i;
 	struct ehht_element_s *element;
 
 	for (i = 0; i < table->num_buckets; ++i) {
@@ -245,12 +241,12 @@ static void foreach_count(const char *each_key, size_t each_key_len,
 			(unsigned int)each_key_len, each_val);
 	}
 
-	*((unsigned int *)context) += 1;
+	*((size_t *)context) += 1;
 }
 
 size_t ehht_size(struct ehht_s *table)
 {
-	unsigned int i = 0;
+	size_t i = 0;
 
 	ehht_foreach_element(table, foreach_count, &i);
 
@@ -260,7 +256,7 @@ size_t ehht_size(struct ehht_s *table)
 struct str_buf_s {
 	char *buf;
 	size_t buf_len;
-	unsigned int buf_pos;
+	size_t buf_pos;
 };
 
 static void to_string_each(const char *each_key, size_t each_key_len,
