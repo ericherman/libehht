@@ -1,5 +1,5 @@
 #include "ehht.h"
-#include <stdlib.h>		/* malloc */
+#include <stdlib.h>		/* malloc calloc */
 #include <string.h>		/* memcpy memcmp */
 #include <stdio.h>		/* fprintf */
 
@@ -23,7 +23,6 @@ struct ehht_s *ehht_new(size_t num_buckets,
 						   size_t str_len))
 {
 	struct ehht_s *table;
-	size_t i;
 
 	if (num_buckets == 0) {
 		num_buckets = 4096;
@@ -34,13 +33,10 @@ struct ehht_s *ehht_new(size_t num_buckets,
 		return NULL;
 	}
 	table->num_buckets = num_buckets;
-	table->buckets = malloc(sizeof(struct ehht_element_s *) * num_buckets);
+	table->buckets = calloc(sizeof(struct ehht_element_s *), num_buckets);
 	if (table->buckets == NULL) {
 		free(table);
 		return NULL;
-	}
-	for (i = 0; i < table->num_buckets; ++i) {
-		table->buckets[i] = NULL;
 	}
 
 	table->hash_func = (hash_func == NULL) ? ehht_hash_code_str : hash_func;
