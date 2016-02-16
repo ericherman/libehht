@@ -106,6 +106,9 @@ static struct ehht_element_s *ehht_new_element(const char *key,
 	return element;
 }
 
+/* "This is not the best possible hash function,
+   but it is short and effective."
+   The C Programming Language, 2nd Edition */
 static unsigned int ehht_hash_code_str(const char *str, size_t str_len)
 {
 	unsigned int hash;
