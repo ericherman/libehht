@@ -58,6 +58,9 @@ LD_LIBRARY_PATH=.$(AUX_LD_LIBRARY_PATHS)
 # extracted from https://github.com/torvalds/linux/blob/master/scripts/Lindent
 LINDENT=indent -npro -kr -i8 -ts8 -sob -l80 -ss -ncs -cp1 -il0
 
+# https://github.com/ericherman/simple_stats
+SSTATS=../simple_stats/sstats
+
 default: library
 
 .c.o:
@@ -92,10 +95,18 @@ tidy:
 		-T size_t \
 		*.h *.c
 
+demo: library
+	$(CC) -c $(INCLUDES) $(CFLAGS) -o demo-ehht.o demo-ehht.c
+	$(CC) demo-ehht.o $(A_NAME) -o demo-ehht
+	for num_buckets in 64 128 256 512 1024 2048 4096; do \
+		echo ""; echo "num buckets: $$num_buckets"; \
+		./demo-ehht $$num_buckets | $(SSTATS) --channels=2 -; \
+	done
+
 clean:
 	rm -f *.o *.a *.$(SHAREDEXT) \
 		$(SO_NAME).* \
-		$(TEST)-static $(TEST)-dynamic
+		$(TEST)-static $(TEST)-dynamic demo-ehht
 
 install: library
 	@echo "Installing libraries in $(LIBDIR)"
