@@ -96,8 +96,10 @@ tidy:
 		*.h *.c
 
 demo: library
+	$(CC) -c $(INCLUDES) $(CFLAGS) \
+		-o leveldb_util_hash.o leveldb_util_hash.c
 	$(CC) -c $(INCLUDES) $(CFLAGS) -o demo-ehht.o demo-ehht.c
-	$(CC) demo-ehht.o $(A_NAME) -o demo-ehht
+	$(CC) leveldb_util_hash.o demo-ehht.o $(A_NAME) -o demo-ehht
 	for num_buckets in 64 128 256 512 1024 2048 4096; do \
 		echo ""; echo "num buckets: $$num_buckets"; \
 		./demo-ehht $$num_buckets | $(SSTATS) --channels=2 -; \
