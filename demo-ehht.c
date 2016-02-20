@@ -12,11 +12,12 @@
 #define WORD_SCANF_FMT "%79s"
 
 /* from leveldb, a murmur-lite */
-static unsigned int leveldb_bloom_hash(const char *b, size_t len)
+static unsigned int leveldb_bloom_hash(const char *str, size_t len)
 {
 	const unsigned int seed = 0xbc9f1d34;
 	const unsigned int m = 0xc6a4a793;
 
+	const unsigned char *b = (const unsigned char *)str;
 	unsigned int h = seed ^ len * m;
 	while (len >= 4) {
 		h += b[0] | (b[1] << 8) | (b[2] << 16) | (b[3] << 24);
