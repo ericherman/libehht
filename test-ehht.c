@@ -118,8 +118,8 @@ int test_ehht_put_get_remove()
 	return failures;
 }
 
-void foreach_thing(const char *each_key, size_t each_key_len,
-		   void *each_val, void *context)
+int foreach_thing(const char *each_key, size_t each_key_len,
+		  void *each_val, void *context)
 {
 
 	unsigned int *i;
@@ -131,6 +131,8 @@ void foreach_thing(const char *each_key, size_t each_key_len,
 	if (each_key_len > 2) {
 		*i += (strlen(each_key) + strlen(val));
 	}
+
+	return 0;
 }
 
 int test_ehht_foreach_element()

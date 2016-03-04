@@ -208,26 +208,30 @@ void *ehht_remove(struct ehht_s *table, const char *key, size_t key_len)
 	return old_val;
 }
 
-void ehht_foreach_element(struct ehht_s *table,
-			  void (*func) (const char *each_key,
-					size_t each_key_len,
-					void *each_val, void *context),
-			  void *context)
+int ehht_foreach_element(struct ehht_s *table,
+			 int (*func) (const char *each_key,
+				      size_t each_key_len,
+				      void *each_val, void *context),
+			 void *context)
 {
-	size_t i;
+	size_t i, end;
 	struct ehht_element_s *element;
 
-	for (i = 0; i < table->num_buckets; ++i) {
-		for (element = table->buckets[i];
-		     element != NULL; element = element->next) {
-			(*func) (element->key, element->key_len, element->val,
-				 context);
+	end = 0;
+	for (i = 0; i < table->num_buckets && !end; ++i) {
+		for (element = table->buckets[i]; element != NULL;
+		     element = element->next) {
+			end =
+			    (*func) (element->key, element->key_len,
+				     element->val, context);
 		}
 	}
+
+	return end;
 }
 
-static void foreach_count(const char *each_key, size_t each_key_len,
-			  void *each_val, void *context)
+static int foreach_count(const char *each_key, size_t each_key_len,
+			 void *each_val, void *context)
 {
 	if (0) {		/* [-Werror=unused-parameter] */
 		fprintf(stderr, "key: %s (len: %u), val: %p", each_key,
@@ -235,6 +239,8 @@ static void foreach_count(const char *each_key, size_t each_key_len,
 	}
 
 	*((size_t *)context) += 1;
+
+	return 0;
 }
 
 size_t ehht_size(struct ehht_s *table)
@@ -252,8 +258,8 @@ struct ehht_str_buf_s {
 	size_t buf_pos;
 };
 
-static void to_string_each(const char *each_key, size_t each_key_len,
-			   void *each_val, void *context)
+static int to_string_each(const char *each_key, size_t each_key_len,
+			  void *each_val, void *context)
 {
 
 	struct ehht_str_buf_s *str_buf;
@@ -270,6 +276,8 @@ static void to_string_each(const char *each_key, size_t each_key_len,
 	if (bytes_written > 0) {
 		str_buf->buf_pos += ((unsigned int)bytes_written);
 	}
+
+	return 0;
 }
 
 size_t ehht_to_string(struct ehht_s *table, char *buf, size_t buf_len)
