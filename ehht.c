@@ -2,6 +2,7 @@
 #include <stdlib.h>		/* malloc calloc */
 #include <string.h>		/* memcpy memcmp */
 #include <stdio.h>		/* fprintf */
+#include <assert.h>
 
 struct ehht_element_s {
 	char *key;
@@ -13,41 +14,66 @@ struct ehht_element_s {
 struct ehht_s {
 	size_t num_buckets;
 	struct ehht_element_s **buckets;
-	unsigned int (*hash_func) (const char *str, size_t str_len);
+	ehht_hash_func hash_func;
+	ehht_malloc mem_alloc;
+	ehht_mfree mem_free;
+	void *mem_context;
 };
 
 static unsigned int ehht_hash_code_str(const char *str, size_t str_len);
+static void *ehht_memalloc(size_t size, void *context);
+static void ehht_memfree(void *ptr, size_t size, void *context);
 
 struct ehht_s *ehht_new(size_t num_buckets,
-			unsigned int (*hash_func) (const char *str,
-						   size_t str_len))
+			ehht_hash_func hash_func,
+			ehht_malloc mem_alloc,
+			ehht_mfree mem_free, void *mem_context)
 {
 	struct ehht_s *table;
+	size_t i;
 
 	if (num_buckets == 0) {
 		num_buckets = 4096;
 	}
+	if (hash_func == NULL) {
+		hash_func = ehht_hash_code_str;
+	}
+	if (mem_alloc == NULL) {
+		mem_alloc = ehht_memalloc;
+	}
+	if (mem_free == NULL) {
+		mem_free = ehht_memfree;
+	}
 
-	table = malloc(sizeof(struct ehht_s));
+	table = mem_alloc(sizeof(struct ehht_s), mem_context);
 	if (table == NULL) {
 		return NULL;
 	}
 	table->num_buckets = num_buckets;
-	table->buckets = calloc(sizeof(struct ehht_element_s *), num_buckets);
+	table->buckets =
+	    mem_alloc(sizeof(struct ehht_element_s *) * num_buckets,
+		      mem_context);
 	if (table->buckets == NULL) {
-		free(table);
+		mem_free(table, sizeof(struct ehht_s), mem_context);
 		return NULL;
 	}
-
-	table->hash_func = (hash_func == NULL) ? ehht_hash_code_str : hash_func;
+	for (i = 0; i < num_buckets; ++i) {
+		table->buckets[i] = NULL;
+	}
+	table->hash_func = hash_func;
+	table->mem_alloc = mem_alloc;
+	table->mem_free = mem_free;
+	table->mem_context = mem_context;
 
 	return table;
 }
 
-static void ehht_free_element(struct ehht_element_s *element)
+static void ehht_free_element(struct ehht_s *table,
+			      struct ehht_element_s *element)
 {
-	free(element->key);
-	free(element);
+	table->mem_free(element->key, element->key_len + 1, table->mem_context);
+	table->mem_free(element, sizeof(struct ehht_element_s),
+			table->mem_context);
 }
 
 void ehht_clear(struct ehht_s *table)
@@ -58,7 +84,7 @@ void ehht_clear(struct ehht_s *table)
 	for (i = 0; i < table->num_buckets; ++i) {
 		while ((element = table->buckets[i]) != NULL) {
 			table->buckets[i] = element->next;
-			ehht_free_element(element);
+			ehht_free_element(table, element);
 		}
 	}
 }
@@ -71,24 +97,28 @@ void ehht_free(struct ehht_s *table)
 
 	ehht_clear(table);
 
-	free(table->buckets);
-	free(table);
+	table->mem_free(table->buckets,
+			sizeof(struct ehht_element_s *) * table->num_buckets,
+			table->mem_context);
+	table->mem_free(table, sizeof(struct ehht_s), table->mem_context);
 }
 
-static struct ehht_element_s *ehht_new_element(const char *key,
-					       size_t key_len, void *val)
+static struct ehht_element_s *ehht_new_element(struct ehht_s *table,
+					       const char *key, size_t key_len,
+					       void *val)
 {
 	char *key_copy;
 	struct ehht_element_s *element;
 
-	element = malloc(sizeof(struct ehht_element_s));
+	element =
+	    table->mem_alloc(sizeof(struct ehht_element_s), table->mem_context);
 	if (element == NULL) {
 		return NULL;
 	}
 
-	key_copy = malloc(key_len + 1);
+	key_copy = table->mem_alloc(key_len + 1, table->mem_context);
 	if (!key_copy) {
-		ehht_free_element(element);
+		ehht_free_element(table, element);
 		return NULL;
 	}
 	memcpy(key_copy, key, key_len);
@@ -166,7 +196,7 @@ void *ehht_put(struct ehht_s *table, const char *key, size_t key_len, void *val)
 	hashcode = table->hash_func(key, key_len);
 	bucket_num = hashcode % table->num_buckets;
 	element = table->buckets[bucket_num];
-	table->buckets[bucket_num] = ehht_new_element(key, key_len, val);
+	table->buckets[bucket_num] = ehht_new_element(table, key, key_len, val);
 	if (table->buckets[bucket_num] == NULL) {
 		/* TODO set errno */
 		fprintf(stderr, "could not allocate struct ehht_element_s\n");
@@ -204,7 +234,7 @@ void *ehht_remove(struct ehht_s *table, const char *key, size_t key_len)
 		}
 		previous_element->next = element->next;
 	}
-	ehht_free_element(element);
+	ehht_free_element(table, element);
 	return old_val;
 }
 
@@ -322,4 +352,17 @@ size_t ehht_distribution_report(struct ehht_s *table, size_t *sizes,
 size_t ehht_num_buckets(struct ehht_s *table)
 {
 	return table->num_buckets;
+}
+
+static void *ehht_memalloc(size_t size, void *context)
+{
+	assert(context == NULL);
+	return malloc(size);
+}
+
+static void ehht_memfree(void *ptr, size_t size, void *context)
+{
+	assert(size != 0);
+	assert(context == NULL);
+	free(ptr);
 }

@@ -7,9 +7,14 @@
 #include <stddef.h>		/* size_t */
 
 typedef unsigned int (*ehht_hash_func) (const char *str, size_t str_len);
+typedef void *(*ehht_malloc) (size_t size, void *context);
+typedef void (*ehht_mfree) (void *ptr, size_t size, void *context);
 
 /* if hash_func is NULL, a hashing function will be provided */
-struct ehht_s *ehht_new(size_t num_buckets, ehht_hash_func hash_func);
+/* if ehht_malloc/mfree are NULL, malloc/free will be used */
+struct ehht_s *ehht_new(size_t num_buckets, ehht_hash_func hash_func,
+			ehht_malloc alloc_func, ehht_mfree free_func,
+			void *mem_context);
 
 void ehht_free(struct ehht_s *table);
 

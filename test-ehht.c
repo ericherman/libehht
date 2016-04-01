@@ -11,7 +11,7 @@ int test_ehht_new()
 	size_t num_buckets = 35;
 
 	/* msg = "test_ehht_new"; */
-	table = ehht_new(num_buckets, NULL);
+	table = ehht_new(num_buckets, NULL, NULL, NULL, NULL);
 
 	if (table == NULL) {
 		++failures;
@@ -35,7 +35,7 @@ int test_ehht_put_get_remove()
 	void *val, *old_val;
 	char buf[1000];
 
-	table = ehht_new(num_buckets, NULL);
+	table = ehht_new(num_buckets, NULL, NULL, NULL, NULL);
 
 	key = "key1";
 	val = ehht_get(table, key, strlen(key));
@@ -141,7 +141,7 @@ int test_ehht_foreach_element()
 	struct ehht_s *table;
 	unsigned int actual, expected, num_buckets = 5;
 
-	table = ehht_new(num_buckets, NULL);
+	table = ehht_new(num_buckets, NULL, NULL, NULL, NULL);
 
 	if (table == NULL) {
 		++failures;
@@ -165,6 +165,33 @@ int test_ehht_foreach_element()
 	return failures;
 }
 
+struct mem_context {
+	unsigned allocs;
+	unsigned alloc_bytes;
+	unsigned frees;
+	unsigned free_bytes;
+	unsigned fails;
+};
+
+void *test_malloc(size_t size, void *context)
+{
+	struct mem_context *ctx = (struct mem_context *)context;
+	++ctx->allocs;
+	ctx->alloc_bytes += size;
+	return malloc(size);
+}
+
+void test_free(void *ptr, size_t size, void *context)
+{
+	struct mem_context *ctx = (struct mem_context *)context;
+	++ctx->frees;
+	ctx->free_bytes += size;
+	if (ptr == NULL) {
+		++ctx->fails;
+	}
+	free(ptr);
+}
+
 int test_ehht_clear()
 {
 	int failures = 0;
@@ -173,8 +200,9 @@ int test_ehht_clear()
 
 	size_t i, count, items_written;
 	size_t report[10];
+	struct mem_context ctx = { 0, 0, 0, 0, 0 };
 
-	table = ehht_new(num_buckets, NULL);
+	table = ehht_new(num_buckets, NULL, test_malloc, test_free, &ctx);
 
 	ehht_put(table, "g", 1, "wiz");
 	ehht_put(table, "foo", 3, "bar");
@@ -205,6 +233,14 @@ int test_ehht_clear()
 	failures += check_size_t_m(count, 0, "ehht_report empty");
 
 	ehht_free(table);
+
+	failures += check_unsigned_int_m(ctx.allocs > 0, 1, "ctx.allocs");
+	failures += check_unsigned_int_m(ctx.frees, ctx.allocs, "alloc/free");
+	failures += check_unsigned_int_m(ctx.alloc_bytes > 0, 1, "bytes > 0");
+	failures +=
+	    check_unsigned_int_m(ctx.free_bytes, ctx.alloc_bytes, "bytes");
+	failures += check_unsigned_int_m(ctx.fails, 0, "free NULL pointers");
+
 	return failures;
 }
 
