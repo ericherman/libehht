@@ -11,75 +11,29 @@ struct ehht_element_s {
 	struct ehht_element_s *next;
 };
 
-struct ehht_s {
+struct ehht_table_s {
 	size_t num_buckets;
 	struct ehht_element_s **buckets;
 	ehht_hash_func hash_func;
-	ehht_malloc mem_alloc;
-	ehht_mfree mem_free;
+	ehht_malloc_func alloc;
+	ehht_free_func free;
 	void *mem_context;
 };
 
-static unsigned int ehht_hash_code_str(const char *str, size_t str_len);
-static void *ehht_memalloc(size_t size, void *context);
-static void ehht_memfree(void *ptr, size_t size, void *context);
-
-struct ehht_s *ehht_new(size_t num_buckets,
-			ehht_hash_func hash_func,
-			ehht_malloc mem_alloc,
-			ehht_mfree mem_free, void *mem_context)
-{
-	struct ehht_s *table;
-	size_t i;
-
-	if (num_buckets == 0) {
-		num_buckets = 4096;
-	}
-	if (hash_func == NULL) {
-		hash_func = ehht_hash_code_str;
-	}
-	if (mem_alloc == NULL) {
-		mem_alloc = ehht_memalloc;
-	}
-	if (mem_free == NULL) {
-		mem_free = ehht_memfree;
-	}
-
-	table = mem_alloc(sizeof(struct ehht_s), mem_context);
-	if (table == NULL) {
-		return NULL;
-	}
-	table->num_buckets = num_buckets;
-	table->buckets =
-	    mem_alloc(sizeof(struct ehht_element_s *) * num_buckets,
-		      mem_context);
-	if (table->buckets == NULL) {
-		mem_free(table, sizeof(struct ehht_s), mem_context);
-		return NULL;
-	}
-	for (i = 0; i < num_buckets; ++i) {
-		table->buckets[i] = NULL;
-	}
-	table->hash_func = hash_func;
-	table->mem_alloc = mem_alloc;
-	table->mem_free = mem_free;
-	table->mem_context = mem_context;
-
-	return table;
-}
-
-static void ehht_free_element(struct ehht_s *table,
+static void ehht_free_element(struct ehht_table_s *table,
 			      struct ehht_element_s *element)
 {
-	table->mem_free(element->key, element->key_len + 1, table->mem_context);
-	table->mem_free(element, sizeof(struct ehht_element_s),
-			table->mem_context);
+	table->free(element->key, element->key_len + 1, table->mem_context);
+	table->free(element, sizeof(struct ehht_element_s), table->mem_context);
 }
 
-void ehht_clear(struct ehht_s *table)
+static void ehht_clear(struct ehht_s *this)
 {
+	struct ehht_table_s *table;
 	size_t i;
 	struct ehht_element_s *element;
+
+	table = (struct ehht_table_s *)this->data;
 
 	for (i = 0; i < table->num_buckets; ++i) {
 		while ((element = table->buckets[i]) != NULL) {
@@ -89,21 +43,7 @@ void ehht_clear(struct ehht_s *table)
 	}
 }
 
-void ehht_free(struct ehht_s *table)
-{
-	if (table == NULL) {
-		return;
-	}
-
-	ehht_clear(table);
-
-	table->mem_free(table->buckets,
-			sizeof(struct ehht_element_s *) * table->num_buckets,
-			table->mem_context);
-	table->mem_free(table, sizeof(struct ehht_s), table->mem_context);
-}
-
-static struct ehht_element_s *ehht_new_element(struct ehht_s *table,
+static struct ehht_element_s *ehht_new_element(struct ehht_table_s *table,
 					       const char *key, size_t key_len,
 					       void *val)
 {
@@ -111,12 +51,12 @@ static struct ehht_element_s *ehht_new_element(struct ehht_s *table,
 	struct ehht_element_s *element;
 
 	element =
-	    table->mem_alloc(sizeof(struct ehht_element_s), table->mem_context);
+	    table->alloc(sizeof(struct ehht_element_s), table->mem_context);
 	if (element == NULL) {
 		return NULL;
 	}
 
-	key_copy = table->mem_alloc(key_len + 1, table->mem_context);
+	key_copy = table->alloc(key_len + 1, table->mem_context);
 	if (!key_copy) {
 		ehht_free_element(table, element);
 		return NULL;
@@ -149,7 +89,7 @@ static unsigned int ehht_hash_code_str(const char *str, size_t str_len)
 	return hash;
 }
 
-static struct ehht_element_s *ehht_get_element(struct ehht_s *table,
+static struct ehht_element_s *ehht_get_element(struct ehht_table_s *table,
 					       const char *key, size_t key_len)
 {
 	struct ehht_element_s *element;
@@ -171,19 +111,27 @@ static struct ehht_element_s *ehht_get_element(struct ehht_s *table,
 	return NULL;
 }
 
-void *ehht_get(struct ehht_s *table, const char *key, size_t key_len)
+static void *ehht_get(struct ehht_s *this, const char *key, size_t key_len)
 {
+	struct ehht_table_s *table;
 	struct ehht_element_s *element;
+
+	table = (struct ehht_table_s *)this->data;
+
 	element = ehht_get_element(table, key, key_len);
 	return (element == NULL) ? NULL : element->val;
 }
 
-void *ehht_put(struct ehht_s *table, const char *key, size_t key_len, void *val)
+static void *ehht_put(struct ehht_s *this, const char *key, size_t key_len,
+		      void *val)
 {
+	struct ehht_table_s *table;
 	struct ehht_element_s *element;
 	void *old_val;
 	unsigned int hashcode;
 	size_t bucket_num;
+
+	table = (struct ehht_table_s *)this->data;
 
 	element = ehht_get_element(table, key, key_len);
 	old_val = (element == NULL) ? NULL : element->val;
@@ -207,12 +155,15 @@ void *ehht_put(struct ehht_s *table, const char *key, size_t key_len, void *val)
 	return NULL;
 }
 
-void *ehht_remove(struct ehht_s *table, const char *key, size_t key_len)
+static void *ehht_remove(struct ehht_s *this, const char *key, size_t key_len)
 {
+	struct ehht_table_s *table;
 	struct ehht_element_s *previous_element, *element;
 	void *old_val;
 	unsigned int hashcode;
 	size_t bucket_num;
+
+	table = (struct ehht_table_s *)this->data;
 
 	element = ehht_get_element(table, key, key_len);
 	if (element == NULL) {
@@ -238,14 +189,17 @@ void *ehht_remove(struct ehht_s *table, const char *key, size_t key_len)
 	return old_val;
 }
 
-int ehht_foreach_element(struct ehht_s *table,
-			 int (*func) (const char *each_key,
-				      size_t each_key_len,
-				      void *each_val, void *context),
-			 void *context)
+static int ehht_foreach_element(struct ehht_s *this,
+				int (*func) (const char *each_key,
+					     size_t each_key_len,
+					     void *each_val, void *context),
+				void *context)
 {
+	struct ehht_table_s *table;
 	size_t i, end;
 	struct ehht_element_s *element;
+
+	table = (struct ehht_table_s *)this->data;
 
 	end = 0;
 	for (i = 0; i < table->num_buckets && !end; ++i) {
@@ -273,11 +227,12 @@ static int foreach_count(const char *each_key, size_t each_key_len,
 	return 0;
 }
 
-size_t ehht_size(struct ehht_s *table)
+static size_t ehht_size(struct ehht_s *this)
 {
-	size_t i = 0;
+	size_t i;
 
-	ehht_foreach_element(table, foreach_count, &i);
+	i = 0;
+	this->for_each(this, foreach_count, &i);
 
 	return i;
 }
@@ -310,7 +265,7 @@ static int to_string_each(const char *each_key, size_t each_key_len,
 	return 0;
 }
 
-size_t ehht_to_string(struct ehht_s *table, char *buf, size_t buf_len)
+static size_t ehht_to_string(struct ehht_s *this, char *buf, size_t buf_len)
 {
 	struct ehht_str_buf_s str_buf;
 	int bytes_written;
@@ -323,7 +278,7 @@ size_t ehht_to_string(struct ehht_s *table, char *buf, size_t buf_len)
 	if (bytes_written > 0) {
 		str_buf.buf_pos += ((unsigned int)bytes_written);
 	}
-	ehht_foreach_element(table, to_string_each, &str_buf);
+	this->for_each(this, to_string_each, &str_buf);
 	bytes_written = sprintf(str_buf.buf + str_buf.buf_pos, "}");
 	if (bytes_written > 0) {
 		str_buf.buf_pos += ((unsigned int)bytes_written);
@@ -331,11 +286,14 @@ size_t ehht_to_string(struct ehht_s *table, char *buf, size_t buf_len)
 	return str_buf.buf_pos;
 }
 
-size_t ehht_distribution_report(struct ehht_s *table, size_t *sizes,
-				size_t sizes_len)
+static size_t ehht_distribution_report(struct ehht_s *this, size_t *sizes,
+				       size_t sizes_len)
 {
+	struct ehht_table_s *table;
 	size_t i;
 	struct ehht_element_s *element;
+
+	table = (struct ehht_table_s *)this->data;
 
 	for (i = 0; i < table->num_buckets && i < sizes_len; ++i) {
 		sizes[i] = 0;
@@ -349,20 +307,107 @@ size_t ehht_distribution_report(struct ehht_s *table, size_t *sizes,
 	return i;
 }
 
-size_t ehht_num_buckets(struct ehht_s *table)
+size_t ehht_num_buckets(struct ehht_s *this)
 {
+	struct ehht_table_s *table;
+
+	table = (struct ehht_table_s *)this->data;
 	return table->num_buckets;
 }
 
-static void *ehht_memalloc(size_t size, void *context)
+static void *ehht_malloc(size_t size, void *context)
 {
 	assert(context == NULL);
 	return malloc(size);
 }
 
-static void ehht_memfree(void *ptr, size_t size, void *context)
+static void ehht_mem_free(void *ptr, size_t size, void *context)
 {
 	assert(size != 0);
 	assert(context == NULL);
 	free(ptr);
+}
+
+struct ehht_s *ehht_new(size_t num_buckets, ehht_hash_func hash_func,
+			ehht_malloc_func mem_alloc, ehht_free_func mem_free,
+			void *mem_context)
+{
+	struct ehht_s *this;
+	struct ehht_table_s *table;
+	size_t i;
+
+	if (num_buckets == 0) {
+		num_buckets = 4096;
+	}
+	if (hash_func == NULL) {
+		hash_func = ehht_hash_code_str;
+	}
+	if (mem_alloc == NULL) {
+		mem_alloc = ehht_malloc;
+	}
+	if (mem_free == NULL) {
+		mem_free = ehht_mem_free;
+	}
+
+	this = mem_alloc(sizeof(struct ehht_s), mem_context);
+	if (this == NULL) {
+		return NULL;
+	}
+	this->get = ehht_get;
+	this->put = ehht_put;
+	this->remove = ehht_remove;
+	this->size = ehht_size;
+	this->clear = ehht_clear;
+	this->for_each = ehht_foreach_element;
+	this->to_string = ehht_to_string;
+	this->num_buckets = ehht_num_buckets;
+	this->report = ehht_distribution_report;
+
+	table = mem_alloc(sizeof(struct ehht_table_s), mem_context);
+	if (table == NULL) {
+		mem_free(table, sizeof(struct ehht_s), mem_context);
+		return NULL;
+	}
+	this->data = table;
+
+	table->num_buckets = num_buckets;
+	table->buckets =
+	    mem_alloc(sizeof(struct ehht_element_s *) * num_buckets,
+		      mem_context);
+	if (table->buckets == NULL) {
+		mem_free(table, sizeof(struct ehht_s), mem_context);
+		mem_free(table, sizeof(struct ehht_table_s), mem_context);
+		return NULL;
+	}
+	for (i = 0; i < num_buckets; ++i) {
+		table->buckets[i] = NULL;
+	}
+	table->hash_func = hash_func;
+	table->alloc = mem_alloc;
+	table->free = mem_free;
+	table->mem_context = mem_context;
+
+	return this;
+}
+
+void ehht_free(struct ehht_s *this)
+{
+	struct ehht_table_s *table;
+	ehht_free_func free_func;
+
+	if (this == NULL) {
+		return;
+	}
+
+	table = (struct ehht_table_s *)this->data;
+
+	this->clear(this);
+
+	free_func = table->free;
+
+	free_func(table->buckets,
+		  sizeof(struct ehht_element_s *) * table->num_buckets,
+		  table->mem_context);
+	free_func(table, sizeof(struct ehht_table_s), table->mem_context);
+	free_func(this, sizeof(struct ehht_s), table->mem_context);
 }
