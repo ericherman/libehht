@@ -189,11 +189,11 @@ static void *ehht_remove(struct ehht_s *this, const char *key, size_t key_len)
 	return old_val;
 }
 
-static int ehht_foreach_element(struct ehht_s *this,
-				int (*func) (const char *each_key,
-					     size_t each_key_len,
-					     void *each_val, void *context),
-				void *context)
+static int ehht_for_each(struct ehht_s *this,
+			 int (*func) (const char *each_key,
+				      size_t each_key_len,
+				      void *each_val, void *context),
+			 void *context)
 {
 	struct ehht_table_s *table;
 	size_t i, end;
@@ -232,7 +232,7 @@ static size_t ehht_size(struct ehht_s *this)
 	size_t i;
 
 	i = 0;
-	ehht_foreach_element(this, foreach_count, &i);
+	ehht_for_each(this, foreach_count, &i);
 
 	return i;
 }
@@ -278,7 +278,7 @@ static size_t ehht_to_string(struct ehht_s *this, char *buf, size_t buf_len)
 	if (bytes_written > 0) {
 		str_buf.buf_pos += ((unsigned int)bytes_written);
 	}
-	ehht_foreach_element(this, to_string_each, &str_buf);
+	ehht_for_each(this, to_string_each, &str_buf);
 	bytes_written = sprintf(str_buf.buf + str_buf.buf_pos, "}");
 	if (bytes_written > 0) {
 		str_buf.buf_pos += ((unsigned int)bytes_written);
@@ -358,7 +358,7 @@ struct ehht_s *ehht_new(size_t num_buckets, ehht_hash_func hash_func,
 	this->remove = ehht_remove;
 	this->size = ehht_size;
 	this->clear = ehht_clear;
-	this->for_each = ehht_foreach_element;
+	this->for_each = ehht_for_each;
 	this->to_string = ehht_to_string;
 	this->num_buckets = ehht_num_buckets;
 	this->report = ehht_distribution_report;
