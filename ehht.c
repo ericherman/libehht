@@ -232,7 +232,7 @@ static size_t ehht_size(struct ehht_s *this)
 	size_t i;
 
 	i = 0;
-	this->for_each(this, foreach_count, &i);
+	ehht_foreach_element(this, foreach_count, &i);
 
 	return i;
 }
@@ -278,7 +278,7 @@ static size_t ehht_to_string(struct ehht_s *this, char *buf, size_t buf_len)
 	if (bytes_written > 0) {
 		str_buf.buf_pos += ((unsigned int)bytes_written);
 	}
-	this->for_each(this, to_string_each, &str_buf);
+	ehht_foreach_element(this, to_string_each, &str_buf);
 	bytes_written = sprintf(str_buf.buf + str_buf.buf_pos, "}");
 	if (bytes_written > 0) {
 		str_buf.buf_pos += ((unsigned int)bytes_written);
