@@ -93,6 +93,7 @@ tidy:
 	$(LINDENT) \
 		-T FILE \
 		-T size_t \
+		-T ehht_s \
 		*.h *.c
 
 demo: library
