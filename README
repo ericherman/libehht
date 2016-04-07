@@ -1,9 +1,21 @@
-libehht is a simple hash-table implementation
+The "libehht" C library specifies a basic object oriented hash-table
+interface and implementation.
+
+The "ehht-interface.h" file declares the "ehht_s" struct and
+function pointer definitions, but does not specify an implementation.
+
+The "ehht.h" includes the interface as well as a constructor and
+destructor for an implementation of the interface.
 
 Dependencies
 ------------
-only the tests depend upon libecheck
+The "make" and "make install" targets have no external dependencies.
+
+The "make check" target depends upon libecheck
   https://github.com/ericherman/libecheck
+
+The "make demo" target depends upon "simple_stats"
+  https://github.com/ericherman/simple_stats
 
 License
 -------
