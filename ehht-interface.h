@@ -7,9 +7,6 @@
 #include <stddef.h>		/* size_t */
 
 /* passed parameter functions */
-typedef unsigned int (*ehht_hash_func) (const char *str, size_t str_len);
-typedef void *(*ehht_malloc_func) (size_t size, void *context);
-typedef void (*ehht_free_func) (void *ptr, size_t size, void *context);
 typedef int (*ehht_iterator_func) (const char *each_key, size_t each_key_len,
 				   void *each_val, void *context);
 
