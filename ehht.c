@@ -249,15 +249,21 @@ static int to_string_each(const char *each_key, size_t each_key_len,
 
 	struct ehht_str_buf_s *str_buf;
 	char *buf;
+	const char *fmt;
+	size_t bytes_to_write;
 	int bytes_written;
 
 	str_buf = (struct ehht_str_buf_s *)context;
 	buf = str_buf->buf + str_buf->buf_pos;
 
-	bytes_written =
-	    sprintf(buf, "'%s' => %p, ", each_key_len ? each_key : "",
-		    each_val);
+	fmt = "'%s' => %p, ";
+	bytes_to_write = each_key_len + (__WORDSIZE / 4) + strlen(fmt);
+	if (str_buf->buf_len < (str_buf->buf_pos + bytes_to_write)) {
+		return -1;
+	}
 
+	bytes_written =
+	    sprintf(buf, fmt, each_key_len ? each_key : "", each_val);
 	if (bytes_written > 0) {
 		str_buf->buf_pos += ((unsigned int)bytes_written);
 	}
