@@ -20,3 +20,5 @@ $*
 *.d
 test-*-dynamic
 test-*-static
+demo-ehht
+demo-as-array
