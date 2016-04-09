@@ -65,11 +65,11 @@ int main(int argc, char *argv[])
 	table->put(table, "whiz", strlen("whiz"), "w");
 	table->put(table, "bang", strlen("bang"), "b");
 
-	kva.len = table->size(table);
+	kva.len = 1 + table->size(table);
 	kva.pos = 0;
-	kva.keys = malloc(sizeof(char *) * kva.len);
-	kva.lens = malloc(sizeof(size_t) * kva.len);
-	kva.vals = malloc(sizeof(void *) * kva.len);
+	kva.keys = calloc(sizeof(char *), kva.len);
+	kva.lens = calloc(sizeof(size_t), kva.len);
+	kva.vals = calloc(sizeof(void *), kva.len);
 
 	table->for_each(table, to_array, &kva);
 
