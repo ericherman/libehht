@@ -98,8 +98,8 @@ tidy:
 
 demo: library
 	$(CC) -c -D_GNU_SOURCE $(INCLUDES) $(CFLAGS) \
-		-o ehht-as-array.o ehht-as-array.c
-	$(CC) ehht-as-array.o $(A_NAME) -o ehht-as-array
+		-o demo-as-array.o demo-as-array.c
+	$(CC) demo-as-array.o $(A_NAME) -o demo-as-array
 	$(CC) -c $(INCLUDES) $(CFLAGS) \
 		-o leveldb_util_hash.o leveldb_util_hash.c
 	$(CC) -c $(INCLUDES) $(CFLAGS) -o demo-ehht.o demo-ehht.c
@@ -112,7 +112,7 @@ demo: library
 clean:
 	rm -f *.o *.a *.$(SHAREDEXT) \
 		$(SO_NAME).* \
-		$(TEST)-static $(TEST)-dynamic demo-ehht ehht-as-array
+		$(TEST)-static $(TEST)-dynamic demo-ehht demo-as-array
 
 install: library
 	@echo "Installing libraries in $(LIBDIR)"

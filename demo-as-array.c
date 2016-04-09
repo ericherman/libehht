@@ -33,6 +33,18 @@ int to_array(const char *key, size_t len, void *val, void *ctx)
 	return 0;
 }
 
+int comp_key_lens(const void *a, const void *b)
+{
+	size_t llen, rlen;
+
+	llen = strlen(a);
+	rlen = strlen(b);
+	if (llen == rlen) {
+		return 0;
+	}
+	return llen > rlen ? -1 : 1;
+}
+
 int main(int argc, char *argv[])
 {
 	struct ehht_s *table;
@@ -60,6 +72,8 @@ int main(int argc, char *argv[])
 	kva.vals = malloc(sizeof(void *) * kva.len);
 
 	table->for_each(table, to_array, &kva);
+
+	qsort(kva.keys, kva.len, sizeof(char *), comp_key_lens);
 
 	for (i = 0; i < kva.pos; ++i) {
 		printf("kva.keys[%u]=%s, kva.lens[%u]:%u, kva.vals[%i]:%s\n",
