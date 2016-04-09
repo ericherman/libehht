@@ -23,6 +23,9 @@ int to_array(const char *key, size_t len, void *val, void *ctx)
 	kva = ctx;
 
 	str = strdup(key);
+	if (strlen(str) != len) {
+		fprintf(stderr, "len(%s) != len(%s) ?\n", key, str);
+	}
 
 	kva->keys[kva->pos] = str;
 	kva->lens[kva->pos] = strlen(str);
