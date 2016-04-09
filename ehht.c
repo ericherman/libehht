@@ -394,6 +394,7 @@ void ehht_free(struct ehht_s *this)
 {
 	struct ehht_table_s *table;
 	ehht_free_func free_func;
+	void *mem_context;
 
 	if (this == NULL) {
 		return;
@@ -404,10 +405,11 @@ void ehht_free(struct ehht_s *this)
 	this->clear(this);
 
 	free_func = table->free;
+	mem_context = table->mem_context;
 
 	free_func(table->buckets,
 		  sizeof(struct ehht_element_s *) * table->num_buckets,
-		  table->mem_context);
-	free_func(table, sizeof(struct ehht_table_s), table->mem_context);
-	free_func(this, sizeof(struct ehht_s), table->mem_context);
+		  mem_context);
+	free_func(table, sizeof(struct ehht_table_s), mem_context);
+	free_func(this, sizeof(struct ehht_s), mem_context);
 }
