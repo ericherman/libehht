@@ -339,15 +339,15 @@ static int fill_keys_each(const char *each_key, size_t each_key_len,
 	char *key_copy;
 
 	kls = (struct kl_s *)context;
+	ehht = kls->ehht;
 
-	assert(each_val == ehht->get(ehht, each_key, each_val));
+	assert(each_val == ehht->get(ehht, each_key, each_key_len));
 
 	if (kls->pos >= kls->bufs_len) {
 		return 1;
 	}
 
 	if (kls->allocate_copies) {
-		ehht = kls->ehht;
 		table = (struct ehht_table_s *)ehht->data;
 		key_copy = table->alloc(sizeof(char *) * (each_key_len + 1),
 					table->mem_context);
