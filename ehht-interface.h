@@ -32,6 +32,12 @@ struct ehht_s {
 	int (*for_each) (struct ehht_s *table, ehht_iterator_func func,
 			 void *context);
 
+	/* fills the keys array with (pointers or newly allocated) key strings
+	   populates the lens array with the corresponding lengths
+	   returns the number of elements populated */
+	size_t (*keys) (struct ehht_s *table, const char **keys, size_t *lens,
+			size_t bufs_len, int allocate_copies);
+
 	/* returns the number of characters written to "buf"
 	   (excluding the null byte terminator) */
 	size_t (*to_string) (struct ehht_s *table, char *buf, size_t buf_len);

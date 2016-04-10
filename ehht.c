@@ -313,12 +313,73 @@ static size_t ehht_distribution_report(struct ehht_s *this, size_t *sizes,
 	return i;
 }
 
-size_t ehht_num_buckets(struct ehht_s *this)
+static size_t ehht_num_buckets(struct ehht_s *this)
 {
 	struct ehht_table_s *table;
 
 	table = (struct ehht_table_s *)this->data;
 	return table->num_buckets;
+}
+
+struct kl_s {
+	struct ehht_s *ehht;
+	const char **keys;
+	size_t *lens;
+	size_t bufs_len;
+	int allocate_copies;
+	size_t pos;
+};
+
+static int fill_keys_each(const char *each_key, size_t each_key_len,
+			  void *each_val, void *context)
+{
+	struct kl_s *kls;
+	struct ehht_s *ehht;
+	struct ehht_table_s *table;
+	char *key_copy;
+
+	kls = (struct kl_s *)context;
+
+	assert(each_val == ehht->get(ehht, each_key, each_val));
+
+	if (kls->pos >= kls->bufs_len) {
+		return 1;
+	}
+
+	if (kls->allocate_copies) {
+		ehht = kls->ehht;
+		table = (struct ehht_table_s *)ehht->data;
+		key_copy = table->alloc(sizeof(char *) * (each_key_len + 1),
+					table->mem_context);
+		if (!key_copy) {
+			return 1;
+		}
+		memcpy(key_copy, each_key, each_key_len + 1);
+		assert(strlen(key_copy) == strlen(each_key));
+	}
+
+	kls->keys[kls->pos] = (kls->allocate_copies) ? key_copy : each_key;
+	kls->lens[kls->pos] = each_key_len;
+	++kls->pos;
+
+	return 0;
+}
+
+static size_t ehht_keys(struct ehht_s *this, const char **keys, size_t *lens,
+			size_t bufs_len, int allocate_copies)
+{
+	struct kl_s kls;
+
+	kls.ehht = this;
+	kls.keys = keys;
+	kls.lens = lens;
+	kls.bufs_len = bufs_len;
+	kls.allocate_copies = allocate_copies;
+	kls.pos = 0;
+
+	ehht_for_each(this, fill_keys_each, &kls);
+
+	return kls.pos;
 }
 
 static void *ehht_malloc(size_t size, void *context)
@@ -365,6 +426,7 @@ struct ehht_s *ehht_new(size_t num_buckets, ehht_hash_func hash_func,
 	this->size = ehht_size;
 	this->clear = ehht_clear;
 	this->for_each = ehht_for_each;
+	this->keys = ehht_keys;
 	this->to_string = ehht_to_string;
 	this->num_buckets = ehht_num_buckets;
 	this->report = ehht_distribution_report;

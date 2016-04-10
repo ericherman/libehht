@@ -244,6 +244,74 @@ int test_ehht_clear()
 	return failures;
 }
 
+int test_ehht_keys()
+{
+	int failures = 0;
+	struct ehht_s *table;
+	int allocate_copies;
+	size_t i, j, keys_len, filled, num_buckets;
+	size_t *lens, *found;
+	const char **keys;
+	const char *e_keys[] = { "foo", "bar", "whiz", "bang", NULL };
+
+	num_buckets = 3;
+
+	for (allocate_copies = 0; allocate_copies < 2; ++allocate_copies) {
+
+		table = ehht_new(num_buckets, NULL, NULL, NULL, NULL);
+
+		for (i = 0; e_keys[i] != NULL; ++i) {
+			table->put(table, e_keys[i], strlen(e_keys[i]), NULL);
+		}
+
+		keys_len = table->size(table);
+		keys = malloc(sizeof(char *) * keys_len);
+		if (!keys) {
+			fprintf(stderr, "could not allocate keys array\n");
+			return 1;
+		}
+		lens = malloc(sizeof(size_t) * keys_len);
+		if (!lens) {
+			fprintf(stderr, "could not allocate lens array\n");
+			return 1;
+		}
+		found = calloc(sizeof(size_t), keys_len);
+		if (!found) {
+			fprintf(stderr, "could not allocate found array\n");
+			return 1;
+		}
+
+		filled =
+		    table->keys(table, keys, lens, keys_len, allocate_copies);
+		failures += check_size_t_m(filled, keys_len, "filled");
+		for (i = 0; i < keys_len; ++i) {
+			for (j = 0; j < keys_len && !found[i]; ++j) {
+				if (strcmp(e_keys[i], keys[j]) == 0) {
+					found[i] = 1;
+				}
+			}
+		}
+		for (i = 0; i < keys_len; ++i) {
+			if (!found[i]) {
+				failures += check_str(e_keys[i], "");
+			}
+		}
+
+		if (allocate_copies) {
+			for (i = 0; i < filled; ++i) {
+				free((char *)keys[i]);
+			}
+		}
+		free(keys);
+		free(lens);
+		free(found);
+
+		ehht_free(table);
+	}
+
+	return failures;
+}
+
 int main(void)
 {				/* int argc, char *argv[]) */
 	int failures = 0;
@@ -252,6 +320,7 @@ int main(void)
 	failures += test_ehht_put_get_remove();
 	failures += test_ehht_foreach_element();
 	failures += test_ehht_clear();
+	failures += test_ehht_keys();
 
 	if (failures) {
 		fprintf(stderr, "%d failures in total\n", failures);
