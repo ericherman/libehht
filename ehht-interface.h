@@ -32,6 +32,8 @@ struct ehht_s {
 	int (*for_each) (struct ehht_s *table, ehht_iterator_func func,
 			 void *context);
 
+	int (*has_key) (struct ehht_s *table, const char *key, size_t key_len);
+
 	/* fills the keys array with (pointers or newly allocated) key strings
 	   populates the lens array with the corresponding lengths
 	   returns the number of elements populated */

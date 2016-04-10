@@ -365,6 +365,17 @@ static int fill_keys_each(const char *each_key, size_t each_key_len,
 	return 0;
 }
 
+static int ehht_has_key(struct ehht_s *this, const char *key, size_t key_len)
+{
+	struct ehht_table_s *table;
+	struct ehht_element_s *element;
+
+	table = (struct ehht_table_s *)this->data;
+
+	element = ehht_get_element(table, key, key_len);
+	return (element != NULL);
+}
+
 static size_t ehht_keys(struct ehht_s *this, const char **keys, size_t *lens,
 			size_t bufs_len, int allocate_copies)
 {
@@ -426,6 +437,7 @@ struct ehht_s *ehht_new(size_t num_buckets, ehht_hash_func hash_func,
 	this->size = ehht_size;
 	this->clear = ehht_clear;
 	this->for_each = ehht_for_each;
+	this->has_key = ehht_has_key;
 	this->keys = ehht_keys;
 	this->to_string = ehht_to_string;
 	this->num_buckets = ehht_num_buckets;

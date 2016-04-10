@@ -38,6 +38,10 @@ int test_ehht_put_get_remove()
 	table = ehht_new(num_buckets, NULL, NULL, NULL, NULL);
 
 	key = "key1";
+
+	failures += check_int(table->has_key(table, key, strlen(key)), 0);
+	failures += check_int(table->has_key(table, key, strlen(key)), 0);
+
 	val = table->get(table, key, strlen(key));
 
 	failures +=
@@ -49,6 +53,7 @@ int test_ehht_put_get_remove()
 	failures +=
 	    check_unsigned_long_m((unsigned long)old_val, (unsigned long)NULL,
 				  "ehht_put while empty");
+	failures += check_int(table->has_key(table, key, strlen(key)), 1);
 
 	val = table->get(table, key, strlen(key));
 	if (val == NULL) {
@@ -86,12 +91,15 @@ int test_ehht_put_get_remove()
 	failures += check_unsigned_int_m(table->size(table), 9, "ehht_size");
 
 	key = "ping";
+	failures += check_int(table->has_key(table, key, strlen(key)), 1);
 	old_val = table->remove(table, key, strlen(key));
 	failures += check_str_m((const char *)old_val, "pong", "ehht_remove");
+	failures += check_int(table->has_key(table, key, strlen(key)), 0);
 	val = table->get(table, "ping", strlen(key));
 	if (val != NULL) {
 		++failures;
 	}
+	failures += check_int(table->has_key(table, key, strlen(key)), 0);
 	failures += check_unsigned_int_m(table->size(table), 8, "remove size");
 	old_val = table->remove(table, "bogus", strlen("bogus"));
 	failures += check_unsigned_int_m(table->size(table), 8, "remove size");
