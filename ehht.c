@@ -342,6 +342,7 @@ static int fill_keys_each(const char *each_key, size_t each_key_len,
 	ehht = kls->ehht;
 
 	assert(each_val == ehht->get(ehht, each_key, each_key_len));
+	assert(kls->pos < kls->bufs_len);
 
 	if (kls->pos >= kls->bufs_len) {
 		return 1;
