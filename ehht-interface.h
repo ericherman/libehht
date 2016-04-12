@@ -10,6 +10,13 @@
 typedef int (*ehht_iterator_func) (const char *each_key, size_t each_key_len,
 				   void *each_val, void *context);
 
+struct ehht_keys_s {
+	const char **keys;
+	int keys_copied;
+	size_t *lens;
+	size_t len;
+};
+
 /* interface */
 struct ehht_s {
 	/* private */
@@ -37,8 +44,8 @@ struct ehht_s {
 	/* fills the keys array with (pointers or newly allocated) key strings
 	   populates the lens array with the corresponding lengths
 	   returns the number of elements populated */
-	size_t (*keys) (struct ehht_s *table, const char **keys, size_t *lens,
-			size_t bufs_len, int allocate_copies);
+	struct ehht_keys_s *(*keys) (struct ehht_s *table, int copy_keys);
+	void (*free_keys) (struct ehht_s *table, struct ehht_keys_s * keys);
 
 	/* returns the number of characters written to "buf"
 	   (excluding the null byte terminator) */
