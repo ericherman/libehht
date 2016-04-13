@@ -3,6 +3,13 @@
 #include <string.h>		/* memcpy memcmp */
 #include <stdio.h>		/* fprintf */
 #include <assert.h>
+#include <errno.h>
+
+#ifdef NDEBUG
+#define EHHT_DEBUG 0
+#else
+#define EHHT_DEBUG 1
+#endif
 
 struct ehht_element_s {
 	char *key;
@@ -53,12 +60,14 @@ static struct ehht_element_s *ehht_new_element(struct ehht_table_s *table,
 	element =
 	    table->alloc(sizeof(struct ehht_element_s), table->mem_context);
 	if (element == NULL) {
+		assert(errno == ENOMEM);
 		return NULL;
 	}
 
 	key_copy = table->alloc(key_len + 1, table->mem_context);
 	if (!key_copy) {
 		ehht_free_element(table, element);
+		assert(errno == ENOMEM);
 		return NULL;
 	}
 	memcpy(key_copy, key, key_len);
@@ -146,8 +155,11 @@ static void *ehht_put(struct ehht_s *this, const char *key, size_t key_len,
 	element = table->buckets[bucket_num];
 	table->buckets[bucket_num] = ehht_new_element(table, key, key_len, val);
 	if (table->buckets[bucket_num] == NULL) {
-		/* TODO set errno */
-		fprintf(stderr, "could not allocate struct ehht_element_s\n");
+		if (EHHT_DEBUG) {
+			fprintf(stderr,
+				"could not allocate struct ehht_element_s\n");
+		}
+		assert(errno == ENOMEM);
 		table->buckets[bucket_num] = element;
 	} else {
 		table->buckets[bucket_num]->next = element;
@@ -350,6 +362,7 @@ static int fill_keys_each(const char *each_key, size_t each_key_len,
 		key_copy = table->alloc(sizeof(char *) * (each_key_len + 1),
 					table->mem_context);
 		if (!key_copy) {
+			assert(errno == ENOMEM);
 			return 1;
 		}
 		memcpy(key_copy, each_key, each_key_len + 1);
@@ -414,6 +427,7 @@ keys_alloc_failed_1:
 	size = sizeof(struct ehht_keys_s);
 	table->free(kls.keys, size, table->mem_context);
 keys_alloc_failed_0:
+	assert(errno == ENOMEM);
 	return NULL;
 }
 

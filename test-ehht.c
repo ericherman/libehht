@@ -1,6 +1,7 @@
 #include <echeck.h>
 #include <stdio.h>		/* fprintf */
 #include <string.h>		/* strlen */
+#include <errno.h>
 
 #include "ehht.h"
 
@@ -179,6 +180,7 @@ struct mem_context {
 	unsigned frees;
 	unsigned free_bytes;
 	unsigned fails;
+	unsigned malloc_multiplier;
 };
 
 void *test_malloc(size_t size, void *context)
@@ -186,6 +188,9 @@ void *test_malloc(size_t size, void *context)
 	struct mem_context *ctx = (struct mem_context *)context;
 	++ctx->allocs;
 	ctx->alloc_bytes += size;
+	if (ctx->malloc_multiplier) {
+		size *= ctx->malloc_multiplier;
+	}
 	return malloc(size);
 }
 
@@ -208,7 +213,7 @@ int test_ehht_clear()
 
 	size_t i, count, items_written;
 	size_t report[10];
-	struct mem_context ctx = { 0, 0, 0, 0, 0 };
+	struct mem_context ctx = { 0, 0, 0, 0, 0, 0 };
 
 	table = ehht_new(num_buckets, NULL, test_malloc, test_free, &ctx);
 
@@ -302,15 +307,58 @@ int test_ehht_keys()
 	return failures;
 }
 
-int main(void)
-{				/* int argc, char *argv[]) */
+int test_out_of_memory()
+{
 	int failures = 0;
+	struct ehht_s *table;
+	char buf[40];
+	size_t i;
+	struct mem_context ctx = { 0, 0, 0, 0, 0, 0 };
+
+	ctx.malloc_multiplier = 8 * 1024;
+	table = ehht_new(0, NULL, test_malloc, test_free, &ctx);
+
+	if (table == NULL) {
+		++failures;
+		return failures;
+	}
+
+	check_int(errno, 0);
+
+	for (i = 0; i == table->size(table); ++i) {
+		if (i % 256 == 0) {
+			fprintf(stderr, "\r%lu,", (unsigned long)i);
+		}
+		sprintf(buf, "_%lu_", (unsigned long)i);
+		table->put(table, buf, strlen(buf), NULL);
+		if (i % 256 == 0) {
+			fprintf(stderr, "%lu ...",
+				(unsigned long)table->size(table));
+		}
+	}
+	fprintf(stderr, "\n");
+	table->clear(table);
+	check_int(errno, ENOMEM);
+	errno = 0;
+
+	ehht_free(table);
+	return failures;
+}
+
+int main(int argc, char **argv)
+{
+	int failures = 0;
+	int test_oom = (argc > 1) ? atoi(argv[1]) : 0;
 
 	failures += test_ehht_new();
 	failures += test_ehht_put_get_remove();
 	failures += test_ehht_foreach_element();
 	failures += test_ehht_clear();
 	failures += test_ehht_keys();
+
+	if (test_oom) {
+		failures += test_out_of_memory();
+	}
 
 	if (failures) {
 		fprintf(stderr, "%d failures in total\n", failures);
