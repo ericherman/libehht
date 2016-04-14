@@ -86,9 +86,9 @@ int main(int argc, char *argv[])
 	for (i = 0; i < kva->pos; ++i) {
 		printf("kva->kvs[%u].key=%s"
 		       ", kva->kvs[%u].len:%u"
-		       ", kva->vals[%i].val:%s\n",
+		       ", kva->vals[%u].val:%s\n",
 		       (unsigned)i, kva->kvs[i].key,
-		       (unsigned)i, kva->kvs[i].len,
+		       (unsigned)i, (unsigned) kva->kvs[i].len,
 		       (unsigned)i, (char *)kva->kvs[i].val);
 	}
 
