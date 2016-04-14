@@ -88,7 +88,7 @@ int main(int argc, char *argv[])
 		       ", kva->kvs[%u].len:%u"
 		       ", kva->vals[%u].val:%s\n",
 		       (unsigned)i, kva->kvs[i].key,
-		       (unsigned)i, (unsigned) kva->kvs[i].len,
+		       (unsigned)i, (unsigned)kva->kvs[i].len,
 		       (unsigned)i, (char *)kva->kvs[i].val);
 	}
 

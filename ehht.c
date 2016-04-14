@@ -369,9 +369,9 @@ static int fill_keys_each(const char *each_key, size_t each_key_len,
 		assert(strlen(key_copy) == strlen(each_key));
 	}
 
-	kls->keys->keys[kls->pos] =
+	kls->keys->keys[kls->pos].key =
 	    (kls->keys->keys_copied) ? key_copy : each_key;
-	kls->keys->lens[kls->pos] = each_key_len;
+	kls->keys->keys[kls->pos].len = each_key_len;
 	++kls->pos;
 
 	return 0;
@@ -404,15 +404,10 @@ static struct ehht_keys_s *ehht_keys(struct ehht_s *this, int copy_keys)
 	}
 	kls.keys->keys_copied = copy_keys;
 	kls.keys->len = this->size(this);
-	size = sizeof(char *) * kls.keys->len;
+	size = sizeof(struct ehht_key_s) * kls.keys->len;
 	kls.keys->keys = table->alloc(size, table->mem_context);
 	if (!kls.keys->keys) {
 		goto keys_alloc_failed_1;
-	}
-	size = sizeof(size_t) * kls.keys->len;
-	kls.keys->lens = table->alloc(size, table->mem_context);
-	if (!kls.keys->lens) {
-		goto keys_alloc_failed_2;
 	}
 	kls.pos = 0;
 
@@ -420,9 +415,6 @@ static struct ehht_keys_s *ehht_keys(struct ehht_s *this, int copy_keys)
 
 	return kls.keys;
 
-keys_alloc_failed_2:
-	size = sizeof(char *) * kls.keys->len;
-	table->free(kls.keys->keys, size, table->mem_context);
 keys_alloc_failed_1:
 	size = sizeof(struct ehht_keys_s);
 	table->free(kls.keys, size, table->mem_context);
@@ -439,12 +431,12 @@ static void ehht_free_keys(struct ehht_s *this, struct ehht_keys_s *keys)
 	table = (struct ehht_table_s *)this->data;
 	if (keys->keys_copied) {
 		for (i = 0; i < keys->len; ++i) {
-			table->free((char *)keys->keys[i], keys->lens[i],
-				    table->mem_context);
+			table->free((char *)keys->keys[i].key,
+				    keys->keys[i].len, table->mem_context);
 		}
 	}
-	table->free(keys->keys, sizeof(char *) * keys->len, table->mem_context);
-	table->free(keys->lens, sizeof(size_t) * keys->len, table->mem_context);
+	table->free(keys->keys, sizeof(struct ehht_key_s) * keys->len,
+		    table->mem_context);
 	table->free(keys, sizeof(struct ehht_keys_s), table->mem_context);
 }
 

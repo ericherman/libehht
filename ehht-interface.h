@@ -10,11 +10,15 @@
 typedef int (*ehht_iterator_func) (const char *each_key, size_t each_key_len,
 				   void *each_val, void *context);
 
-struct ehht_keys_s {
-	const char **keys;
-	int keys_copied;
-	size_t *lens;
+struct ehht_key_s {
+	const char *key;
 	size_t len;
+};
+
+struct ehht_keys_s {
+	struct ehht_key_s *keys;
+	size_t len;
+	int keys_copied;
 };
 
 /* interface */

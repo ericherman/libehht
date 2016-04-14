@@ -33,8 +33,8 @@ TEST_OBJ=test-$(LIB_NAME).o
 TEST=test-$(LIB_NAME)
 
 CSTD_CFLAGS=-std=c89
-DEBUG_CFLAGS=-ggdb -O0
-#DEBUG_CFLAGS=-ggdb -O3 -DNDEBUG -Wno-unused-parameter
+#DEBUG_CFLAGS=-ggdb -O0
+DEBUG_CFLAGS=-ggdb -O3 -DNDEBUG -Wno-unused-parameter
 NOISY_CFLAGS=-Wall -Wextra -pedantic -Werror
 
 CFLAGS += $(CSTD_CFLAGS) $(DEBUG_CFLAGS) $(NOISY_CFLAGS)

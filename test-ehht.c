@@ -261,7 +261,7 @@ int test_ehht_keys()
 {
 	int failures = 0;
 	struct ehht_s *table;
-	struct ehht_keys_s *keys;
+	struct ehht_keys_s *ks;
 	int allocate_copies;
 	size_t i, j, num_buckets;
 	size_t *found;
@@ -283,22 +283,22 @@ int test_ehht_keys()
 			return 1;
 		}
 
-		keys = table->keys(table, allocate_copies);
-		failures += check_size_t(keys->len, table->size(table));
+		ks = table->keys(table, allocate_copies);
+		failures += check_size_t(ks->len, table->size(table));
 		for (i = 0; e_keys[i] != NULL; ++i) {
-			for (j = 0; j < keys->len && !found[i]; ++j) {
-				if (strcmp(e_keys[i], keys->keys[j]) == 0) {
+			for (j = 0; j < ks->len && !found[i]; ++j) {
+				if (strcmp(e_keys[i], ks->keys[j].key) == 0) {
 					found[i] = 1;
 				}
 			}
 		}
-		for (i = 0; i < keys->len; ++i) {
+		for (i = 0; i < ks->len; ++i) {
 			if (!found[i]) {
 				failures += check_str("", e_keys[i]);
 			}
 		}
 
-		table->free_keys(table, keys);
+		table->free_keys(table, ks);
 		free(found);
 
 		ehht_free(table);
