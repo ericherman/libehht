@@ -21,6 +21,7 @@ struct ehht_element_s {
 struct ehht_table_s {
 	size_t num_buckets;
 	struct ehht_element_s **buckets;
+	size_t size;
 	ehht_hash_func hash_func;
 	ehht_malloc_func alloc;
 	ehht_free_func free;
@@ -48,6 +49,7 @@ static void ehht_clear(struct ehht_s *this)
 			ehht_free_element(table, element);
 		}
 	}
+	table->size = 0;
 }
 
 static struct ehht_element_s *ehht_new_element(struct ehht_table_s *table,
@@ -77,6 +79,8 @@ static struct ehht_element_s *ehht_new_element(struct ehht_table_s *table,
 	element->key_len = key_len;
 	element->val = val;
 	element->next = NULL;
+
+	++(table->size);
 
 	return element;
 }
@@ -198,6 +202,7 @@ static void *ehht_remove(struct ehht_s *this, const char *key, size_t key_len)
 		previous_element->next = element->next;
 	}
 	ehht_free_element(table, element);
+	--(table->size);
 	return old_val;
 }
 
@@ -226,27 +231,12 @@ static int ehht_for_each(struct ehht_s *this,
 	return end;
 }
 
-static int foreach_count(const char *each_key, size_t each_key_len,
-			 void *each_val, void *context)
-{
-	if (0) {		/* [-Werror=unused-parameter] */
-		fprintf(stderr, "key: %s (len: %u), val: %p", each_key,
-			(unsigned int)each_key_len, each_val);
-	}
-
-	*((size_t *)context) += 1;
-
-	return 0;
-}
-
 static size_t ehht_size(struct ehht_s *this)
 {
-	size_t i;
+	struct ehht_table_s *table;
 
-	i = 0;
-	ehht_for_each(this, foreach_count, &i);
-
-	return i;
+	table = (struct ehht_table_s *)this->data;
+	return table->size;
 }
 
 struct ehht_str_buf_s {
@@ -510,6 +500,8 @@ struct ehht_s *ehht_new(size_t num_buckets, ehht_hash_func hash_func,
 	for (i = 0; i < num_buckets; ++i) {
 		table->buckets[i] = NULL;
 	}
+	table->size = 0;
+
 	table->hash_func = hash_func;
 	table->alloc = mem_alloc;
 	table->free = mem_free;
