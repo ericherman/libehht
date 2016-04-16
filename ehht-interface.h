@@ -6,10 +6,6 @@
 
 #include <stddef.h>		/* size_t */
 
-/* passed parameter functions */
-typedef int (*ehht_iterator_func) (const char *each_key, size_t each_key_len,
-				   void *each_val, void *context);
-
 struct ehht_key_s {
 	const char *key;
 	size_t len;
@@ -21,6 +17,10 @@ struct ehht_keys_s {
 	size_t len;
 	int keys_copied;
 };
+
+/* passed parameter functions */
+typedef int (*ehht_iterator_func) (struct ehht_key_s each_key,
+				   void *each_val, void *context);
 
 /* interface */
 struct ehht_s {

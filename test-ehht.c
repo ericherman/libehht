@@ -127,8 +127,7 @@ int test_ehht_put_get_remove()
 	return failures;
 }
 
-int foreach_thing(const char *each_key, size_t each_key_len,
-		  void *each_val, void *context)
+int foreach_thing(struct ehht_key_s each_key, void *each_val, void *context)
 {
 
 	unsigned int *i;
@@ -137,8 +136,8 @@ int foreach_thing(const char *each_key, size_t each_key_len,
 	i = (unsigned int *)context;
 	val = (const char *)each_val;
 
-	if (each_key_len > 2) {
-		*i += (strlen(each_key) + strlen(val));
+	if (each_key.len > 2) {
+		*i += (strlen(each_key.key) + strlen(val));
 	}
 
 	return 0;

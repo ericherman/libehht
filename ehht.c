@@ -211,8 +211,7 @@ static void *ehht_remove(struct ehht_s *this, const char *key, size_t key_len)
 }
 
 static int ehht_for_each(struct ehht_s *this,
-			 int (*func) (const char *each_key,
-				      size_t each_key_len,
+			 int (*func) (struct ehht_key_s each_key,
 				      void *each_val, void *context),
 			 void *context)
 {
@@ -226,9 +225,7 @@ static int ehht_for_each(struct ehht_s *this,
 	for (i = 0; i < table->num_buckets && !end; ++i) {
 		for (element = table->buckets[i]; element != NULL;
 		     element = element->next) {
-			end =
-			    (*func) (element->key.key, element->key.len,
-				     element->val, context);
+			end = (*func) (element->key, element->val, context);
 		}
 	}
 
@@ -249,8 +246,7 @@ struct ehht_str_buf_s {
 	size_t buf_pos;
 };
 
-static int to_string_each(const char *each_key, size_t each_key_len,
-			  void *each_val, void *context)
+static int to_string_each(struct ehht_key_s key, void *each_val, void *context)
 {
 
 	struct ehht_str_buf_s *str_buf;
@@ -263,13 +259,12 @@ static int to_string_each(const char *each_key, size_t each_key_len,
 	buf = str_buf->buf + str_buf->buf_pos;
 
 	fmt = "'%s' => %p, ";
-	bytes_to_write = each_key_len + (__WORDSIZE / 4) + strlen(fmt);
+	bytes_to_write = key.len + (__WORDSIZE / 4) + strlen(fmt);
 	if (str_buf->buf_len < (str_buf->buf_pos + bytes_to_write)) {
 		return -1;
 	}
 
-	bytes_written =
-	    sprintf(buf, fmt, each_key_len ? each_key : "", each_val);
+	bytes_written = sprintf(buf, fmt, key.len ? key.key : "", each_val);
 	if (bytes_written > 0) {
 		str_buf->buf_pos += ((unsigned int)bytes_written);
 	}
@@ -372,18 +367,18 @@ struct kl_s {
 	size_t pos;
 };
 
-static int fill_keys_each(const char *each_key, size_t each_key_len,
-			  void *each_val, void *context)
+static int fill_keys_each(struct ehht_key_s key, void *each_val, void *context)
 {
 	struct kl_s *kls;
 	struct ehht_s *ehht;
 	struct ehht_table_s *table;
 	char *key_copy;
+	size_t size;
 
 	kls = (struct kl_s *)context;
 	ehht = kls->ehht;
 
-	assert(each_val == ehht->get(ehht, each_key, each_key_len));
+	assert(each_val == ehht->get(ehht, key.key, key.len));
 	assert(kls->pos < kls->keys->len);
 
 	if (kls->pos >= kls->keys->len) {
@@ -392,19 +387,21 @@ static int fill_keys_each(const char *each_key, size_t each_key_len,
 
 	if (kls->keys->keys_copied) {
 		table = (struct ehht_table_s *)ehht->data;
-		key_copy = table->alloc(sizeof(char *) * (each_key_len + 1),
-					table->mem_context);
+		size = sizeof(char *) * (key.len + 1);
+		key_copy = table->alloc(size, table->mem_context);
 		if (!key_copy) {
 			assert(errno == ENOMEM);
 			return 1;
 		}
-		memcpy(key_copy, each_key, each_key_len + 1);
+		memcpy(key_copy, key.key, key.len + 1);
 		assert(strlen(key_copy) == strlen(each_key));
+		kls->keys->keys[kls->pos].key = key_copy;
+		kls->keys->keys[kls->pos].len = key.len;
+		kls->keys->keys[kls->pos].hashcode = key.hashcode;
+	} else {
+		kls->keys->keys[kls->pos] = key;
 	}
 
-	kls->keys->keys[kls->pos].key =
-	    (kls->keys->keys_copied) ? key_copy : each_key;
-	kls->keys->keys[kls->pos].len = each_key_len;
 	++kls->pos;
 
 	return 0;

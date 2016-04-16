@@ -19,16 +19,16 @@ struct kva_s {
 	struct kv_s *kvs;
 };
 
-int to_array(const char *key, size_t len, void *val, void *ctx)
+int to_array(struct ehht_key_s key, void *val, void *ctx)
 {
 	struct kva_s *kva;
 	char *str;
 
 	kva = ctx;
 
-	str = strdup(key);
-	if (strlen(str) != len) {
-		fprintf(stderr, "len(%s) != len(%s) ?\n", key, str);
+	str = strdup(key.key);
+	if (strlen(str) != key.len) {
+		fprintf(stderr, "len(%s) != len(%s) ?\n", key.key, str);
 	}
 
 	kva->kvs[kva->pos].key = str;
