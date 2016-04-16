@@ -13,6 +13,7 @@ typedef int (*ehht_iterator_func) (const char *each_key, size_t each_key_len,
 struct ehht_key_s {
 	const char *key;
 	size_t len;
+	unsigned hashcode;
 };
 
 struct ehht_keys_s {

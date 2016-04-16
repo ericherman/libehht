@@ -12,9 +12,7 @@
 #endif
 
 struct ehht_element_s {
-	char *key;
-	size_t key_len;
-	unsigned int hashcode;
+	struct ehht_key_s key;
 	void *val;
 	struct ehht_element_s *next;
 };
@@ -32,7 +30,10 @@ struct ehht_table_s {
 static void ehht_free_element(struct ehht_table_s *table,
 			      struct ehht_element_s *element)
 {
-	table->free(element->key, element->key_len + 1, table->mem_context);
+	struct ehht_key_s *k;
+
+	k = &element->key;
+	table->free((char *)k->key, k->len + 1, table->mem_context);
 	table->free(element, sizeof(struct ehht_element_s), table->mem_context);
 }
 
@@ -76,9 +77,9 @@ static struct ehht_element_s *ehht_new_element(struct ehht_table_s *table,
 	memcpy(key_copy, key, key_len);
 	key_copy[key_len] = '\0';
 
-	element->key = key_copy;
-	element->key_len = key_len;
-	element->hashcode = hashcode;
+	element->key.key = key_copy;
+	element->key.len = key_len;
+	element->key.hashcode = hashcode;
 	element->val = val;
 	element->next = NULL;
 
@@ -116,8 +117,8 @@ static struct ehht_element_s *ehht_get_element(struct ehht_table_s *table,
 
 	element = table->buckets[bucket_num];
 	while (element != NULL) {
-		if (element->key_len == key_len) {
-			if (memcmp(key, element->key, key_len) == 0) {
+		if (element->key.len == key_len) {
+			if (memcmp(key, element->key.key, key_len) == 0) {
 				return element;
 			}
 		}
@@ -226,7 +227,7 @@ static int ehht_for_each(struct ehht_s *this,
 		for (element = table->buckets[i]; element != NULL;
 		     element = element->next) {
 			end =
-			    (*func) (element->key, element->key_len,
+			    (*func) (element->key.key, element->key.len,
 				     element->val, context);
 		}
 	}
@@ -344,7 +345,7 @@ static size_t ehht_resize(struct ehht_s *this, size_t num_buckets)
 	for (i = 0; i < old_num_buckets; ++i) {
 		while ((element = old_buckets[i]) != NULL) {
 			old_buckets[i] = element->next;
-			new_bucket_num = element->hashcode % num_buckets;
+			new_bucket_num = element->key.hashcode % num_buckets;
 			element->next = new_buckets[new_bucket_num];
 			new_buckets[new_bucket_num] = element;
 		}
