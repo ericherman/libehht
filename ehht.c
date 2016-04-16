@@ -373,7 +373,6 @@ static int fill_keys_each(struct ehht_key_s key, void *each_val, void *context)
 			return 1;
 		}
 		memcpy(str_copy, key.str, key.len + 1);
-		assert(strlen(str_copy) == strlen(each_key));
 		kls->keys->keys[kls->pos].str = str_copy;
 		kls->keys->keys[kls->pos].len = key.len;
 		kls->keys->keys[kls->pos].hashcode = key.hashcode;
