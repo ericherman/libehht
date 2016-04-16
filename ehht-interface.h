@@ -62,6 +62,8 @@ struct ehht_s {
 	   returns the number of size_t values written */
 	size_t (*report) (struct ehht_s *table, size_t *sizes,
 			  size_t sizes_len);
+
+	size_t (*resize) (struct ehht_s *table, size_t num_buckets);
 };
 
 #endif /* EHHT_INTERFACE_H */

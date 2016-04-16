@@ -14,6 +14,7 @@
 struct ehht_element_s {
 	char *key;
 	size_t key_len;
+	unsigned int hashcode;
 	void *val;
 	struct ehht_element_s *next;
 };
@@ -54,7 +55,7 @@ static void ehht_clear(struct ehht_s *this)
 
 static struct ehht_element_s *ehht_new_element(struct ehht_table_s *table,
 					       const char *key, size_t key_len,
-					       void *val)
+					       unsigned int hashcode, void *val)
 {
 	char *key_copy;
 	struct ehht_element_s *element;
@@ -77,6 +78,7 @@ static struct ehht_element_s *ehht_new_element(struct ehht_table_s *table,
 
 	element->key = key_copy;
 	element->key_len = key_len;
+	element->hashcode = hashcode;
 	element->val = val;
 	element->next = NULL;
 
@@ -157,7 +159,8 @@ static void *ehht_put(struct ehht_s *this, const char *key, size_t key_len,
 	hashcode = table->hash_func(key, key_len);
 	bucket_num = hashcode % table->num_buckets;
 	element = table->buckets[bucket_num];
-	table->buckets[bucket_num] = ehht_new_element(table, key, key_len, val);
+	table->buckets[bucket_num] =
+	    ehht_new_element(table, key, key_len, hashcode, val);
 	if (table->buckets[bucket_num] == NULL) {
 		if (EHHT_DEBUG) {
 			fprintf(stderr,
@@ -313,6 +316,45 @@ static size_t ehht_distribution_report(struct ehht_s *this, size_t *sizes,
 	}
 
 	return i;
+}
+
+static size_t ehht_resize(struct ehht_s *this, size_t num_buckets)
+{
+	size_t i, old_num_buckets, new_bucket_num, size;
+	struct ehht_table_s *table;
+	struct ehht_element_s **new_buckets, **old_buckets, *element;
+
+	table = (struct ehht_table_s *)this->data;
+
+	if (num_buckets == 0) {
+		num_buckets = table->num_buckets * 2;
+	}
+	assert(num_buckets > 1);
+	size = sizeof(struct ehht_element_s *) * num_buckets;
+	new_buckets = table->alloc(size, table->mem_context);
+	if (new_buckets == NULL) {
+		return table->num_buckets;
+	}
+	for (i = 0; i < num_buckets; ++i) {
+		new_buckets[i] = NULL;
+	}
+
+	old_num_buckets = table->num_buckets;
+	old_buckets = table->buckets;
+	for (i = 0; i < old_num_buckets; ++i) {
+		while ((element = old_buckets[i]) != NULL) {
+			old_buckets[i] = element->next;
+			new_bucket_num = element->hashcode % num_buckets;
+			element->next = new_buckets[new_bucket_num];
+			new_buckets[new_bucket_num] = element;
+		}
+	}
+	table->buckets = new_buckets;
+	table->num_buckets = num_buckets;
+
+	size = sizeof(struct ehht_element_s *) * old_num_buckets;
+	table->free(old_buckets, size, table->mem_context);
+	return num_buckets;
 }
 
 static size_t ehht_num_buckets(struct ehht_s *this)
@@ -479,6 +521,7 @@ struct ehht_s *ehht_new(size_t num_buckets, ehht_hash_func hash_func,
 	this->free_keys = ehht_free_keys;
 	this->to_string = ehht_to_string;
 	this->num_buckets = ehht_num_buckets;
+	this->resize = ehht_resize;
 	this->report = ehht_distribution_report;
 
 	table = mem_alloc(sizeof(struct ehht_table_s), mem_context);
