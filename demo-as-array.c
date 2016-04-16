@@ -8,8 +8,7 @@
 #define MAKE_VALGRIND_HAPPY 1
 
 struct kv_s {
-	char *key;
-	size_t len;
+	struct ehht_key_s key;
 	void *val;
 };
 
@@ -26,13 +25,13 @@ int to_array(struct ehht_key_s key, void *val, void *ctx)
 
 	kva = ctx;
 
-	str = strdup(key.key);
+	str = strdup(key.str);
 	if (strlen(str) != key.len) {
-		fprintf(stderr, "len(%s) != len(%s) ?\n", key.key, str);
+		fprintf(stderr, "len(%s) != len(%s) ?\n", key.str, str);
 	}
+	key.str = str;
 
-	kva->kvs[kva->pos].key = str;
-	kva->kvs[kva->pos].len = strlen(str);
+	kva->kvs[kva->pos].key = key;
 	kva->kvs[kva->pos].val = val;
 
 	++kva->pos;
@@ -46,10 +45,10 @@ int comp_key_lens(const void *a, const void *b)
 	l = a;
 	r = b;
 
-	if (l->len == r->len) {
+	if (l->key.len == r->key.len) {
 		return 0;
 	}
-	return l->len > r->len ? -1 : 1;
+	return l->key.len > r->key.len ? -1 : 1;
 }
 
 int main(int argc, char *argv[])
@@ -84,17 +83,17 @@ int main(int argc, char *argv[])
 	qsort(kva->kvs, kva->pos, sizeof(struct kv_s), comp_key_lens);
 
 	for (i = 0; i < kva->pos; ++i) {
-		printf("kva->kvs[%u].key=%s"
+		printf("kva->kvs[%u].str=%s"
 		       ", kva->kvs[%u].len:%u"
 		       ", kva->vals[%u].val:%s\n",
-		       (unsigned)i, kva->kvs[i].key,
-		       (unsigned)i, (unsigned)kva->kvs[i].len,
+		       (unsigned)i, kva->kvs[i].key.str,
+		       (unsigned)i, (unsigned)kva->kvs[i].key.len,
 		       (unsigned)i, (char *)kva->kvs[i].val);
 	}
 
 	if (MAKE_VALGRIND_HAPPY) {
 		for (i = 0; i < kva->pos; ++i) {
-			free(kva->kvs[i].key);
+			free((char *)kva->kvs[i].key.str);
 		}
 		free(kva->kvs);
 		free(kva);

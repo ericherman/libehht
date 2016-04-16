@@ -30,10 +30,10 @@ struct ehht_table_s {
 static void ehht_free_element(struct ehht_table_s *table,
 			      struct ehht_element_s *element)
 {
-	struct ehht_key_s *k;
+	struct ehht_key_s key;
 
-	k = &element->key;
-	table->free((char *)k->key, k->len + 1, table->mem_context);
+	key = element->key;
+	table->free((char *)key.str, key.len + 1, table->mem_context);
 	table->free(element, sizeof(struct ehht_element_s), table->mem_context);
 }
 
@@ -58,7 +58,7 @@ static struct ehht_element_s *ehht_new_element(struct ehht_table_s *table,
 					       const char *key, size_t key_len,
 					       unsigned int hashcode, void *val)
 {
-	char *key_copy;
+	char *str_copy;
 	struct ehht_element_s *element;
 
 	element =
@@ -68,16 +68,16 @@ static struct ehht_element_s *ehht_new_element(struct ehht_table_s *table,
 		return NULL;
 	}
 
-	key_copy = table->alloc(key_len + 1, table->mem_context);
-	if (!key_copy) {
+	str_copy = table->alloc(key_len + 1, table->mem_context);
+	if (!str_copy) {
 		ehht_free_element(table, element);
 		assert(errno == ENOMEM);
 		return NULL;
 	}
-	memcpy(key_copy, key, key_len);
-	key_copy[key_len] = '\0';
+	memcpy(str_copy, key, key_len);
+	str_copy[key_len] = '\0';
 
-	element->key.key = key_copy;
+	element->key.str = str_copy;
 	element->key.len = key_len;
 	element->key.hashcode = hashcode;
 	element->val = val;
@@ -118,7 +118,7 @@ static struct ehht_element_s *ehht_get_element(struct ehht_table_s *table,
 	element = table->buckets[bucket_num];
 	while (element != NULL) {
 		if (element->key.len == key_len) {
-			if (memcmp(key, element->key.key, key_len) == 0) {
+			if (memcmp(key, element->key.str, key_len) == 0) {
 				return element;
 			}
 		}
@@ -264,7 +264,7 @@ static int to_string_each(struct ehht_key_s key, void *each_val, void *context)
 		return -1;
 	}
 
-	bytes_written = sprintf(buf, fmt, key.len ? key.key : "", each_val);
+	bytes_written = sprintf(buf, fmt, key.len ? key.str : "", each_val);
 	if (bytes_written > 0) {
 		str_buf->buf_pos += ((unsigned int)bytes_written);
 	}
@@ -372,13 +372,13 @@ static int fill_keys_each(struct ehht_key_s key, void *each_val, void *context)
 	struct kl_s *kls;
 	struct ehht_s *ehht;
 	struct ehht_table_s *table;
-	char *key_copy;
+	char *str_copy;
 	size_t size;
 
 	kls = (struct kl_s *)context;
 	ehht = kls->ehht;
 
-	assert(each_val == ehht->get(ehht, key.key, key.len));
+	assert(each_val == ehht->get(ehht, key.str, key.len));
 	assert(kls->pos < kls->keys->len);
 
 	if (kls->pos >= kls->keys->len) {
@@ -388,14 +388,14 @@ static int fill_keys_each(struct ehht_key_s key, void *each_val, void *context)
 	if (kls->keys->keys_copied) {
 		table = (struct ehht_table_s *)ehht->data;
 		size = sizeof(char *) * (key.len + 1);
-		key_copy = table->alloc(size, table->mem_context);
-		if (!key_copy) {
+		str_copy = table->alloc(size, table->mem_context);
+		if (!str_copy) {
 			assert(errno == ENOMEM);
 			return 1;
 		}
-		memcpy(key_copy, key.key, key.len + 1);
-		assert(strlen(key_copy) == strlen(each_key));
-		kls->keys->keys[kls->pos].key = key_copy;
+		memcpy(str_copy, key.str, key.len + 1);
+		assert(strlen(str_copy) == strlen(each_key));
+		kls->keys->keys[kls->pos].str = str_copy;
 		kls->keys->keys[kls->pos].len = key.len;
 		kls->keys->keys[kls->pos].hashcode = key.hashcode;
 	} else {
@@ -461,7 +461,7 @@ static void ehht_free_keys(struct ehht_s *this, struct ehht_keys_s *keys)
 	table = (struct ehht_table_s *)this->data;
 	if (keys->keys_copied) {
 		for (i = 0; i < keys->len; ++i) {
-			table->free((char *)keys->keys[i].key,
+			table->free((char *)keys->keys[i].str,
 				    keys->keys[i].len, table->mem_context);
 		}
 	}

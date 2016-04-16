@@ -137,7 +137,7 @@ int foreach_thing(struct ehht_key_s each_key, void *each_val, void *context)
 	val = (const char *)each_val;
 
 	if (each_key.len > 2) {
-		*i += (strlen(each_key.key) + strlen(val));
+		*i += (strlen(each_key.str) + strlen(val));
 	}
 
 	return 0;
@@ -286,7 +286,7 @@ int test_ehht_keys()
 		failures += check_size_t(ks->len, table->size(table));
 		for (i = 0; e_keys[i] != NULL; ++i) {
 			for (j = 0; j < ks->len && !found[i]; ++j) {
-				if (strcmp(e_keys[i], ks->keys[j].key) == 0) {
+				if (strcmp(e_keys[i], ks->keys[j].str) == 0) {
 					found[i] = 1;
 				}
 			}

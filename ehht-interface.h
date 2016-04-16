@@ -7,7 +7,7 @@
 #include <stddef.h>		/* size_t */
 
 struct ehht_key_s {
-	const char *key;
+	const char *str;
 	size_t len;
 	unsigned hashcode;
 };
