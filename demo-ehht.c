@@ -3,6 +3,7 @@
 #include <string.h>		/* strlen */
 
 #include "ehht.h"
+#include "ehht-report.h"
 
 #ifndef MAKE_VALGRIND_HAPPY
 #define MAKE_VALGRIND_HAPPY 0
@@ -54,8 +55,8 @@ int main(int argc, char *argv[])
 		fprintf(stderr, "malloc returned NULL");
 		return 2;
 	}
-	default_table->report(default_table, default_sizes, num_buckets);
-	leveldb_table->report(leveldb_table, leveldb_sizes, num_buckets);
+	ehht_distribution_report(default_table, default_sizes, num_buckets);
+	ehht_distribution_report(leveldb_table, leveldb_sizes, num_buckets);
 	for (i = 0; i < num_buckets; ++i) {
 		printf("%lu, %lu\n", (unsigned long)default_sizes[i],
 		       (unsigned long)leveldb_sizes[i]);

@@ -4,6 +4,8 @@
 #include <errno.h>
 
 #include "ehht.h"
+#include "ehht-report.h"
+#define REPORT_LEN 10
 
 int test_ehht_new()
 {
@@ -211,7 +213,7 @@ int test_ehht_clear()
 	size_t num_buckets = 5;
 
 	size_t i, count, items_written;
-	size_t report[10];
+	size_t report[REPORT_LEN];
 	struct mem_context ctx = { 0, 0, 0, 0, 0, 0 };
 
 	table = ehht_new(num_buckets, NULL, test_malloc, test_free, &ctx);
@@ -223,26 +225,25 @@ int test_ehht_clear()
 
 	failures += check_unsigned_int_m(table->size(table), 4, "ehht_size");
 
-	items_written = table->report(table, report, 10);
-	failures += check_size_t_m(items_written, num_buckets, "ehht_report 1");
+	items_written = ehht_distribution_report(table, report, REPORT_LEN);
 	count = 0;
-	for (i = 0; i < items_written; ++i) {
+	for (i = 0; i < REPORT_LEN; ++i) {
 		count += report[i];
 	}
 	failures += check_size_t_m(count, 4, "ehht_report 1");
+	failures += check_size_t_m(items_written, count, "ehht_report 1");
 
 	table->clear(table);
 
 	failures += check_unsigned_int_m(table->size(table), 0, "clear");
 
-	items_written = table->report(table, report, 10);
-	failures +=
-	    check_size_t_m(items_written, num_buckets, "ehht_report full");
+	items_written = ehht_distribution_report(table, report, 10);
 	count = 0;
 	for (i = 0; i < items_written; ++i) {
 		count += report[i];
 	}
 	failures += check_size_t_m(count, 0, "ehht_report empty");
+	failures += check_size_t_m(items_written, count, "ehht_report full");
 
 	ehht_free(table);
 
@@ -330,7 +331,7 @@ int test_ehht_resize()
 		table->put(table, buf, strlen(buf), NULL);
 	}
 
-	items_written = table->report(table, report, 10);
+	items_written = ehht_distribution_report(table, report, 10);
 	failures += check_unsigned_int_m(items_written, num_buckets,
 					 "first items_written");
 	big_bucket1 = 0;
@@ -343,9 +344,11 @@ int test_ehht_resize()
 	num_buckets *= 2;
 	table->resize(table, num_buckets);
 
-	items_written = table->report(table, report, 10);
-	failures += check_unsigned_int_m(items_written, num_buckets,
-					 "second items_written");
+	items_written = ehht_distribution_report(table, report, 10);
+	failures +=
+	    check_unsigned_int_m(items_written, table->size(table),
+				 "second items_written");
+
 	big_bucket2 = 0;
 	for (i = 0; i < items_written; ++i) {
 		if (report[i] > big_bucket1) {

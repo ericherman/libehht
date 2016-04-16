@@ -57,13 +57,6 @@ struct ehht_s {
 	size_t (*to_string) (struct ehht_s *table, char *buf, size_t buf_len);
 
 	size_t (*num_buckets) (struct ehht_s *table);
-
-	/* reports each of the bucket sizes
-	   sizes_len should be equal to or greater than num_buckets of ehht_new
-	   returns the number of size_t values written */
-	size_t (*report) (struct ehht_s *table, size_t *sizes,
-			  size_t sizes_len);
-
 	size_t (*resize) (struct ehht_s *table, size_t num_buckets);
 };
 

@@ -293,27 +293,6 @@ static size_t ehht_to_string(struct ehht_s *this, char *buf, size_t buf_len)
 	return str_buf.buf_pos;
 }
 
-static size_t ehht_distribution_report(struct ehht_s *this, size_t *sizes,
-				       size_t sizes_len)
-{
-	struct ehht_table_s *table;
-	size_t i;
-	struct ehht_element_s *element;
-
-	table = (struct ehht_table_s *)this->data;
-
-	for (i = 0; i < table->num_buckets && i < sizes_len; ++i) {
-		sizes[i] = 0;
-		element = table->buckets[i];
-		while (element != NULL) {
-			sizes[i] += 1;
-			element = element->next;
-		}
-	}
-
-	return i;
-}
-
 static size_t ehht_resize(struct ehht_s *this, size_t num_buckets)
 {
 	size_t i, old_num_buckets, new_bucket_num, size;
@@ -520,7 +499,6 @@ struct ehht_s *ehht_new(size_t num_buckets, ehht_hash_func hash_func,
 	this->to_string = ehht_to_string;
 	this->num_buckets = ehht_num_buckets;
 	this->resize = ehht_resize;
-	this->report = ehht_distribution_report;
 
 	table = mem_alloc(sizeof(struct ehht_table_s), mem_context);
 	if (table == NULL) {
