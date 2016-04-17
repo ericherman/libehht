@@ -30,7 +30,9 @@ struct ehht_s {
 	/* public methods */
 	void *(*get) (struct ehht_s *table, const char *key, size_t key_len);
 
-	/* returns the previous value or NULL */
+	/* allocates a copy of the key parameter,
+	 * copy will be freed when the key is no longer in use by the table
+	 * returns the previous value or NULL */
 	void *(*put) (struct ehht_s *table, const char *key, size_t key_len,
 		      void *val);
 
@@ -50,7 +52,7 @@ struct ehht_s {
 	   populates the lens array with the corresponding lengths
 	   returns the number of elements populated */
 	struct ehht_keys_s *(*keys) (struct ehht_s *table, int copy_keys);
-	void (*free_keys) (struct ehht_s *table, struct ehht_keys_s * keys);
+	void (*free_keys) (struct ehht_s *table, struct ehht_keys_s *keys);
 
 	/* returns the number of characters written to "buf"
 	   (excluding the null byte terminator) */

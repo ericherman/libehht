@@ -94,6 +94,8 @@ tidy:
 		-T FILE \
 		-T size_t \
 		-T ehht_s \
+		-T ehht_key_s \
+		-T ehht_keys_s \
 		*.h *.c
 
 demo: library
