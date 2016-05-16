@@ -1,11 +1,11 @@
 LIB_NAME=ehht
 
-AUX_INCLUDES=-I ../libecheck
-AUX_A_FILES=../libecheck/libecheck.a
-AUX_LDFLAGS=-L../libecheck
 AUX_LDADD=-lecheck
-AUX_LD_LIBRARY_PATHS=:../libecheck
 
+AUX_INCLUDES=
+AUX_A_FILES=
+AUX_LDFLAGS=
+AUX_LD_LIBRARY_PATHS=
 
 UNAME := $(shell uname)
 
@@ -17,10 +17,10 @@ SHAREDFLAGS = -shared
 SHAREDEXT = so
 endif
 
-LIB_SRC=$(LIB_NAME).c
-LIB_HDR=$(LIB_NAME).h
+LIB_SRC=src/$(LIB_NAME).c
+LIB_HDR=src/$(LIB_NAME).h
 LIB_OBJ=$(LIB_SRC:.c=.o)
-SO_OBJS=$(LIB_NAME).o
+SO_OBJS=src/$(LIB_NAME).o
 SO_NAME=lib$(LIB_NAME).$(SHAREDEXT)
 ifneq ($(UNAME), Darwin)
     SHAREDFLAGS += -Wl,-soname,$(SO_NAME)
@@ -29,8 +29,8 @@ endif
 A_NAME=lib$(LIB_NAME).a
 
 INCLUDES=-I.
-TEST_SRC=test-$(LIB_NAME).c
-TEST_OBJ=test-$(LIB_NAME).o
+TEST_SRC=tests/test-$(LIB_NAME).c
+TEST_OBJ=tests/test-$(LIB_NAME).o
 TEST=test-$(LIB_NAME)
 
 CSTD_CFLAGS=-std=c89
@@ -81,7 +81,8 @@ library: $(SO_NAME) $(A_NAME)
 $(TEST): library
 	$(CC) -c $(INCLUDES) $(AUX_INCLUDES) $(CFLAGS) \
 		$(TEST_SRC) -o $(TEST_OBJ)
-	$(CC) $(TEST_OBJ) $(A_NAME) $(AUX_A_FILES) -o $(TEST)-static
+	$(CC) $(TEST_OBJ) $(A_NAME) $(AUX_A_FILES) -o $(TEST)-static \
+		$(AUX_LDADD)
 	$(CC) $(TEST_OBJ) $(LDFLAGS) $(AUX_LDFLAGS) -o $(TEST)-dynamic \
 		$(LDADD) $(AUX_LDADD)
 
@@ -99,15 +100,15 @@ tidy:
 		-T ehht_s \
 		-T ehht_key_s \
 		-T ehht_keys_s \
-		*.h *.c
+		`find src tests demos -name *.h -o -name *.c`
 
 demo: library
 	$(CC) -c -D_GNU_SOURCE $(INCLUDES) $(CFLAGS) \
-		-o demo-as-array.o demo-as-array.c
+		-o demo-as-array.o demos/demo-as-array.c
 	$(CC) demo-as-array.o $(A_NAME) -o demo-as-array
 	$(CC) -c $(INCLUDES) $(CFLAGS) \
-		-o leveldb_util_hash.o leveldb_util_hash.c
-	$(CC) -c $(INCLUDES) $(CFLAGS) -o demo-ehht.o demo-ehht.c
+		-o leveldb_util_hash.o demos/leveldb_util_hash.c
+	$(CC) -c $(INCLUDES) $(CFLAGS) -o demo-ehht.o demos/demo-ehht.c
 	$(CC) leveldb_util_hash.o demo-ehht.o $(A_NAME) -o demo-ehht
 	for num_buckets in 64 128 256 512 1024 2048 4096; do \
 		echo ""; echo "num buckets: $$num_buckets"; \
@@ -121,6 +122,9 @@ clean:
 
 spotless:
 	rm -rf `cat .gitignore`
+	( cd src; rm -rf `cat ../.gitignore`; cd .. )
+	( cd tests; rm -rf `cat ../.gitignore`; cd .. )
+	( cd demos ; rm -rf `cat ../.gitignore`; cd .. )
 
 install: library
 	@echo "Installing libraries in $(LIBDIR)"

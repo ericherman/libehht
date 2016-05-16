@@ -2,8 +2,8 @@
 #include <stdlib.h>		/* malloc */
 #include <string.h>		/* strlen */
 
-#include "ehht.h"
-#include "ehht-report.h"
+#include "../src/ehht.h"
+#include "../src/ehht-report.h"
 
 #ifndef MAKE_VALGRIND_HAPPY
 #define MAKE_VALGRIND_HAPPY 0

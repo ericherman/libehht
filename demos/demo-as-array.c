@@ -3,7 +3,7 @@
 #include <string.h>		/* strlen */
 #include <strings.h>		/* strdup */
 
-#include "ehht.h"
+#include "../src/ehht.h"
 
 #define MAKE_VALGRIND_HAPPY 1
 

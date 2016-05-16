@@ -3,8 +3,8 @@
 #include <string.h>		/* strlen */
 #include <errno.h>
 
-#include "ehht.h"
-#include "ehht-report.h"
+#include "../src/ehht.h"
+#include "../src/ehht-report.h"
 #define REPORT_LEN 10
 
 int test_ehht_new()
