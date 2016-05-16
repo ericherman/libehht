@@ -10,11 +10,13 @@ test_ehht_LDADD=libehht.la -lecheck
 
 DEMOS=$(demo_PROGRAMS)
 demo_PROGRAMS=demo-ehht demo-as-array
+demodir=demos
 demo_ehht_SOURCES=demos/leveldb_util_hash.c demos/demo-ehht.c \
  src/ehht.h src/ehht-report.h
 demo_ehht_LDADD=libehht.la
 demo_as_array_SOURCES=demos/demo-as-array.c src/ehht.h
 demo_as_array_LDADD=libehht.la
+demo_as_array_CFLAGS=$(AM_CFLAGS) -D_GNU_SOURCE
 
 ACLOCAL_AMFLAGS=-I m4 --install
 
