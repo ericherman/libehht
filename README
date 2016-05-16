@@ -7,6 +7,7 @@ function pointer definitions, but does not specify an implementation.
 The "ehht.h" includes the interface as well as a constructor and
 destructor for an implementation of the interface.
 
+
 Dependencies
 ------------
 The "make" and "make install" targets have no external dependencies.
@@ -16,6 +17,25 @@ The "make check" target depends upon libecheck
 
 The "make demo" target depends upon "simple_stats"
   https://github.com/ericherman/simple_stats
+
+
+Building on linux from a release tar
+--------
+tar -xf /path/to/libehht-*.tar.gz
+cd libehht-*
+./configure && make && make check
+sudo make install
+sudo ldconfig
+
+
+Packaging
+---------
+autoreconf -iv &&
+ ./configure &&
+ make &&
+ make distcheck &&
+ echo "Success."
+
 
 License
 -------

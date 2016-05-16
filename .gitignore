@@ -22,8 +22,8 @@ test-*-dynamic
 test-*-static
 test-ehht
 demo-ehht
-demo-as-array
-
+demo-ehht-as-array
+libehht-*.tar.*
 
 ################
 # autotools junk
