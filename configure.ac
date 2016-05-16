@@ -2,16 +2,19 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ([2.69])
-AC_INIT([FULL-PACKAGE-NAME], [VERSION], [BUG-REPORT-ADDRESS])
-AC_CONFIG_SRCDIR([demos/demo-ehht.c])
+AC_INIT([libehht], [1.0.0], [eric@freesa.org])
+AC_CONFIG_SRCDIR([src/ehht.h])
 AC_CONFIG_HEADERS([config.h])
+AC_CONFIG_AUX_DIR([build-aux])
+AC_CONFIG_MACRO_DIR([m4])
+
+AC_USE_SYSTEM_EXTENSIONS
 
 # Checks for programs.
 AC_PROG_CC
 
 # Checks for libraries.
-# FIXME: Replace `main' with a function in `-lecheck':
-AC_CHECK_LIB([echeck], [main])
+AC_CHECK_LIB([echeck], [check_unsigned_int_m])
 
 # Checks for header files.
 AC_CHECK_HEADERS([stddef.h stdlib.h string.h strings.h])
@@ -22,6 +25,10 @@ AC_TYPE_SIZE_T
 # Checks for library functions.
 AC_FUNC_MALLOC
 AC_CHECK_FUNCS([strdup])
+
+AM_INIT_AUTOMAKE([subdir-objects -Werror -Wall])
+AM_PROG_AR
+LT_INIT
 
 AC_CONFIG_FILES([Makefile])
 AC_OUTPUT
