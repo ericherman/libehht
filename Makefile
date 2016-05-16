@@ -119,6 +119,9 @@ clean:
 		$(SO_NAME).* \
 		$(TEST)-static $(TEST)-dynamic demo-ehht demo-as-array
 
+spotless:
+	rm -rf `cat .gitignore`
+
 install: library
 	@echo "Installing libraries in $(LIBDIR)"
 	mkdir -pv $(LIBDIR)
