@@ -34,7 +34,7 @@ LINDENT=indent -npro -kr -i8 -ts8 -sob -l80 -ss -ncs -cp1 -il0
 #SSTATS=../simple_stats/sstats
 
 valgrind: test-ehht
-	valgrind ./test-ehht
+	libtool --mode=execute valgrind ./test-ehht
 
 tidy:
 	$(LINDENT) \
@@ -52,7 +52,7 @@ tidy:
 #	done
 
 spotless:
-	rm -rf `cat .gitignore`
-	( cd src; rm -rf `cat ../.gitignore`; cd .. )
-	( cd tests; rm -rf `cat ../.gitignore`; cd .. )
-	( cd demos ; rm -rf `cat ../.gitignore`; cd .. )
+	rm -rf `cat .gitignore | sed -e 's/#.*//'`
+	pushd src && rm -rf `cat ../.gitignore | sed -e 's/#.*//'`; popd
+	pushd tests && rm -rf `cat ../.gitignore | sed -e 's/#.*//'`; popd
+	pushd demos && rm -rf `cat ../.gitignore | sed -e 's/#.*//'`; popd
