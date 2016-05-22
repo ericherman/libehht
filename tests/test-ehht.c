@@ -428,5 +428,5 @@ int main(int argc, char **argv)
 	if (failures) {
 		fprintf(stderr, "%d failures in total\n", failures);
 	}
-	return failures;
+	return (failures > 127 || failures < -128) ? 127 : failures;
 }
