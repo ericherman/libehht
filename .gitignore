@@ -18,20 +18,31 @@ $*
 *.a
 *.bin
 *.d
+*.la
+*.lo
+*.log
+*.trs
+*.tar.*
+
+################
+# test files
+################
+test_ehht_clear
+test_ehht_foreach_element
+test_ehht_keys
+test_ehht_new
+test_ehht_put_get_remove
+test_ehht_resize
+test_out_of_memory
 test-*-dynamic
 test-*-static
 test-ehht
 demo-ehht
 demo-ehht-as-array
-libehht-*.tar.*
 
 ################
 # autotools junk
 ################
-*.la
-*.lo
-*.log
-*.trs
 .libs/
 INSTALL
 Makefile

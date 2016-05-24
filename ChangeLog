@@ -1,3 +1,19 @@
+
+2016-05-24  Eric Herman <eric@freesa.org>
+
+	* Makefile.am: support split of tests
+	* tests/test-ehht.c: split into individual test programs; remove
+	* tests/test-ehht.h: extract from test-ehht.c
+	* tests/test_ehht_clear.c: same
+	* tests/test_ehht_foreach_element.c: same
+	* tests/test_ehht_keys.c: same
+	* tests/test_ehht_new.c: same
+	* tests/test_ehht_put_get_remove.c: same
+	* tests/test_ehht_resize.c: same
+	* tests/test_out_of_memory.c: same
+	* .gitignore: support new tests, tidy
+
+
 2016-05-22  Eric Herman <eric@freesa.org>
 
 	* tests/test-ehht.c: avoid exit values that are out-of-range
