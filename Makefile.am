@@ -14,6 +14,8 @@ SSTATS=../simple_stats/sstats
 
 ACLOCAL_AMFLAGS=-I m4 --install
 
+EXTRA_DIST=misc
+
 DEMOS=$(bin_PROGRAMS)
 bin_PROGRAMS=demo-ehht demo-ehht-as-array
 
