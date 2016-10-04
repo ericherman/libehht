@@ -40,4 +40,4 @@ autoreconf -iv &&
 License
 -------
 GNU Lesser General Public License (LGPL), version 3 or later.
-See COPYING, misc/lgpl-3.0.txt, and misc/gpl-3.0.txt for details.
+See COPYING, COPYING.GPL for details.
