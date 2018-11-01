@@ -1,4 +1,3 @@
-#include <echeck.h>
 #include <stdio.h>		/* fprintf */
 #include <string.h>		/* strlen */
 #include <errno.h>
@@ -6,6 +5,7 @@
 #include "../src/ehht.h"
 #include "../src/ehht-report.h"
 #define REPORT_LEN 10
+#include "echeck.h"
 
 struct mem_context {
 	unsigned allocs;

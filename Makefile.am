@@ -38,6 +38,7 @@ check_PROGRAMS=\
 
 
 tidy:
+	patch -Np1 -i misc/pre-tidy.patch
 	$(LINDENT) \
 		-T FILE \
 		-T size_t \
@@ -45,6 +46,7 @@ tidy:
 		-T ehht_key_s \
 		-T ehht_keys_s \
 		`find src tests demos -name '*.h' -o -name '*.c'`
+	patch -Rp1 -i misc/pre-tidy.patch
 
 demo: $(DEMOS)
 	libtool --mode=execute ./demo-ehht-as-array
@@ -76,8 +78,12 @@ include_HEADERS=src/ehht.h src/ehht-interface.h
 
 TESTS=$(check_PROGRAMS)
 
-T_COMMON_SOURCES=tests/test-ehht.h $(include_HEADERS)
-T_COMMON_LDADD=libehht.la -lecheck
+T_COMMON_SOURCES=\
+ tests/echeck.h \
+ tests/echeck.c \
+ tests/test-ehht.h \
+ $(include_HEADERS)
+T_COMMON_LDADD=libehht.la
 
 test_ehht_clear_SOURCES=tests/test_ehht_clear.c \
  $(T_COMMON_SOURCES)

@@ -1,6 +1,7 @@
 #include <stdio.h>		/* fprintf fscanf printf */
 #include <stdlib.h>		/* malloc */
 #include <string.h>		/* strlen */
+#include <errno.h>		/* errno strerror */
 
 #include "../src/ehht.h"
 #include "../src/ehht-report.h"
@@ -19,9 +20,12 @@ int main(int argc, char *argv[])
 	struct ehht_s *default_table, *leveldb_table;
 	size_t i, num_buckets, *default_sizes, *leveldb_sizes;
 	char buf[MAX_WORD_LEN];
+	char *file_name;
+	int save_errno;
 	FILE *file;
 
 	num_buckets = (argc > 1) ? (size_t)atoi(argv[1]) : 0;
+	file_name = (argc > 2) ? argv[2] : "COPYING";
 
 	default_table = ehht_new(num_buckets, NULL, NULL, NULL, NULL);
 	if (default_table == NULL) {
@@ -34,7 +38,14 @@ int main(int argc, char *argv[])
 		return 1;
 	}
 
-	file = fopen("COPYING.GPL3", "r");
+	errno = 0;
+	file = fopen(file_name, "r");
+	if (!file) {
+		save_errno = errno;
+		fprintf(stderr, "%s: %s\n", strerror(save_errno), file_name);
+		return 1;
+
+	}
 	while (!feof(file)) {
 		if (!fscanf(file, WORD_SCANF_FMT, buf)) {
 			continue;
