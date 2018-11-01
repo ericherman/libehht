@@ -61,14 +61,14 @@ static struct ehht_element_s *ehht_new_element(struct ehht_table_s *table,
 	char *str_copy;
 	struct ehht_element_s *element;
 
-	element =
+	element = (struct ehht_element_s *)
 	    table->alloc(sizeof(struct ehht_element_s), table->mem_context);
 	if (element == NULL) {
 		assert(errno == ENOMEM);
 		return NULL;
 	}
 
-	str_copy = table->alloc(key_len + 1, table->mem_context);
+	str_copy = (char *)table->alloc(key_len + 1, table->mem_context);
 	if (!str_copy) {
 		ehht_free_element(table, element);
 		assert(errno == ENOMEM);
@@ -306,7 +306,8 @@ static size_t ehht_resize(struct ehht_s *this, size_t num_buckets)
 	}
 	assert(num_buckets > 1);
 	size = sizeof(struct ehht_element_s *) * num_buckets;
-	new_buckets = table->alloc(size, table->mem_context);
+	new_buckets =
+	    (struct ehht_element_s **)table->alloc(size, table->mem_context);
 	if (new_buckets == NULL) {
 		return table->num_buckets;
 	}

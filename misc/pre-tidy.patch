@@ -1,0 +1,100 @@
+--- orig/src/ehht.h
++++ tidy/src/ehht.h
+@@ -4,9 +4,11 @@
+ 
+ /* a simple hash-table */
+ 
++/*
+ #ifdef __cplusplus
+ extern "C" {
+ #endif
++*/
+ 
+ #include "ehht-interface.h"
+ #include <stddef.h>		/* size_t */
+@@ -25,8 +27,10 @@
+ /* destructor */
+ void ehht_free(struct ehht_s *table);
+ 
++/*
+ #ifdef __cplusplus
+ }
+ #endif
++*/
+ 
+ #endif /* EHHT_H */
+--- orig/src/ehht-interface.h
++++ tidy/src/ehht-interface.h
+@@ -4,9 +4,11 @@
+ 
+ /* a simple hash-table interface */
+ 
++/*
+ #ifdef __cplusplus
+ extern "C" {
+ #endif
++*/
+ 
+ #include <stddef.h>		/* size_t */
+ 
+@@ -66,8 +68,10 @@
+ 	size_t (*resize) (struct ehht_s *table, size_t num_buckets);
+ };
+ 
++/*
+ #ifdef __cplusplus
+ }
+ #endif
++*/
+ 
+ #endif /* EHHT_INTERFACE_H */
+--- orig/src/ehht-report.h
++++ tidy/src/ehht-report.h
+@@ -1,9 +1,11 @@
+ #ifndef EHHT_REPORT_H
+ #define EHHT_REPORT_H
+ 
++/*
+ #ifdef __cplusplus
+ extern "C" {
+ #endif
++*/
+ 
+ /** reports table's key.hashcode values distributed over sizes_len buckets
+  * returns total items across all buckets  */
+@@ -29,8 +31,10 @@
+ 	return i;
+ }
+ 
++/*
+ #ifdef __cplusplus
+ extern "C" {
+ #endif
++*/
+ 
+ #endif /* EHHT_REPORT_H */
+--- orig/tests/echeck.h
++++ tidy/tests/echeck.h
+@@ -19,9 +19,11 @@
+ #ifndef ECHECK_H
+ #define ECHECK_H
+ 
++/*
+ #ifdef __cplusplus
+ extern "C" {
+ #endif
++*/
+ 
+ #include <stdlib.h>		/* for size_t */
+ #include <stdio.h>		/* for FILE */
+@@ -281,8 +283,10 @@
+ #define check_status(val)\
+ 	echeck_status_m(stderr, ECHECK_FUNC, __FILE__, __LINE__, val, NULL)
+ 
++/*
+ #ifdef __cplusplus
+ }
+ #endif
++*/
+ 
+ #endif /* ECHECK_H */

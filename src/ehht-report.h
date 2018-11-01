@@ -1,5 +1,10 @@
 #ifndef EHHT_REPORT_H
 #define EHHT_REPORT_H
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /** reports table's key.hashcode values distributed over sizes_len buckets
  * returns total items across all buckets  */
 size_t ehht_distribution_report(struct ehht_s *table, size_t *sizes,
@@ -23,4 +28,9 @@ size_t ehht_distribution_report(struct ehht_s *table, size_t *sizes,
 
 	return i;
 }
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #endif /* EHHT_REPORT_H */

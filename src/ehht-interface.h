@@ -4,6 +4,10 @@
 
 /* a simple hash-table interface */
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include <stddef.h>		/* size_t */
 
 struct ehht_key_s {
@@ -61,5 +65,9 @@ struct ehht_s {
 	size_t (*num_buckets) (struct ehht_s *table);
 	size_t (*resize) (struct ehht_s *table, size_t num_buckets);
 };
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* EHHT_INTERFACE_H */

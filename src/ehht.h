@@ -4,6 +4,10 @@
 
 /* a simple hash-table */
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include "ehht-interface.h"
 #include <stddef.h>		/* size_t */
 
@@ -20,5 +24,9 @@ struct ehht_s *ehht_new(size_t num_buckets, ehht_hash_func hash_func,
 
 /* destructor */
 void ehht_free(struct ehht_s *table);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* EHHT_H */
