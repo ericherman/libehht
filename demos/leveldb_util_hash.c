@@ -46,15 +46,6 @@ unsigned int leveldb_decode_fixed_32(const char *ptr)
 }
 
 /*
-The FALLTHROUGH_INTENDED macro can be used to annotate implicit fall-through
-between switch labels. The real definition should be provided externally.
-This one is a fallback version for unsupported compilers.
-*/
-#ifndef FALLTHROUGH_INTENDED
-#define FALLTHROUGH_INTENDED do { } while (0)
-#endif
-
-/*
   seed taken from hash_test.cc -Eric Herman
   https://github.com/google/leveldb/blob/master/util/hash_test.cc#L32
 */
@@ -82,10 +73,10 @@ unsigned int leveldb_hash(const char *data, size_t n)
 	switch (limit - data) {
 	case 3:
 		h += ((unsigned int)((unsigned char)(data[2]))) << 16;
-		FALLTHROUGH_INTENDED;
+		/* fallthrough */
 	case 2:
 		h += ((unsigned int)((unsigned char)(data[1]))) << 8;
-		FALLTHROUGH_INTENDED;
+		/* fallthrough */
 	case 1:
 		h += ((unsigned int)((unsigned char)(data[0])));
 		h *= m;
