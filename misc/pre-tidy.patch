@@ -1,6 +1,6 @@
 --- orig/src/ehht.h
 +++ tidy/src/ehht.h
-@@ -4,9 +4,11 @@
+@@ -19,9 +19,11 @@
  
  /* a simple hash-table */
  
@@ -12,7 +12,7 @@
  
  #include "ehht-interface.h"
  #include <stddef.h>		/* size_t */
-@@ -25,8 +27,10 @@
+@@ -40,8 +42,10 @@
  /* destructor */
  void ehht_free(struct ehht_s *table);
  
@@ -25,7 +25,7 @@
  #endif /* EHHT_H */
 --- orig/src/ehht-interface.h
 +++ tidy/src/ehht-interface.h
-@@ -4,9 +4,11 @@
+@@ -19,9 +19,11 @@
  
  /* a simple hash-table interface */
  
@@ -37,8 +37,8 @@
  
  #include <stddef.h>		/* size_t */
  
-@@ -66,8 +68,10 @@
- 	size_t (*resize) (struct ehht_s *table, size_t num_buckets);
+@@ -83,8 +85,10 @@
+ 				  size_t key_len);
  };
  
 +/*
@@ -50,7 +50,7 @@
  #endif /* EHHT_INTERFACE_H */
 --- orig/src/ehht-report.h
 +++ tidy/src/ehht-report.h
-@@ -1,9 +1,11 @@
+@@ -17,9 +17,11 @@
  #ifndef EHHT_REPORT_H
  #define EHHT_REPORT_H
  
@@ -60,9 +60,9 @@
  #endif
 +*/
  
- /** reports table's key.hashcode values distributed over sizes_len buckets
-  * returns total items across all buckets  */
-@@ -29,8 +31,10 @@
+ #include <ehht-interface.h>
+ 
+@@ -48,8 +50,10 @@
  	return i;
  }
  
@@ -73,6 +73,31 @@
 +*/
  
  #endif /* EHHT_REPORT_H */
+--- orig/src/jumphash.h
++++ tidy/src/jumphash.h
+@@ -24,17 +24,21 @@
+ #ifndef JUMP_HASH_H
+ #define JUMP_HASH_H
+ 
++/*
+ #ifdef __cplusplus
+ extern "C" {
+ #endif
++*/
+ 
+ #include <stdint.h>
+ 
+ /* returns the bucket number for this key */
+ int32_t jumphash(uint64_t key, int32_t num_buckets);
+ 
++/*
+ #ifdef __cplusplus
+ }
+ #endif
++*/
+ 
+ #endif /* JUMP_HASH_H */
++#endif				/* JUMP_HASH_H */
 --- orig/tests/echeck.h
 +++ tidy/tests/echeck.h
 @@ -19,9 +19,11 @@

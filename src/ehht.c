@@ -21,6 +21,14 @@
 #include <assert.h>
 #include <errno.h>
 
+#ifndef EHHT_USE_JUMPHASH
+#define EHHT_USE_JUMPHASH 0
+#endif
+
+#if EHHT_USE_JUMPHASH
+#include "jumphash.h"		/* jumphash */
+#endif /* EHHT_USE_JUMPHASH */
+
 #ifdef NDEBUG
 #define EHHT_DEBUG 0
 #else
@@ -68,6 +76,44 @@ static void ehht_clear(struct ehht_s *this)
 		}
 	}
 	table->size = 0;
+}
+
+#if EHHT_USE_JUMPHASH
+static size_t ehht_bucket_for_hashcode(unsigned int hashcode,
+				       size_t num_buckets)
+{
+	int32_t jh_rv;
+	uint64_t jh_key;
+	int32_t jh_num_buckets;
+
+	jh_num_buckets = (int32_t)num_buckets;
+	jh_key = (uint64_t)hashcode;
+
+	jh_rv = jumphash(jh_key, jh_num_buckets);
+
+	if (jh_rv < 0) {
+		return 0;
+	}
+	return (size_t)jh_rv;
+}
+#else
+static size_t ehht_bucket_for_hashcode(unsigned int hashcode,
+				       size_t num_buckets)
+{
+	return (size_t)(hashcode % num_buckets);
+}
+#endif /* EHHT_USE_JUMPHASH */
+
+static size_t ehht_bucket_for_key(struct ehht_s *this, const char *key,
+				  size_t key_len)
+{
+	struct ehht_table_s *table;
+	unsigned int hashcode;
+
+	table = (struct ehht_table_s *)this->data;
+	hashcode = table->hash_func(key, key_len);
+
+	return ehht_bucket_for_hashcode(hashcode, table->num_buckets);
 }
 
 static struct ehht_element_s *ehht_new_element(struct ehht_table_s *table,
@@ -129,7 +175,7 @@ static struct ehht_element_s *ehht_get_element(struct ehht_table_s *table,
 	size_t bucket_num;
 
 	hashcode = table->hash_func(key, key_len);
-	bucket_num = hashcode % table->num_buckets;
+	bucket_num = ehht_bucket_for_hashcode(hashcode, table->num_buckets);
 
 	element = table->buckets[bucket_num];
 	while (element != NULL) {
@@ -174,7 +220,7 @@ static void *ehht_put(struct ehht_s *this, const char *key, size_t key_len,
 	}
 
 	hashcode = table->hash_func(key, key_len);
-	bucket_num = hashcode % table->num_buckets;
+	bucket_num = ehht_bucket_for_hashcode(hashcode, table->num_buckets);
 	element = table->buckets[bucket_num];
 	table->buckets[bucket_num] =
 	    ehht_new_element(table, key, key_len, hashcode, val);
@@ -209,7 +255,7 @@ static void *ehht_remove(struct ehht_s *this, const char *key, size_t key_len)
 	old_val = element->val;
 
 	hashcode = table->hash_func(key, key_len);
-	bucket_num = hashcode % table->num_buckets;
+	bucket_num = ehht_bucket_for_hashcode(hashcode, table->num_buckets);
 
 	previous_element = table->buckets[bucket_num];
 	if (previous_element == element) {
@@ -336,7 +382,9 @@ static size_t ehht_resize(struct ehht_s *this, size_t num_buckets)
 	for (i = 0; i < old_num_buckets; ++i) {
 		while ((element = old_buckets[i]) != NULL) {
 			old_buckets[i] = element->next;
-			new_bucket_num = element->key.hashcode % num_buckets;
+			new_bucket_num =
+			    ehht_bucket_for_hashcode(element->key.hashcode,
+						     num_buckets);
 			element->next = new_buckets[new_bucket_num];
 			new_buckets[new_bucket_num] = element;
 		}
@@ -515,6 +563,7 @@ struct ehht_s *ehht_new(size_t num_buckets, ehht_hash_func hash_func,
 	this->to_string = ehht_to_string;
 	this->num_buckets = ehht_num_buckets;
 	this->resize = ehht_resize;
+	this->bucket_for_key = ehht_bucket_for_key;
 
 	table = mem_alloc(sizeof(struct ehht_table_s), mem_context);
 	if (table == NULL) {

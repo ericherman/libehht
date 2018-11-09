@@ -79,6 +79,8 @@ struct ehht_s {
 
 	size_t (*num_buckets) (struct ehht_s *table);
 	size_t (*resize) (struct ehht_s *table, size_t num_buckets);
+	size_t (*bucket_for_key) (struct ehht_s *table, const char *key,
+				  size_t key_len);
 };
 
 #ifdef __cplusplus

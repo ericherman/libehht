@@ -16,11 +16,17 @@
 
 lib_LTLIBRARIES=libehht.la
 
-CSTD_CFLAGS=-std=c89
+CSTD_CFLAGS=-std=c89 -Wno-long-long
 #DEBUG_CFLAGS=-ggdb -O0
-DEBUG_CFLAGS=-ggdb -O3 -DNDEBUG -Wno-unused-parameter -fomit-frame-pointer
+DEBUG_CFLAGS=-ggdb -O2 -DNDEBUG -Wno-unused-parameter -fomit-frame-pointer
 NOISY_CFLAGS=-Wall -Wextra -pedantic -Werror
-AM_CFLAGS=$(CSTD_CFLAGS) $(DEBUG_CFLAGS) $(NOISY_CFLAGS) -pipe
+#USE_JUMPHASH_CFLAGS=-DEHHT_USE_JUMPHASH=1
+AM_CFLAGS=\
+ $(CSTD_CFLAGS) \
+ $(DEBUG_CFLAGS) \
+ $(NOISY_CFLAGS) \
+ $(USE_JUMPHASH_CFLAGS) \
+ -I src/ -pipe
 
 # extracted from https://github.com/torvalds/linux/blob/master/scripts/Lindent
 LINDENT=indent -npro -kr -i8 -ts8 -sob -l80 -ss -ncs -cp1 -il0
@@ -57,7 +63,11 @@ tidy:
 	patch -Np1 -i misc/pre-tidy.patch
 	$(LINDENT) \
 		-T FILE \
-		-T size_t \
+		-T size_t -T ssize_t \
+		-T uint8_t -T int8_t \
+		-T uint16_t -T int16_t \
+		-T uint32_t -T int32_t \
+		-T uint64_t -T int64_t \
 		-T ehht_s \
 		-T ehht_key_s \
 		-T ehht_keys_s \
@@ -88,7 +98,7 @@ valgrind: $(check_PROGRAMS)
 	libtool --mode=execute valgrind -q ./test_ehht_resize
 
 
-libehht_la_SOURCES=src/ehht.c
+libehht_la_SOURCES=$(include_HEADERS) src/jumphash.h src/jumphash.c src/ehht.c
 
 include_HEADERS=src/ehht.h src/ehht-interface.h
 

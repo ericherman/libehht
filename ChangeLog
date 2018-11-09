@@ -1,3 +1,15 @@
+2018-11-09  Eric Herman <eric@freesa.org>
+
+	* src/ehht-interface.h: add method bucket_for_key
+	* src/ehht.c: use jumphash for bucket_for_key #if EHHT_USE_JUMPHASH
+	* src/jumphash.h: copy from https://github.com/ericherman/libjumphash
+	* src/jumphash.c: copy from https://github.com/ericherman/libjumphash
+	* src/ehht-report.h: use bucket_for_key
+	* configure.ac: version bump from 1.0.1-dev -> 1.1.0-dev
+	* Makefile.am: include jumphash files
+	* misc/pre-tidy.patch: respin
+
+
 2016-06-18  Eric Herman <eric@freesa.org>
 
 	* Makefile.am: include COPYING.GPL
