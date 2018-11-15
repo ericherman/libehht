@@ -21,7 +21,7 @@
 extern "C" {
 #endif
 
-#include <ehht-interface.h>
+#include <ehht.h>
 
 /** reports table's key.hashcode values distributed over sizes_len buckets
  * returns total items across all buckets  */

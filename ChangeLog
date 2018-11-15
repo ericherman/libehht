@@ -1,3 +1,19 @@
+2018-11-15  Eric Herman <eric@freesa.org>
+
+	Separating the headers is not needed yet as there is only one
+	implementation. Should a better/different implmentation require
+	the change, we can re-do it.
+
+	* src/ehht.h: merged in src/ehht-interface.h
+	* src/ehht-interface.h: merged into src/ehht.h
+	* src/ehht-report.h: moved to tests/ dir
+	* tests/ehht-report.h: moved from src/ dir
+	* tests/test-ehht.h: reflect move
+	* demos/demo-ehht.c: reflect move
+	* Makefile.am: fixup for above changes
+	* configure.ac: version bump [1.1.1-dev]
+	* misc/pre-tidy.patch: respin
+
 2018-11-09  Eric Herman <eric@freesa.org>
 
 	* src/ehht-interface.h: add method bucket_for_key

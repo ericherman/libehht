@@ -19,8 +19,8 @@
 #include <string.h>		/* strlen */
 #include <errno.h>		/* errno strerror */
 
-#include "../src/ehht.h"
-#include "../src/ehht-report.h"
+#include "ehht.h"
+#include "ehht-report.h"
 
 #ifndef MAKE_VALGRIND_HAPPY
 #define MAKE_VALGRIND_HAPPY 0

@@ -19,7 +19,7 @@
 #include <errno.h>
 
 #include "../src/ehht.h"
-#include "../src/ehht-report.h"
+#include "ehht-report.h"
 #define REPORT_LEN 10
 #include "echeck.h"
 

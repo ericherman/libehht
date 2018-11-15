@@ -42,8 +42,9 @@ DEMOS=$(bin_PROGRAMS)
 bin_PROGRAMS=demo-ehht demo-ehht-as-array
 
 demo_ehht_SOURCES=demos/leveldb_util_hash.c demos/demo-ehht.c \
- src/ehht.h src/ehht-report.h
+ src/ehht.h tests/ehht-report.h
 demo_ehht_LDADD=libehht.la
+demo_ehht_CFLAGS=$(AM_CFLAGS) -I tests/
 
 demo_ehht_as_array_SOURCES=demos/demo-ehht-as-array.c src/ehht.h
 demo_ehht_as_array_LDADD=libehht.la
@@ -100,7 +101,7 @@ valgrind: $(check_PROGRAMS)
 
 libehht_la_SOURCES=$(include_HEADERS) src/jumphash.h src/jumphash.c src/ehht.c
 
-include_HEADERS=src/ehht.h src/ehht-interface.h
+include_HEADERS=src/ehht.h
 
 TESTS=$(check_PROGRAMS)
 
