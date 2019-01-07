@@ -240,7 +240,8 @@ static void *ehht_put(struct ehht_s *this, const char *key, size_t key_len,
 static void *ehht_remove(struct ehht_s *this, const char *key, size_t key_len)
 {
 	struct ehht_table_s *table;
-	struct ehht_element_s *previous_element, *element;
+	struct ehht_element_s *element;
+	struct ehht_element_s **ptr_to_element;
 	void *old_val;
 	unsigned int hashcode;
 	size_t bucket_num;
@@ -257,18 +258,17 @@ static void *ehht_remove(struct ehht_s *this, const char *key, size_t key_len)
 	hashcode = table->hash_func(key, key_len);
 	bucket_num = ehht_bucket_for_hashcode(hashcode, table->num_buckets);
 
-	previous_element = table->buckets[bucket_num];
-	if (previous_element == element) {
-		table->buckets[bucket_num] = element->next;
-	} else {
-		while (previous_element->next != element) {
-			previous_element = previous_element->next;
-			/* assert(previous_element != NULL); */
-		}
-		previous_element->next = element->next;
+	/* find what points to this element */
+	ptr_to_element = &(table->buckets[bucket_num]);
+	while (*ptr_to_element != element) {
+		ptr_to_element = &((*ptr_to_element)->next);
 	}
+	/* make that point to the next element */
+	*ptr_to_element = element->next;
+
 	ehht_free_element(table, element);
 	--(table->size);
+
 	return old_val;
 }
 
