@@ -221,19 +221,18 @@ static void *ehht_put(struct ehht_s *this, const char *key, size_t key_len,
 
 	hashcode = table->hash_func(key, key_len);
 	bucket_num = ehht_bucket_for_hashcode(hashcode, table->num_buckets);
-	element = table->buckets[bucket_num];
-	table->buckets[bucket_num] =
-	    ehht_new_element(table, key, key_len, hashcode, val);
-	if (table->buckets[bucket_num] == NULL) {
+	element = ehht_new_element(table, key, key_len, hashcode, val);
+	if (!element) {
 		if (EHHT_DEBUG) {
 			fprintf(stderr,
 				"could not allocate struct ehht_element_s\n");
 		}
 		assert(errno == ENOMEM);
-		table->buckets[bucket_num] = element;
-	} else {
-		table->buckets[bucket_num]->next = element;
+		/* should this exit? */
+		return NULL;
 	}
+	element->next = table->buckets[bucket_num];
+	table->buckets[bucket_num] = element;
 	return NULL;
 }
 
