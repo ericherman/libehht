@@ -51,6 +51,16 @@ struct ehht_table_s {
 	void *mem_context;
 };
 
+static void ehht_set_table(struct ehht_s *this, struct ehht_table_s *table)
+{
+	this->data = (void *)table;
+}
+
+static struct ehht_table_s *ehht_get_table(struct ehht_s *this)
+{
+	return (struct ehht_table_s *)this->data;
+}
+
 static void ehht_free_element(struct ehht_table_s *table,
 			      struct ehht_element_s *element)
 {
@@ -67,7 +77,7 @@ static void ehht_clear(struct ehht_s *this)
 	size_t i;
 	struct ehht_element_s *element;
 
-	table = (struct ehht_table_s *)this->data;
+	table = ehht_get_table(this);
 
 	for (i = 0; i < table->num_buckets; ++i) {
 		while ((element = table->buckets[i]) != NULL) {
@@ -110,7 +120,7 @@ static size_t ehht_bucket_for_key(struct ehht_s *this, const char *key,
 	struct ehht_table_s *table;
 	unsigned int hashcode;
 
-	table = (struct ehht_table_s *)this->data;
+	table = ehht_get_table(this);
 	hashcode = table->hash_func(key, key_len);
 
 	return ehht_bucket_for_hashcode(hashcode, table->num_buckets);
@@ -196,7 +206,7 @@ static void *ehht_get(struct ehht_s *this, const char *key, size_t key_len)
 	struct ehht_table_s *table;
 	struct ehht_element_s *element;
 
-	table = (struct ehht_table_s *)this->data;
+	table = ehht_get_table(this);
 
 	element = ehht_get_element(table, key, key_len);
 	return (element == NULL) ? NULL : element->val;
@@ -211,7 +221,7 @@ static void *ehht_put(struct ehht_s *this, const char *key, size_t key_len,
 	unsigned int hashcode;
 	size_t bucket_num;
 
-	table = (struct ehht_table_s *)this->data;
+	table = ehht_get_table(this);
 
 	element = ehht_get_element(table, key, key_len);
 	old_val = (element == NULL) ? NULL : element->val;
@@ -247,7 +257,7 @@ static void *ehht_remove(struct ehht_s *this, const char *key, size_t key_len)
 	unsigned int hashcode;
 	size_t bucket_num;
 
-	table = (struct ehht_table_s *)this->data;
+	table = ehht_get_table(this);
 
 	element = ehht_get_element(table, key, key_len);
 	if (element == NULL) {
@@ -282,7 +292,7 @@ static int ehht_for_each(struct ehht_s *this,
 	size_t i, end;
 	struct ehht_element_s *element;
 
-	table = (struct ehht_table_s *)this->data;
+	table = ehht_get_table(this);
 
 	end = 0;
 	for (i = 0; i < table->num_buckets && !end; ++i) {
@@ -299,7 +309,7 @@ static size_t ehht_size(struct ehht_s *this)
 {
 	struct ehht_table_s *table;
 
-	table = (struct ehht_table_s *)this->data;
+	table = ehht_get_table(this);
 	return table->size;
 }
 
@@ -362,7 +372,7 @@ static size_t ehht_resize(struct ehht_s *this, size_t num_buckets)
 	struct ehht_table_s *table;
 	struct ehht_element_s **new_buckets, **old_buckets, *element;
 
-	table = (struct ehht_table_s *)this->data;
+	table = ehht_get_table(this);
 
 	if (num_buckets == 0) {
 		num_buckets = table->num_buckets * 2;
@@ -401,7 +411,7 @@ static size_t ehht_num_buckets(struct ehht_s *this)
 {
 	struct ehht_table_s *table;
 
-	table = (struct ehht_table_s *)this->data;
+	table = ehht_get_table(this);
 	return table->num_buckets;
 }
 
@@ -430,7 +440,7 @@ static int fill_keys_each(struct ehht_key_s key, void *each_val, void *context)
 	}
 
 	if (kls->keys->keys_copied) {
-		table = (struct ehht_table_s *)ehht->data;
+		table = ehht_get_table(ehht);
 		size = sizeof(char *) * (key.len + 1);
 		str_copy = table->alloc(size, table->mem_context);
 		if (!str_copy) {
@@ -455,7 +465,7 @@ static int ehht_has_key(struct ehht_s *this, const char *key, size_t key_len)
 	struct ehht_table_s *table;
 	struct ehht_element_s *element;
 
-	table = (struct ehht_table_s *)this->data;
+	table = ehht_get_table(this);
 
 	element = ehht_get_element(table, key, key_len);
 	return (element != NULL);
@@ -467,7 +477,7 @@ static struct ehht_keys_s *ehht_keys(struct ehht_s *this, int copy_keys)
 	struct kl_s kls;
 	size_t size;
 
-	table = this->data;
+	table = ehht_get_table(this);
 
 	kls.ehht = this;
 	size = sizeof(struct ehht_keys_s);
@@ -501,7 +511,7 @@ static void ehht_free_keys(struct ehht_s *this, struct ehht_keys_s *keys)
 	struct ehht_table_s *table;
 	size_t i;
 
-	table = (struct ehht_table_s *)this->data;
+	table = ehht_get_table(this);
 	if (keys->keys_copied) {
 		for (i = 0; i < keys->len; ++i) {
 			table->free((char *)keys->keys[i].str,
@@ -570,7 +580,7 @@ struct ehht_s *ehht_new(size_t num_buckets, ehht_hash_func hash_func,
 		mem_free(this, sizeof(struct ehht_s), mem_context);
 		return NULL;
 	}
-	this->data = table;
+	ehht_set_table(this, table);
 
 	table->num_buckets = num_buckets;
 	table->buckets =
@@ -604,7 +614,7 @@ void ehht_free(struct ehht_s *this)
 		return;
 	}
 
-	table = (struct ehht_table_s *)this->data;
+	table = ehht_get_table(this);
 
 	this->clear(this);
 
