@@ -319,7 +319,8 @@ struct ehht_str_buf_s {
 	size_t buf_pos;
 };
 
-static int to_string_each(struct ehht_key_s key, void *each_val, void *context)
+static int ehht_to_string_each(struct ehht_key_s key, void *each_val,
+			       void *context)
 {
 
 	struct ehht_str_buf_s *str_buf;
@@ -358,7 +359,7 @@ static size_t ehht_to_string(struct ehht_s *this, char *buf, size_t buf_len)
 	if (bytes_written > 0) {
 		str_buf.buf_pos += ((unsigned int)bytes_written);
 	}
-	ehht_for_each(this, to_string_each, &str_buf);
+	ehht_for_each(this, ehht_to_string_each, &str_buf);
 	bytes_written = sprintf(str_buf.buf + str_buf.buf_pos, "}");
 	if (bytes_written > 0) {
 		str_buf.buf_pos += ((unsigned int)bytes_written);
@@ -415,21 +416,22 @@ static size_t ehht_num_buckets(struct ehht_s *this)
 	return table->num_buckets;
 }
 
-struct kl_s {
+struct ehht_kl_s {
 	struct ehht_s *ehht;
 	struct ehht_keys_s *keys;
 	size_t pos;
 };
 
-static int fill_keys_each(struct ehht_key_s key, void *each_val, void *context)
+static int ehht_fill_keys_each(struct ehht_key_s key, void *each_val,
+			       void *context)
 {
-	struct kl_s *kls;
+	struct ehht_kl_s *kls;
 	struct ehht_s *ehht;
 	struct ehht_table_s *table;
 	char *str_copy;
 	size_t size;
 
-	kls = (struct kl_s *)context;
+	kls = (struct ehht_kl_s *)context;
 	ehht = kls->ehht;
 
 	assert(each_val == ehht->get(ehht, key.str, key.len));
@@ -474,7 +476,7 @@ static int ehht_has_key(struct ehht_s *this, const char *key, size_t key_len)
 static struct ehht_keys_s *ehht_keys(struct ehht_s *this, int copy_keys)
 {
 	struct ehht_table_s *table;
-	struct kl_s kls;
+	struct ehht_kl_s kls;
 	size_t size;
 
 	table = ehht_get_table(this);
@@ -494,7 +496,7 @@ static struct ehht_keys_s *ehht_keys(struct ehht_s *this, int copy_keys)
 	}
 	kls.pos = 0;
 
-	ehht_for_each(this, fill_keys_each, &kls);
+	ehht_for_each(this, ehht_fill_keys_each, &kls);
 
 	return kls.keys;
 
