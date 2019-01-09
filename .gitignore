@@ -23,6 +23,7 @@ $*
 *.log
 *.trs
 *.tar.*
+*.gch
 
 ################
 # test files
