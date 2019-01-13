@@ -304,10 +304,9 @@ To see how to use jumphash, you can look in the "demos" directory:
 
 Dependencies
 ------------
-The "make" and "make install" targets have no external dependencies.
-
-The "make check" target depends upon libecheck
-  * https://github.com/ericherman/libecheck
+The "make", "make check", and "make install" targets have no
+external dependencies.  The files "src/ehht.c" and "src/ehht.h" can
+be added directly into your project.
 
 The "make demo" target depends upon "simple_stats"
   * https://github.com/ericherman/simple_stats
