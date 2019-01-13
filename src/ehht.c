@@ -21,14 +21,6 @@
 #include <assert.h>
 #include <errno.h>
 
-#ifndef EHHT_USE_JUMPHASH
-#define EHHT_USE_JUMPHASH 0
-#endif
-
-#if EHHT_USE_JUMPHASH
-#include "jumphash.h"		/* jumphash */
-#endif /* EHHT_USE_JUMPHASH */
-
 #ifdef NDEBUG
 #define EHHT_DEBUG 0
 #else
@@ -88,31 +80,11 @@ static void ehht_clear(struct ehht_s *this)
 	table->size = 0;
 }
 
-#if EHHT_USE_JUMPHASH
-static size_t ehht_bucket_for_hashcode(unsigned int hashcode,
-				       size_t num_buckets)
-{
-	int32_t jh_rv;
-	uint64_t jh_key;
-	int32_t jh_num_buckets;
-
-	jh_num_buckets = (int32_t)num_buckets;
-	jh_key = (uint64_t)hashcode;
-
-	jh_rv = jumphash(jh_key, jh_num_buckets);
-
-	if (jh_rv < 0) {
-		return 0;
-	}
-	return (size_t)jh_rv;
-}
-#else
 static size_t ehht_bucket_for_hashcode(unsigned int hashcode,
 				       size_t num_buckets)
 {
 	return (size_t)(hashcode % num_buckets);
 }
-#endif /* EHHT_USE_JUMPHASH */
 
 static size_t ehht_bucket_for_key(struct ehht_s *this, const char *key,
 				  size_t key_len)
@@ -165,15 +137,15 @@ static struct ehht_element_s *ehht_alloc_element(struct ehht_table_s *table,
 /* "This is not the best possible hash function,
    but it is short and effective."
    The C Programming Language, 2nd Edition */
-static unsigned int ehht_hash_code_str(const char *str, size_t str_len)
+unsigned int ehht_kr2_hashcode(const char *data, size_t len)
 {
 	unsigned int hash;
 	size_t i;
 
 	hash = 0;
-	for (i = 0; i < str_len; ++i) {
+	for (i = 0; i < len; ++i) {
 		hash *= 31;
-		hash += (unsigned int)str[i];
+		hash += (unsigned int)data[i];
 	}
 
 	return hash;
@@ -550,7 +522,7 @@ struct ehht_s *ehht_new(size_t num_buckets, ehht_hash_func hash_func,
 		num_buckets = 4096;
 	}
 	if (hash_func == NULL) {
-		hash_func = ehht_hash_code_str;
+		hash_func = ehht_kr2_hashcode;
 	}
 	if (mem_alloc == NULL) {
 		mem_alloc = ehht_malloc;

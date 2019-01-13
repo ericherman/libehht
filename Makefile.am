@@ -41,7 +41,8 @@ EXTRA_DIST=COPYING.GPL
 DEMOS=$(bin_PROGRAMS)
 bin_PROGRAMS=demo-ehht demo-ehht-as-array
 
-demo_ehht_SOURCES=demos/leveldb_util_hash.c demos/demo-ehht.c \
+demo_ehht_SOURCES=demos/leveldb_util_hash.c demos/djb2_hash.c \
+ demos/jumphash.c demos/demo-ehht.c \
  src/ehht.h tests/ehht-report.h
 demo_ehht_LDADD=libehht.la
 demo_ehht_CFLAGS=$(AM_CFLAGS) -I tests/
@@ -76,12 +77,12 @@ tidy:
 	patch -Rp1 -i misc/pre-tidy.patch
 
 demo: $(DEMOS)
-	libtool --mode=execute ./demo-ehht-as-array
+	./libtool --mode=execute ./demo-ehht-as-array
 	@echo ""
 	for num_buckets in 64 128 256 512 1024 2048 4096; do \
 		echo ""; echo "num buckets: $$num_buckets"; \
-		libtool --mode=execute ./demo-ehht \
-			$$num_buckets | $(SSTATS) --channels=2 -; \
+		./libtool --mode=execute ./demo-ehht \
+			$$num_buckets | $(SSTATS) --channels=5 -; \
 	done
 
 spotless:
@@ -99,7 +100,7 @@ valgrind: $(check_PROGRAMS)
 	libtool --mode=execute valgrind -q ./test_ehht_resize
 
 
-libehht_la_SOURCES=$(include_HEADERS) src/jumphash.h src/jumphash.c src/ehht.c
+libehht_la_SOURCES=$(include_HEADERS) src/ehht.c
 
 include_HEADERS=src/ehht.h
 

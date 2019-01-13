@@ -1,3 +1,18 @@
+2019-01-13  Eric Herman <eric@freesa.org>
+
+	Rather than build with-or-without jumphash, simply
+	demonstrate how the caller can use jumphash as part
+	of a function pointer.
+
+	* src/ehht.c: remove jumphash
+	* src/jumphash.c: moved to demos/jumphash.c
+	* demos/demo-ehht.c: demonstrate using jumphash, djb2_hash
+	* demos/djb2_hash.c: simple re-impl
+	* src/jumphash.h: deleted
+	* misc/pre-tidy.patch: removed jumphash.h
+	* Makefile.am: update for demos
+
+
 2018-11-15  Eric Herman <eric@freesa.org>
 
 	Separating the headers is not needed yet as there is only one

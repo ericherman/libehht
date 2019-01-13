@@ -21,7 +21,7 @@ https://arxiv.org/pdf/1406.2294v1.pdf
   this algorithm to the community.
 */
 
-#include <jumphash.h>
+#include <stdint.h>		/* int32_t int64_t uint64_t */
 
 /* see also: http://random.mat.sbg.ac.at/results/karl/server/node5.html */
 #define Linear_Congruential_Generator_64 2862933555777941757ULL

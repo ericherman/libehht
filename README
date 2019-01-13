@@ -15,14 +15,11 @@ Default Construction
 
 In the simple case, the defaults will usually be fine, e.g.:
 
-	size_t buckets = 1024;
-	ehht_hash_func hfunc = NULL;
-	ehht_malloc_func afunc = NULL;
-	ehht_free_func ffunc = NULL;
-	void *alloc_context = NULL;
+	size_t buckets;
 	struct ehht_s *table;
 
-	table = ehht_new(buckets, hfunc, afunc, ffunc, alloc_context);
+	buckets = 1024;
+	table = ehht_new(buckets, NULL, NULL, NULL, NULL);
 	if (!t) {
 		exit(EXIT_FAILURE);
 	}
@@ -92,7 +89,7 @@ Has Key
 -------
 
 The "has_key" method returns 0 if the table has the key or non-zero
-if the key i present in the table.
+if the key is present in the table.
 
 	if (table->has_key(table, buf, strlen(buf))) {
 		printf("already have key '%s'\n", buf);
@@ -139,16 +136,16 @@ the table, until the iterator function returns a non-zero value.
 
 	unsigned long total_len(struct ehht_s *table)
 	{
-		unsigned long len;
+		unsigned long total;
 
 		if (!table) {
 			return 0;
 		}
 		total = 0;
 
-		table->for_each(table, add_lens, &len);
+		table->for_each(table, add_lens, &total);
 
-		return len;
+		return total;
 	}
 
 
@@ -278,18 +275,15 @@ hashing functions:
 		free(ptr);
 	}
 
-	#ifndef DJB2_HASH_STR_SEED
-	#define DJB2_HASH_STR_SEED 5381
-	#endif
-	/* http://www.cse.yorku.ca/~oz/hash.html */
-	unsigned int djb2_hash_str(const char *str, size_t str_len)
+	#define DJB2_HASH_SEED 5381
+	unsigned int djb2_hash(const char *data, size_t len)
 	{
 		unsigned int hash;
 		size_t i;
 
-		hash = DJB2_HASH_STR_SEED;
-		for (i = 0; i < str_len; ++i) {
-			hash = ((hash << 5) + hash) + ((unsigned int)str[i]);
+		hash = DJB2_HASH_SEED;
+		for (i = 0; i < len; ++i) {
+			hash = ((hash << 5) + hash) + ((unsigned int)data[i]);
 		}
 
 		return hash;
@@ -298,19 +292,25 @@ hashing functions:
 	struct ehht_s *new_tracking_table(size_t buckets,
 					  struct tracking_context_s *ctx)
 	{
-		return ehht_new(buckets, djb2_hash_str, tracking_malloc,
+		return ehht_new(buckets, djb2_hash, tracking_malloc,
 				tracking_free, ctx);
 	}
+
+To see how to use jumphash, you can look in the "demos" directory:
+ * https://github.com/ericherman/libehht/blob/master/demos/demo-ehht.c
+ * https://github.com/ericherman/libjumphash
+ * http://www.cse.yorku.ca/~oz/hash.html
+
 
 Dependencies
 ------------
 The "make" and "make install" targets have no external dependencies.
 
 The "make check" target depends upon libecheck
-  https://github.com/ericherman/libecheck
+  * https://github.com/ericherman/libecheck
 
 The "make demo" target depends upon "simple_stats"
-  https://github.com/ericherman/simple_stats
+  * https://github.com/ericherman/simple_stats
 
 
 Building on linux from a release tar
