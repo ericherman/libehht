@@ -9,6 +9,9 @@ construction time.
 
 The keys need not be strings, any char pointer and length is fine.
 
+The operations are _not_ thread-safe, and thus the caller is
+responsible for locking if used in a multi-threaded environment.
+
 
 Default Construction
 --------------------
