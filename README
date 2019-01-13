@@ -1,12 +1,306 @@
-The "libehht" C library specifies a basic object oriented hash-table
-interface and implementation.
+The "libehht" C library specifies a basic object oriented hash-table.
 
-The "ehht-interface.h" file declares the "ehht_s" struct and
-function pointer definitions, but does not specify an implementation.
+The "put" operation has predicatable time because a put does not
+cause a table re-balance. It is the caller's responsibility to set
+the initial number of buckets and to call "resize" if the total
+number of values becomes too large for the number of buckets. Memory
+allocation functions and the hashing method are configurable at
+construction time.
 
-The "ehht.h" includes the interface as well as a constructor and
-destructor for an implementation of the interface.
+The keys need not be strings, any char pointer and length is fine.
 
+
+Default Construction
+--------------------
+
+In the simple case, the defaults will usually be fine, e.g.:
+
+	size_t buckets = 1024;
+	ehht_hash_func hfunc = NULL;
+	ehht_malloc_func afunc = NULL;
+	ehht_free_func ffunc = NULL;
+	void *alloc_context = NULL;
+	struct ehht_s *table;
+
+	table = ehht_new(buckets, hfunc, afunc, ffunc, alloc_context);
+	if (!t) {
+		exit(EXIT_FAILURE);
+	}
+
+The the number of buckets is 0, a default is chosen.
+
+If needed, custom hashing functions, as well as memory allocation
+functions can be provided. See "Custom Contruction" below.
+
+
+Destruction
+-----------
+
+To free the table, the "ehht_free" function is provided.
+
+	ehht_free(table);
+
+
+Put
+----
+
+The "put" method takes a pointer to the table struct, a pointer to
+key, the length of the key in bytes, and a pointer to a value. The
+key is copied by the hashtable, thus the caller is welcome to use a
+mutable buffer when put-ing objects into the table. The return value
+is whatever value was previously pointed to by the key, or NULL.
+
+
+	void *previous_val;
+	char buf[80];
+
+	strcpy(buf, "foo");
+	previous_val = table->put(table, buf, strlen(buf), "bar");
+
+	strcpy(buf, "whiz");
+	previous_val = table->put(table, buf, strlen(buf), "bang");
+
+
+Get
+----
+
+The "get" method takes a pointer to the table, a pointer to the key,
+the length of the key in bytes, and a pointer to the value.
+
+
+	val = table->get(table, buf, strlen(buf));
+
+
+Remove
+------
+
+The "remove" method returns the previous value or NULL, and frees
+the table's private copy of the key.
+
+	previous_val = table->remove(table, buf, strlen(buf));
+
+
+Clear
+-----
+
+The "clear" method removes all entries in the table;
+
+	table->clear(table);
+
+
+Has Key
+-------
+
+The "has_key" method returns 0 if the table has the key or non-zero
+if the key i present in the table.
+
+	if (table->has_key(table, buf, strlen(buf))) {
+		printf("already have key '%s'\n", buf);
+	}
+
+
+
+Size
+----
+
+The "size" method returns the number of keys in the table.
+
+	size_t keys_used;
+
+	keys_used = table->size(table);
+
+
+For Each
+--------
+
+The "for_each" method takes an iterator function pointer and a
+context pointer and calls the function for each key-value pair in
+the table, until the iterator function returns a non-zero value.
+
+	int add_lens(struct ehht_key_s each_key, void *each_val, void *context)
+	{
+		int halt_iteration;
+		unsigned long *i;
+		const char *val;
+
+		halt_iteration = 0;
+		i = (unsigned long *)context;
+		val = (const char *)each_val;
+
+		if (each_key.str) {
+			*i += each_key.len;
+		}
+		if (val) {
+			*i += strlen(val);
+		}
+
+		return halt_iteration;
+	}
+
+	unsigned long total_len(struct ehht_s *table)
+	{
+		unsigned long len;
+
+		if (!table) {
+			return 0;
+		}
+		total = 0;
+
+		table->for_each(table, add_lens, &len);
+
+		return len;
+	}
+
+
+
+External Iteration
+------------------
+
+If "for_each" is not desired, an struct of keys can be used for
+user-controlled iteration. If the buffers of keys will be pointed to
+after the struct ehht_keys_s is freed, then the caller may request
+that the keys be new copies, rather than pointers to internal keys.
+
+	size_t distribution_report(struct ehht_s *table,
+				   size_t *sizes, size_t sizes_len)
+	{
+		struct ehht_keys_s *keys;
+		int copy_keys;
+		size_t i, bucket;
+
+		for (i = 0; i < sizes_len; ++i) {
+			sizes[i] = 0;
+		}
+
+		copy_keys = 0;
+		keys = table->keys(table, copy_keys);
+		for (i = 0; i < keys->len; ++i) {
+			bucket = table->bucket_for_key(table,
+						       keys->keys[i].str,
+						       keys->keys[i].len);
+			++sizes[bucket];
+		}
+		table->free_keys(table, keys);
+
+		return i;
+	}
+
+
+To String
+---------
+
+For debug convienence, a basic "to_string" method is provided. The
+return value is the the number of characters written to buffer,
+excluding the null byte terminator.
+
+	char buf[BUF_LEN];
+	size_t written;
+
+	written = table->to_string(table, buf, BUF_LEN);
+	printf("table: %s\n", buf);
+
+
+Num Buckets
+-----------
+
+The "num_buckets" method returns the current number of buckets
+allocated inside the table.
+
+	size_t buckets;
+
+	buckets = table->num_buckets(table);
+
+
+Resize
+------
+
+The "resize" method allows the caller to change the number of
+buckets used by the table. If allocation fails, the bucket size
+remains unchanged.
+
+	size_t buckets, target_buckets;
+
+	target_buckets = 2048;
+	buckets = table->resize(table, target_buckets);
+	if (buckets != target_buckets) {
+		fprintf(stderr, "resize failed\n");
+	}
+
+
+
+Custom Construction
+-------------------
+
+Here is an example of constructing an ehht with custom allocation and
+hashing functions:
+
+	struct tracking_context_s {
+		unsigned allocs;
+		unsigned alloc_fails;
+		unsigned frees;
+		unsigned null_frees;
+		unsigned alloc_bytes;
+		unsigned free_bytes;
+		unsigned peak_usage;
+	};
+
+	void *tracking_malloc(size_t size, void *context)
+	{
+		void *v;
+		struct tracking_context_s *ctx;
+		unsigned current_usage;
+
+		ctx = (struct tracking_context_s *)context;
+		++ctx->allocs;
+		v = malloc(size);
+		if (!v) {
+			ctx->alloc_fails++;
+		} else {
+			ctx->alloc_bytes += size;
+			current_usage = ctx->alloc_bytes - ctx->free_bytes;
+			if (current_usage > ctx->peak_usage) {
+				ctx->peak_usage = current_usage;
+			}
+		}
+		return v;
+	}
+
+	void tracking_free(void *ptr, size_t size, void *context)
+	{
+		struct tracking_context_s *ctx;
+
+		ctx = (struct tracking_context_s *)context;
+		++ctx->frees;
+		ctx->free_bytes += size;
+		if (ptr == NULL) {
+			++ctx->null_frees;
+		}
+		free(ptr);
+	}
+
+	#ifndef DJB2_HASH_STR_SEED
+	#define DJB2_HASH_STR_SEED 5381
+	#endif
+	/* http://www.cse.yorku.ca/~oz/hash.html */
+	unsigned int djb2_hash_str(const char *str, size_t str_len)
+	{
+		unsigned int hash;
+		size_t i;
+
+		hash = DJB2_HASH_STR_SEED;
+		for (i = 0; i < str_len; ++i) {
+			hash = ((hash << 5) + hash) + ((unsigned int)str[i]);
+		}
+
+		return hash;
+	}
+
+	struct ehht_s *new_tracking_table(size_t buckets,
+					  struct tracking_context_s *ctx)
+	{
+		return ehht_new(buckets, djb2_hash_str, tracking_malloc,
+				tracking_free, ctx);
+	}
 
 Dependencies
 ------------
