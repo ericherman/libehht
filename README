@@ -117,6 +117,21 @@ The "for_each" method takes an iterator function pointer and a
 context pointer and calls the function for each key-value pair in
 the table, until the iterator function returns a non-zero value.
 
+This is an example prototype for a function usable with "for_each":
+
+	int add_lens(struct ehht_key_s each_key, void *each_val, void *context);
+
+Calling "for_each" would be done as so:
+
+	unsigned long total;
+
+	total = 0;
+	table->for_each(table, add_lens, &total);
+	fprintf("total length: %lu\n", total);
+
+This is an example implementation of "add_lens", which shows how
+the key, value, and context may be used:
+
 	int add_lens(struct ehht_key_s each_key, void *each_val, void *context)
 	{
 		int halt_iteration;
@@ -135,20 +150,6 @@ the table, until the iterator function returns a non-zero value.
 		}
 
 		return halt_iteration;
-	}
-
-	unsigned long total_len(struct ehht_s *table)
-	{
-		unsigned long total;
-
-		if (!table) {
-			return 0;
-		}
-		total = 0;
-
-		table->for_each(table, add_lens, &total);
-
-		return total;
 	}
 
 
