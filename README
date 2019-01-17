@@ -247,36 +247,46 @@ hashing functions:
 
 	void *tracking_malloc(size_t size, void *context)
 	{
-		void *v;
 		struct tracking_context_s *ctx;
-		unsigned current_usage;
+		unsigned char *tracking_buffer;
+		void *ptr;
+		size_t used;
 
+		ptr = NULL;
 		ctx = (struct tracking_context_s *)context;
-		++ctx->allocs;
-		v = malloc(size);
-		if (!v) {
-			ctx->alloc_fails++;
-		} else {
-			ctx->alloc_bytes += size;
-			current_usage = ctx->alloc_bytes - ctx->free_bytes;
-			if (current_usage > ctx->peak_usage) {
-				ctx->peak_usage = current_usage;
-			}
+		tracking_buffer = malloc(sizeof(size_t) + size);
+		if (!tracking_buffer) {
+			++ctx->alloc_fails;
+			return NULL;
 		}
-		return v;
+
+		ptr = (void *)(tracking_buffer + sizeof(size_t));
+		memcpy(tracking_buffer, &size, sizeof(size_t));
+		++ctx->allocs;
+		ctx->alloc_bytes += size;
+		used = ctx->alloc_bytes - ctx->free_bytes;
+		if (used > ctx->peak_usage) {
+			ctx->peak_usage = used;
+		}
+		return ptr;
 	}
 
-	void tracking_free(void *ptr, size_t size, void *context)
+	void tracking_free(void *ptr, void *context)
 	{
 		struct tracking_context_s *ctx;
+		unsigned char *tracking_buffer;
+		size_t size;
 
 		ctx = (struct tracking_context_s *)context;
-		++ctx->frees;
-		ctx->free_bytes += size;
 		if (ptr == NULL) {
 			++ctx->null_frees;
+			return;
 		}
-		free(ptr);
+		tracking_buffer = ((unsigned char *)ptr) - sizeof(size_t);
+		memcpy(&size, tracking_buffer, sizeof(size_t));
+		ctx->free_bytes += size;
+		++ctx->frees;
+		free(tracking_buffer);
 	}
 
 	#define DJB2_HASH_SEED 5381
@@ -294,8 +304,18 @@ hashing functions:
 	}
 
 	struct ehht_s *new_tracking_table(size_t buckets,
-					  struct tracking_context_s *ctx)
+					  struct tracking_context_s *ctx,
+					  int clear_context)
 	{
+		if (clear_context) {
+			ctx->allocs = 0;
+			ctx->alloc_bytes = 0;
+			ctx->alloc_fails = 0;
+			ctx->frees = 0;
+			ctx->free_bytes = 0;
+			ctx->null_frees = 0;
+			ctx->peak_usage = 0;
+		}
 		return ehht_new(buckets, djb2_hash, tracking_malloc,
 				tracking_free, ctx);
 	}

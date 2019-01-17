@@ -24,7 +24,7 @@ int test_ehht_clear()
 
 	size_t i, count, items_written;
 	size_t report[REPORT_LEN];
-	struct mem_context ctx = { 0, 0, 0, 0, 0, 0 };
+	struct tracking_mem_context ctx = { 0, 0, 0, 0, 0, 0, 0 };
 
 	table = ehht_new(num_buckets, NULL, test_malloc, test_free, &ctx);
 

@@ -83,9 +83,9 @@ struct ehht_s {
 				  size_t key_len);
 };
 
-typedef unsigned int (*ehht_hash_func) (const char *str, size_t str_len);
+typedef unsigned int (*ehht_hash_func) (const char *data, size_t data_len);
 typedef void *(*ehht_malloc_func) (size_t size, void *context);
-typedef void (*ehht_free_func) (void *ptr, size_t size, void *context);
+typedef void (*ehht_free_func) (void *ptr, void *context);
 
 /* constructor */
 /* if hash_func is NULL, a hashing function will be provided */

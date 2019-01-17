@@ -1,5 +1,21 @@
 2019-01-13  Eric Herman <eric@freesa.org>
 
+	API-breaking change: no longer pass "size" to ehht_free_func:
+
+	-void (*ehht_free_func) (void *ptr, size_t size, void *context);
+	+void (*ehht_free_func) (void *ptr, void *context);
+
+	* src/ehht.h:
+	* src/ehht.c: no longer pass "size" to free funcs
+	* tests/test-ehht.h: update to use new API, move size code inside
+	* tests/test_ehht_clear.c: update the initialization
+	* tests/test_out_of_memory.c: update the initialization
+	* README: update the example
+	* configure.ac: version bump
+
+
+2019-01-13  Eric Herman <eric@freesa.org>
+
 	Rather than build with-or-without jumphash, simply
 	demonstrate how the caller can use jumphash as part
 	of a function pointer.

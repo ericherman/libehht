@@ -22,7 +22,7 @@ int test_out_of_memory()
 	struct ehht_s *table;
 	char buf[40];
 	size_t i;
-	struct mem_context ctx = { 0, 0, 0, 0, 0, 0 };
+	struct tracking_mem_context ctx = { 0, 0, 0, 0, 0, 0, 0 };
 
 	ctx.malloc_multiplier = 8 * 1024;
 	table = ehht_new(0, NULL, test_malloc, test_free, &ctx);
