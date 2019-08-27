@@ -20,7 +20,11 @@
 /* a simple hash-table */
 
 #ifdef __cplusplus
-extern "C" {
+#define Ehht_begin_C_functions extern "C" {
+#define Ehht_end_C_functions }
+#else
+#define Ehht_begin_C_functions
+#define Ehht_end_C_functions
 #endif
 
 #include <stddef.h>		/* size_t */
@@ -38,8 +42,8 @@ struct ehht_keys_s {
 };
 
 /* passed parameter functions */
-typedef int (*ehht_iterator_func) (struct ehht_key_s each_key,
-				   void *each_val, void *context);
+typedef int (*ehht_iterator_func)(struct ehht_key_s each_key,
+				  void *each_val, void *context);
 
 /* interface */
 struct ehht_s {
@@ -47,46 +51,48 @@ struct ehht_s {
 	void *data;
 
 	/* public methods */
-	void *(*get) (struct ehht_s *table, const char *key, size_t key_len);
+	void *(*get)(struct ehht_s *table, const char *key, size_t key_len);
 
 	/* allocates a copy of the key parameter,
 	 * copy will be freed when the key is no longer in use by the table
 	 * returns the previous value or NULL */
-	void *(*put) (struct ehht_s *table, const char *key, size_t key_len,
-		      void *val);
+	void *(*put)(struct ehht_s *table, const char *key, size_t key_len,
+		     void *val);
 
 	/* returns the previous value or NULL */
-	void *(*remove) (struct ehht_s *table, const char *key, size_t key_len);
+	void *(*remove)(struct ehht_s *table, const char *key, size_t key_len);
 
-	size_t (*size) (struct ehht_s *table);
+	size_t (*size)(struct ehht_s *table);
 
-	void (*clear) (struct ehht_s *table);
+	void (*clear)(struct ehht_s *table);
 
-	int (*for_each) (struct ehht_s *table, ehht_iterator_func func,
-			 void *context);
+	int (*for_each)(struct ehht_s *table, ehht_iterator_func func,
+			void *context);
 
-	int (*has_key) (struct ehht_s *table, const char *key, size_t key_len);
+	int (*has_key)(struct ehht_s *table, const char *key, size_t key_len);
 
 	/* fills the keys array with (pointers or newly allocated) key strings
 	   populates the lens array with the corresponding lengths
 	   returns the number of elements populated */
 	struct ehht_keys_s *(*keys) (struct ehht_s *table, int copy_keys);
-	void (*free_keys) (struct ehht_s *table, struct ehht_keys_s *keys);
+	void (*free_keys)(struct ehht_s *table, struct ehht_keys_s *keys);
 
 	/* returns the number of characters written to "buf"
 	   (excluding the null byte terminator) */
-	size_t (*to_string) (struct ehht_s *table, char *buf, size_t buf_len);
+	size_t (*to_string)(struct ehht_s *table, char *buf, size_t buf_len);
 
-	size_t (*num_buckets) (struct ehht_s *table);
-	size_t (*resize) (struct ehht_s *table, size_t num_buckets);
-	size_t (*bucket_for_key) (struct ehht_s *table, const char *key,
-				  size_t key_len);
+	size_t (*num_buckets)(struct ehht_s *table);
+	size_t (*resize)(struct ehht_s *table, size_t num_buckets);
+	size_t (*bucket_for_key)(struct ehht_s *table, const char *key,
+				 size_t key_len);
 };
 
-typedef unsigned int (*ehht_hash_func) (const char *data, size_t data_len);
-typedef void *(*ehht_malloc_func) (size_t size, void *context);
-typedef void (*ehht_free_func) (void *ptr, void *context);
+typedef unsigned int (*ehht_hash_func)(const char *data, size_t data_len);
+typedef void *(*ehht_malloc_func)(size_t size, void *context);
+typedef void (*ehht_free_func)(void *ptr, void *context);
 
+Ehht_begin_C_functions
+#undef Ehht_begin_C_functions
 /* constructor */
 /* if hash_func is NULL, a hashing function will be provided */
 /* if ehht_malloc_func/free_func are NULL, malloc/free will be used */
@@ -97,8 +103,6 @@ struct ehht_s *ehht_new(size_t num_buckets, ehht_hash_func hash_func,
 /* destructor */
 void ehht_free(struct ehht_s *table);
 
-#ifdef __cplusplus
-}
-#endif
-
+Ehht_end_C_functions
+#undef Ehht_end_C_functions
 #endif /* EHHT_H */

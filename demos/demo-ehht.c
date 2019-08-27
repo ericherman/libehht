@@ -20,8 +20,8 @@
 #include <errno.h>		/* errno strerror */
 #include <stdint.h>		/* int32_t */
 
-#include "ehht.h"
-#include "ehht-report.h"
+#include "../src/ehht.h"
+#include "../tests/ehht-report.h"
 
 #ifndef MAKE_VALGRIND_HAPPY
 #define MAKE_VALGRIND_HAPPY 0

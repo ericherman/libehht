@@ -21,10 +21,12 @@
 #include <assert.h>
 #include <errno.h>
 
+#ifndef EHHT_DEBUG
 #ifdef NDEBUG
 #define EHHT_DEBUG 0
 #else
 #define EHHT_DEBUG 1
+#endif
 #endif
 
 struct ehht_element_s {
@@ -256,8 +258,8 @@ static void *ehht_remove(struct ehht_s *this, const char *key, size_t key_len)
 }
 
 static int ehht_for_each(struct ehht_s *this,
-			 int (*func) (struct ehht_key_s each_key,
-				      void *each_val, void *context),
+			 int (*func)(struct ehht_key_s each_key,
+				     void *each_val, void *context),
 			 void *context)
 {
 	struct ehht_table_s *table;

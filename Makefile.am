@@ -36,7 +36,7 @@ SSTATS=../simple_stats/sstats
 
 ACLOCAL_AMFLAGS=-I m4 --install
 
-EXTRA_DIST=COPYING.GPL
+EXTRA_DIST=COPYING COPYING.LESSER
 
 DEMOS=$(bin_PROGRAMS)
 bin_PROGRAMS=demo-ehht demo-ehht-as-array
@@ -62,7 +62,6 @@ check_PROGRAMS=\
 
 
 tidy:
-	patch -Np1 -i misc/pre-tidy.patch
 	$(LINDENT) \
 		-T FILE \
 		-T size_t -T ssize_t \
@@ -74,7 +73,6 @@ tidy:
 		-T ehht_key_s \
 		-T ehht_keys_s \
 		`find src tests demos -name '*.h' -o -name '*.c'`
-	patch -Rp1 -i misc/pre-tidy.patch
 
 demo: $(DEMOS)
 	./libtool --mode=execute ./demo-ehht-as-array
