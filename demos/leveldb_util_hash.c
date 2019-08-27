@@ -1,3 +1,4 @@
+/* SPDX-License-Identifier: BSD-3-Clause */
 /*
 Copyright (c) 2011 The LevelDB Authors. All rights reserved.
 
@@ -30,6 +31,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 /*
   original C++ code here: https://github.com/google/leveldb
+                          https://github.com/google/leveldb/blob/master/LICENSE
+
   in this form, converted to C
   Eric Herman 2016-02-20
 */
