@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: LGPL-3.0-or-later */
 /* ehht.h: a simple OO hashtable */
-/* Copyright (C) 2016, 2017, 2018, 2019 Eric Herman <eric@freesa.org> */
+/* Copyright (C) 2016, 2017, 2018, 2019, 2020 Eric Herman <eric@freesa.org> */
 /* https://github.com/ericherman/libehht */
 
 #ifndef EHHT_H
@@ -88,6 +88,9 @@ Ehht_begin_C_functions
 struct ehht_s *ehht_new(size_t num_buckets, ehht_hash_func hash_func,
 			ehht_malloc_func alloc_func, ehht_free_func free_func,
 			void *mem_context);
+
+/* provided for testing and very special uses, not part of a hashtable API */
+void ehht_set_collision_resize_load_factor(struct ehht_s *table, double factor);
 
 /* destructor */
 void ehht_free(struct ehht_s *table);

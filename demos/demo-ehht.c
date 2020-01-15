@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: LGPL-3.0-or-later */
 /* demo-ehht.c: demo of a simple OO hashtable */
-/* Copyright (C) 2016, 2017, 2018, 2019 Eric Herman <eric@freesa.org> */
+/* Copyright (C) 2016, 2017, 2018, 2019, 2020 Eric Herman <eric@freesa.org> */
 /* https://github.com/ericherman/libehht */
 
 #include <stdio.h>		/* fprintf fscanf printf */
@@ -45,6 +45,7 @@ unsigned int ehht_jump(const char *data, size_t len)
 				__FILE__, __LINE__); \
 			return 1; \
 		} \
+		ehht_set_collision_resize_load_factor((*target), 0.0); \
 	} while (0)
 
 #define new_sizes(target, target_sizes) \

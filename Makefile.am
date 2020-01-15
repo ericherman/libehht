@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: LGPL-3.0-or-later
 # Makefile.am: build instructions for a simple OO hashtable
-# Copyright (C) 2016, 2017, 2018, 2019 Eric Herman <eric@freesa.org>
+# Copyright (C) 2016, 2017, 2018, 2019, 2020 Eric Herman <eric@freesa.org>
 # https://github.com/ericherman/libehht
 
 lib_LTLIBRARIES=libehht.la
@@ -47,6 +47,7 @@ check_PROGRAMS=\
  test_ehht_foreach_element \
  test_ehht_keys \
  test_ehht_resize \
+ test_ehht_collision_resize \
  test_out_of_memory
 
 
@@ -85,6 +86,7 @@ valgrind: $(check_PROGRAMS)
 	libtool --mode=execute valgrind -q ./test_ehht_foreach_element
 	libtool --mode=execute valgrind -q ./test_ehht_keys
 	libtool --mode=execute valgrind -q ./test_ehht_resize
+	libtool --mode=execute valgrind -q ./test_ehht_collision_resize
 
 
 libehht_la_SOURCES=$(include_HEADERS) src/ehht.c
@@ -123,6 +125,10 @@ test_ehht_put_get_remove_LDADD=$(T_COMMON_LDADD)
 test_ehht_resize_SOURCES=tests/test_ehht_resize.c \
  $(T_COMMON_SOURCES)
 test_ehht_resize_LDADD=$(T_COMMON_LDADD)
+
+test_ehht_collision_resize_SOURCES=tests/test_ehht_collision_resize.c \
+ $(T_COMMON_SOURCES)
+test_ehht_collision_resize_LDADD=$(T_COMMON_LDADD)
 
 test_out_of_memory_SOURCES=tests/test_out_of_memory.c \
  $(T_COMMON_SOURCES)

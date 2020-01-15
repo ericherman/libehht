@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: LGPL-3.0-or-later */
 /* ehht.c: a simple OO hashtable */
-/* Copyright (C) 2016, 2017, 2018, 2019 Eric Herman <eric@freesa.org> */
+/* Copyright (C) 2016, 2017, 2018, 2019, 2020 Eric Herman <eric@freesa.org> */
 /* https://github.com/ericherman/libehht */
 
 #include "ehht.h"
@@ -9,6 +9,16 @@
 #include <stdio.h>		/* fprintf */
 #include <assert.h>
 #include <errno.h>
+
+#ifndef EHHT_DEFAULT_BUCKETS
+#define EHHT_DEFAULT_BUCKETS 64
+#endif
+
+#ifndef EHHT_DEFAULT_RESIZE_LOADFACTOR
+/* we split when we collide and we have a load factor over 0.667 */
+/* https://github.com/Perl/perl5/blob/blead/hv.c#L37 */
+#define EHHT_DEFAULT_RESIZE_LOADFACTOR (2.0/3.0)
+#endif
 
 #ifndef EHHT_DEBUG
 #ifdef NDEBUG
@@ -32,6 +42,7 @@ struct ehht_table_s {
 	ehht_malloc_func alloc;
 	ehht_free_func free;
 	void *mem_context;
+	double collision_load_factor;
 };
 
 static void ehht_set_table(struct ehht_s *this, struct ehht_table_s *table)
@@ -181,7 +192,7 @@ static void *ehht_put(struct ehht_s *this, const char *key, size_t key_len,
 	struct ehht_table_s *table;
 	struct ehht_element_s *element;
 	void *old_val;
-	unsigned int hashcode;
+	unsigned int hashcode, collision;
 	size_t bucket_num;
 
 	table = ehht_get_table(this);
@@ -196,6 +207,14 @@ static void *ehht_put(struct ehht_s *this, const char *key, size_t key_len,
 
 	hashcode = table->hash_func(key, key_len);
 	bucket_num = ehht_bucket_for_hashcode(hashcode, table->num_buckets);
+	collision = (table->buckets[bucket_num] == NULL) ? 0 : 1;
+	if (collision && table->collision_load_factor > 0.0) {
+		if (table->size >=
+		    (table->num_buckets * table->collision_load_factor)) {
+			this->resize(this, 0);
+		}
+	}
+
 	element = ehht_alloc_element(table, key, key_len, hashcode, val);
 	if (!element) {
 		if (EHHT_DEBUG) {
@@ -206,8 +225,11 @@ static void *ehht_put(struct ehht_s *this, const char *key, size_t key_len,
 		/* should this exit? */
 		return NULL;
 	}
+
+	bucket_num = ehht_bucket_for_hashcode(hashcode, table->num_buckets);
 	element->next = table->buckets[bucket_num];
 	table->buckets[bucket_num] = element;
+
 	return NULL;
 }
 
@@ -498,6 +520,14 @@ static void ehht_mem_free(void *ptr, void *context)
 	free(ptr);
 }
 
+void ehht_set_collision_resize_load_factor(struct ehht_s *this, double factor)
+{
+	struct ehht_table_s *table;
+
+	table = ehht_get_table(this);
+	table->collision_load_factor = factor;
+}
+
 struct ehht_s *ehht_new(size_t num_buckets, ehht_hash_func hash_func,
 			ehht_malloc_func mem_alloc, ehht_free_func mem_free,
 			void *mem_context)
@@ -507,7 +537,7 @@ struct ehht_s *ehht_new(size_t num_buckets, ehht_hash_func hash_func,
 	size_t i;
 
 	if (num_buckets == 0) {
-		num_buckets = 4096;
+		num_buckets = EHHT_DEFAULT_BUCKETS;
 	}
 	if (hash_func == NULL) {
 		hash_func = ehht_kr2_hashcode;
@@ -557,6 +587,7 @@ struct ehht_s *ehht_new(size_t num_buckets, ehht_hash_func hash_func,
 		table->buckets[i] = NULL;
 	}
 	table->size = 0;
+	table->collision_load_factor = EHHT_DEFAULT_RESIZE_LOADFACTOR;
 
 	table->hash_func = hash_func;
 	table->alloc = mem_alloc;
