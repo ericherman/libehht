@@ -72,8 +72,6 @@ struct ehht_s {
 
 	size_t (*num_buckets)(struct ehht_s *table);
 	size_t (*resize)(struct ehht_s *table, size_t num_buckets);
-	size_t (*bucket_for_key)(struct ehht_s *table, const char *key,
-				 size_t key_len);
 };
 
 typedef unsigned int (*ehht_hash_func)(const char *data, size_t data_len);
@@ -91,6 +89,7 @@ struct ehht_s *ehht_new(size_t num_buckets, ehht_hash_func hash_func,
 
 /* provided for testing and very special uses, not part of a hashtable API */
 void ehht_set_collision_resize_load_factor(struct ehht_s *table, double factor);
+size_t ehht_bucket_for_key(struct ehht_s *table, const char *key, size_t key_len);
 
 /* destructor */
 void ehht_free(struct ehht_s *table);

@@ -34,7 +34,7 @@ size_t ehht_distribution_report(struct ehht_s *table, size_t *sizes,
 	copy_keys = 0;
 	keys = table->keys(table, copy_keys);
 	for (i = 0; i < keys->len; ++i) {
-		bucket = table->bucket_for_key(table, keys->keys[i].str,
+		bucket = ehht_bucket_for_key(table, keys->keys[i].str,
 					       keys->keys[i].len);
 		++sizes[bucket];
 	}

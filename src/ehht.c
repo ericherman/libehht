@@ -88,7 +88,7 @@ static size_t ehht_bucket_for_hashcode(unsigned int hashcode,
 	return (size_t)(hashcode % num_buckets);
 }
 
-static size_t ehht_bucket_for_key(struct ehht_s *this, const char *key,
+size_t ehht_bucket_for_key(struct ehht_s *this, const char *key,
 				  size_t key_len)
 {
 	struct ehht_table_s *table;
@@ -565,7 +565,6 @@ struct ehht_s *ehht_new(size_t num_buckets, ehht_hash_func hash_func,
 	this->to_string = ehht_to_string;
 	this->num_buckets = ehht_num_buckets;
 	this->resize = ehht_resize;
-	this->bucket_for_key = ehht_bucket_for_key;
 
 	table = mem_alloc(sizeof(struct ehht_table_s), mem_context);
 	if (table == NULL) {
