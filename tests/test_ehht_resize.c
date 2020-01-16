@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: LGPL-3.0-or-later */
 /* test_ehht_resize.c: test for a simple OO hashtable */
-/* Copyright (C) 2016, 2017, 2018, 2019 Eric Herman <eric@freesa.org> */
+/* Copyright (C) 2016, 2017, 2018, 2019, 2020 Eric Herman <eric@freesa.org> */
 /* https://github.com/ericherman/libehht */
 
 #include "test-ehht.h"
@@ -14,13 +14,13 @@ int test_ehht_resize()
 	char buf[24];
 
 	num_buckets = 4;
-	table = ehht_new(num_buckets, NULL, NULL, NULL, NULL);
+	table = ehht_new_custom(num_buckets, NULL, NULL, NULL, NULL);
 
 	if (table == NULL) {
 		return ++failures;
 	}
 
-	failures += check_unsigned_int_m(table->num_buckets(table), num_buckets,
+	failures += check_unsigned_int_m(ehht_num_buckets(table), num_buckets,
 					 "init num_buckets");
 
 	x = num_buckets;
@@ -40,7 +40,7 @@ int test_ehht_resize()
 	}
 
 	num_buckets *= 2;
-	table->resize(table, num_buckets);
+	ehht_resize(table, num_buckets);
 
 	items_written = ehht_distribution_report(table, report, 10);
 	failures +=

@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: LGPL-3.0-or-later */
 /* test_ehht_foreach_element.c: test for a simple OO hashtable */
-/* Copyright (C) 2016, 2017, 2018, 2019 Eric Herman <eric@freesa.org> */
+/* Copyright (C) 2016, 2017, 2018, 2019, 2020 Eric Herman <eric@freesa.org> */
 /* https://github.com/ericherman/libehht */
 
 #include "test-ehht.h"
@@ -27,7 +27,7 @@ int test_ehht_foreach_element()
 	struct ehht_s *table;
 	unsigned int actual, expected, num_buckets = 5;
 
-	table = ehht_new(num_buckets, NULL, NULL, NULL, NULL);
+	table = ehht_new_custom(num_buckets, NULL, NULL, NULL, NULL);
 
 	if (table == NULL) {
 		++failures;

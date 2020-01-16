@@ -1,11 +1,11 @@
 # SPDX-License-Identifier: LGPL-3.0-or-later
 # configure.ac: Autoconf for a simple OO hashtable library
-# Copyright (C) 2016, 2018, 2019 Eric Herman <eric@freesa.org>
+# Copyright (C) 2016, 2018, 2019, 2020 Eric Herman <eric@freesa.org>
 # https://github.com/ericherman/libehht
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ([2.69])
-AC_INIT([libehht], [2.0.1-dev], [eric@freesa.org])
+AC_INIT([libehht], [2.0.2-dev], [eric@freesa.org])
 AC_CONFIG_SRCDIR([src/ehht.h])
 AC_CONFIG_HEADERS([config.h])
 AC_CONFIG_AUX_DIR([build-aux])

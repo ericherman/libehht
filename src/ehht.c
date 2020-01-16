@@ -88,8 +88,7 @@ static size_t ehht_bucket_for_hashcode(unsigned int hashcode,
 	return (size_t)(hashcode % num_buckets);
 }
 
-size_t ehht_bucket_for_key(struct ehht_s *this, const char *key,
-				  size_t key_len)
+size_t ehht_bucket_for_key(struct ehht_s *this, const char *key, size_t key_len)
 {
 	struct ehht_table_s *table;
 	unsigned int hashcode;
@@ -211,7 +210,7 @@ static void *ehht_put(struct ehht_s *this, const char *key, size_t key_len,
 	if (collision && table->collision_load_factor > 0.0) {
 		if (table->size >=
 		    (table->num_buckets * table->collision_load_factor)) {
-			this->resize(this, 0);
+			ehht_resize(this, 0);
 		}
 	}
 
@@ -352,7 +351,7 @@ static size_t ehht_to_string(struct ehht_s *this, char *buf, size_t buf_len)
 	return str_buf.buf_pos;
 }
 
-static size_t ehht_resize(struct ehht_s *this, size_t num_buckets)
+size_t ehht_resize(struct ehht_s *this, size_t num_buckets)
 {
 	size_t i, old_num_buckets, new_bucket_num, size;
 	struct ehht_table_s *table;
@@ -393,7 +392,7 @@ static size_t ehht_resize(struct ehht_s *this, size_t num_buckets)
 	return num_buckets;
 }
 
-static size_t ehht_num_buckets(struct ehht_s *this)
+size_t ehht_num_buckets(struct ehht_s *this)
 {
 	struct ehht_table_s *table;
 
@@ -528,9 +527,14 @@ void ehht_set_collision_resize_load_factor(struct ehht_s *this, double factor)
 	table->collision_load_factor = factor;
 }
 
-struct ehht_s *ehht_new(size_t num_buckets, ehht_hash_func hash_func,
-			ehht_malloc_func mem_alloc, ehht_free_func mem_free,
-			void *mem_context)
+struct ehht_s *ehht_new(void)
+{
+	return ehht_new_custom(0, NULL, NULL, NULL, NULL);
+}
+
+struct ehht_s *ehht_new_custom(size_t num_buckets, ehht_hash_func hash_func,
+			       ehht_malloc_func mem_alloc,
+			       ehht_free_func mem_free, void *mem_context)
 {
 	struct ehht_s *this;
 	struct ehht_table_s *table;
@@ -563,8 +567,6 @@ struct ehht_s *ehht_new(size_t num_buckets, ehht_hash_func hash_func,
 	this->keys = ehht_keys;
 	this->free_keys = ehht_free_keys;
 	this->to_string = ehht_to_string;
-	this->num_buckets = ehht_num_buckets;
-	this->resize = ehht_resize;
 
 	table = mem_alloc(sizeof(struct ehht_table_s), mem_context);
 	if (table == NULL) {

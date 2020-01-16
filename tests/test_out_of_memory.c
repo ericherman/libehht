@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: LGPL-3.0-or-later */
 /* test_out_of_memory.c: test for a simple OO hashtable */
-/* Copyright (C) 2016, 2017, 2018, 2019 Eric Herman <eric@freesa.org> */
+/* Copyright (C) 2016, 2017, 2018, 2019, 2020 Eric Herman <eric@freesa.org> */
 /* https://github.com/ericherman/libehht */
 
 #include "test-ehht.h"
@@ -14,7 +14,7 @@ int test_out_of_memory()
 	struct tracking_mem_context ctx = { 0, 0, 0, 0, 0, 0, 0 };
 
 	ctx.malloc_multiplier = 8 * 1024;
-	table = ehht_new(0, NULL, test_malloc, test_free, &ctx);
+	table = ehht_new_custom(0, NULL, test_malloc, test_free, &ctx);
 
 	if (table == NULL) {
 		++failures;

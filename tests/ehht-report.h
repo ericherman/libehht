@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: LGPL-3.0-or-later */
 /* ehht-report.h: reporting interface for a simple OO hashtable */
-/* Copyright (C) 2016, 2017, 2018, 2019 Eric Herman <eric@freesa.org> */
+/* Copyright (C) 2016, 2017, 2018, 2019, 2020 Eric Herman <eric@freesa.org> */
 /* https://github.com/ericherman/libehht */
 
 #ifndef EHHT_REPORT_H
@@ -35,7 +35,7 @@ size_t ehht_distribution_report(struct ehht_s *table, size_t *sizes,
 	keys = table->keys(table, copy_keys);
 	for (i = 0; i < keys->len; ++i) {
 		bucket = ehht_bucket_for_key(table, keys->keys[i].str,
-					       keys->keys[i].len);
+					     keys->keys[i].len);
 		++sizes[bucket];
 	}
 	table->free_keys(table, keys);

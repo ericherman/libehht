@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: LGPL-3.0-or-later */
 /* test_ehht_keys.c: test for a simple OO hashtable */
-/* Copyright (C) 2016, 2017, 2018, 2019 Eric Herman <eric@freesa.org> */
+/* Copyright (C) 2016, 2017, 2018, 2019, 2020 Eric Herman <eric@freesa.org> */
 /* https://github.com/ericherman/libehht */
 
 #include "test-ehht.h"
@@ -19,7 +19,7 @@ int test_ehht_keys()
 
 	for (allocate_copies = 0; allocate_copies < 2; ++allocate_copies) {
 
-		table = ehht_new(num_buckets, NULL, NULL, NULL, NULL);
+		table = ehht_new_custom(num_buckets, NULL, NULL, NULL, NULL);
 
 		for (i = 0; e_keys[i] != NULL; ++i) {
 			table->put(table, e_keys[i], strlen(e_keys[i]), NULL);

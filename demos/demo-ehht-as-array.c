@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: LGPL-3.0-or-later */
 /* demo-ehht-as-array.c: demo of a simple OO hashtable */
-/* Copyright (C) 2016, 2017, 2018, 2019 Eric Herman <eric@freesa.org> */
+/* Copyright (C) 2016, 2017, 2018, 2019, 2020 Eric Herman <eric@freesa.org> */
 /* https://github.com/ericherman/libehht */
 
 #include <stdio.h>		/* fprintf fscanf printf */
@@ -56,15 +56,13 @@ int comp_key_lens(const void *a, const void *b)
 	return l->key.len > r->key.len ? -1 : 1;
 }
 
-int main(int argc, char *argv[])
+int main(void)
 {
 	struct ehht_s *table;
-	size_t i, num_buckets;
+	size_t i;
 	struct kva_s *kva;
 
-	num_buckets = (argc > 1) ? atoi(argv[1]) : 0;
-
-	table = ehht_new(num_buckets, NULL, NULL, NULL, NULL);
+	table = ehht_new();
 	if (table == NULL) {
 		fprintf(stderr, "ehht_new returned NULL");
 		exit(EXIT_FAILURE);

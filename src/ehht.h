@@ -64,14 +64,12 @@ struct ehht_s {
 	   populates the lens array with the corresponding lengths
 	   returns the number of elements populated */
 	struct ehht_keys_s *(*keys) (struct ehht_s *table, int copy_keys);
+
 	void (*free_keys)(struct ehht_s *table, struct ehht_keys_s *keys);
 
 	/* returns the number of characters written to "buf"
 	   (excluding the null byte terminator) */
 	size_t (*to_string)(struct ehht_s *table, char *buf, size_t buf_len);
-
-	size_t (*num_buckets)(struct ehht_s *table);
-	size_t (*resize)(struct ehht_s *table, size_t num_buckets);
 };
 
 typedef unsigned int (*ehht_hash_func)(const char *data, size_t data_len);
@@ -80,19 +78,25 @@ typedef void (*ehht_free_func)(void *ptr, void *context);
 
 Ehht_begin_C_functions
 #undef Ehht_begin_C_functions
-/* constructor */
+/* default constructor */
+struct ehht_s *ehht_new(void);
+
+/* allocator aware constructor */
 /* if hash_func is NULL, a hashing function will be provided */
 /* if ehht_malloc_func/free_func are NULL, malloc/free will be used */
-struct ehht_s *ehht_new(size_t num_buckets, ehht_hash_func hash_func,
-			ehht_malloc_func alloc_func, ehht_free_func free_func,
-			void *mem_context);
-
-/* provided for testing and very special uses, not part of a hashtable API */
-void ehht_set_collision_resize_load_factor(struct ehht_s *table, double factor);
-size_t ehht_bucket_for_key(struct ehht_s *table, const char *key, size_t key_len);
+struct ehht_s *ehht_new_custom(size_t num_buckets, ehht_hash_func hash_func,
+			       ehht_malloc_func alloc_func,
+			       ehht_free_func free_func, void *mem_context);
 
 /* destructor */
 void ehht_free(struct ehht_s *table);
+
+/* provided for testing and very special uses, not part of a hashtable API */
+void ehht_set_collision_resize_load_factor(struct ehht_s *table, double factor);
+size_t ehht_bucket_for_key(struct ehht_s *table, const char *key,
+			   size_t key_len);
+size_t ehht_num_buckets(struct ehht_s *table);
+size_t ehht_resize(struct ehht_s *table, size_t num_buckets);
 
 Ehht_end_C_functions
 #undef Ehht_end_C_functions

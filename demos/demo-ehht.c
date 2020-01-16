@@ -39,7 +39,8 @@ unsigned int ehht_jump(const char *data, size_t len)
 
 #define new_table(target, buckets, hash_pfunc) \
 	do { \
-		(*target) = ehht_new(buckets, hash_pfunc, NULL, NULL, NULL); \
+		(*target) = ehht_new_custom(buckets, hash_pfunc, \
+				NULL, NULL, NULL); \
 		if (!(*target)) { \
 			fprintf(stderr, "%s:%d: ehht_new returned NULL", \
 				__FILE__, __LINE__); \
@@ -50,7 +51,7 @@ unsigned int ehht_jump(const char *data, size_t len)
 
 #define new_sizes(target, target_sizes) \
 	do { \
-		actual_buckets = target->num_buckets(target); \
+		actual_buckets = ehht_num_buckets(target); \
 		if (num_buckets != actual_buckets) { \
 			fprintf(stderr, "%s:%d: %lu != %lu\n", \
 				__FILE__, __LINE__, \

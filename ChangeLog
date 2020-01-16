@@ -1,3 +1,36 @@
+2020-01-16  Eric Herman <eric@freesa.org>
+
+	More API-breaking changes!
+
+	The default constructor is now no-arg.
+	The custom constructor is now ehht_new_custom
+
+	The hashtable no long has member functions num_buckets, resize,
+	or bucket_for_key, rather ehht_num_buckets, ehht_resize, and
+	ehht_bucket_for_key are available for testing and the rare
+	situations where they may be desired. As these are specific to
+	an implementation, they are no longer part of the hashtable API.
+
+	The 'put' operation will now auto-resize the hashtable if it
+	encounters a collision if load factor is reached. Auto-resizing
+	can be disabled with:
+		ehht_set_collision_resize_load_factor(table, 0.0)
+
+	Also SPDX-License-Identifier all the things.
+
+	* src/ehht.h: constructor adjustment, move impl specific funcs
+	* src/ehht.c: auto-resize on collision
+	* README: constructor, auto-resize
+	* demos/demo-ehht-as-array.c: constructor
+	* demos/demo-ehht.c: constructor, set_collision_resize_load_factor 0.0
+	* demos/leveldb_util_hash.c: Add BSD-3-clause License info
+	* configure.ac: version bump
+	* tests/test_ehht_collision_resize.c: new test!
+	* tests/*.c: adjust constructor
+	* Makefile.am: +test_ehht_collision_resize
+	* .gitignore: +test_ehht_collision_resize
+
+
 2019-01-13  Eric Herman <eric@freesa.org>
 
 	API-breaking change: no longer pass "size" to ehht_free_func:

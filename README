@@ -1,12 +1,5 @@
 The "libehht" C library specifies a basic object oriented hash-table.
 
-The "put" operation has predicatable time because a put does not
-cause a table re-balance. It is the caller's responsibility to set
-the initial number of buckets and to call "resize" if the total
-number of values becomes too large for the number of buckets. Memory
-allocation functions and the hashing method are configurable at
-construction time.
-
 The keys need not be strings, any char pointer and length is fine.
 
 The operations are _not_ thread-safe, and thus the caller is
@@ -18,16 +11,12 @@ Default Construction
 
 In the simple case, the defaults will usually be fine, e.g.:
 
-	size_t buckets;
 	struct ehht_s *table;
 
-	buckets = 1024;
-	table = ehht_new(buckets, NULL, NULL, NULL, NULL);
+	table = ehht_new();
 	if (!t) {
 		exit(EXIT_FAILURE);
 	}
-
-The the number of buckets is 0, a default is chosen.
 
 If needed, custom hashing functions, as well as memory allocation
 functions can be provided. See "Custom Contruction" below.
@@ -201,34 +190,6 @@ excluding the null byte terminator.
 	printf("table: %s\n", buf);
 
 
-Num Buckets
------------
-
-The "num_buckets" method returns the current number of buckets
-allocated inside the table.
-
-	size_t buckets;
-
-	buckets = table->num_buckets(table);
-
-
-Resize
-------
-
-The "resize" method allows the caller to change the number of
-buckets used by the table. If allocation fails, the bucket size
-remains unchanged.
-
-	size_t buckets, target_buckets;
-
-	target_buckets = 2048;
-	buckets = table->resize(table, target_buckets);
-	if (buckets != target_buckets) {
-		fprintf(stderr, "resize failed\n");
-	}
-
-
-
 Custom Construction
 -------------------
 
@@ -316,14 +277,50 @@ hashing functions:
 			ctx->null_frees = 0;
 			ctx->peak_usage = 0;
 		}
-		return ehht_new(buckets, djb2_hash, tracking_malloc,
-				tracking_free, ctx);
+		return ehht_new_custom(buckets, djb2_hash, tracking_malloc,
+				      tracking_free, ctx);
 	}
+
+If the number of buckets is 0 at construction, a default is chosen.
 
 To see how to use jumphash, you can look in the "demos" directory:
  * https://github.com/ericherman/libehht/blob/master/demos/demo-ehht.c
  * https://github.com/ericherman/libjumphash
  * http://www.cse.yorku.ca/~oz/hash.html
+
+
+Num Buckets
+-----------
+
+The "num_buckets" method returns the current number of buckets
+allocated inside the table.
+
+	size_t buckets;
+
+	buckets = ehht_num_buckets(table);
+
+
+Resize
+------
+The 'put' operation will auto-resize the hashtable if it encounters a
+collision if load factor is reached. Auto-resizing can be disabled with:
+                ehht_set_collision_resize_load_factor(table, 0.0)
+The default load-factor is 2/3.
+
+The "ehht_resize" function allows the caller to change the number of
+buckets used by the table. If allocation fails, the bucket size
+remains unchanged.
+
+	size_t buckets, target_buckets;
+
+	target_buckets = 2048;
+	buckets = ehht_resize(table, target_buckets);
+	if (buckets != target_buckets) {
+		fprintf(stderr, "resize failed\n");
+	}
+
+
+
 
 
 Dependencies

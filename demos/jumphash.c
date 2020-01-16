@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: LGPL-2.1-or-later */
 /* jumphash: A Fast, Minimal Memory, Consistent Hash Algorithm (from: Google) */
-/* Copyright (C) 2018, 2019 Eric Herman <eric@freesa.org> */
+/* Copyright (C) 2018, 2019, 2020 Eric Herman <eric@freesa.org> */
 /* https://github.com/ericherman/libehht */
 /* https://www.gnu.org/licenses/old-licenses/lgpl-2.1.txt */
 

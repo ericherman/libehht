@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: LGPL-3.0-or-later */
 /* test_ehht_put_get_remove: test for a simple OO hashtable */
-/* Copyright (C) 2016, 2017, 2018, 2019 Eric Herman <eric@freesa.org> */
+/* Copyright (C) 2016, 2017, 2018, 2019, 2020 Eric Herman <eric@freesa.org> */
 /* https://github.com/ericherman/libehht */
 
 #include "test-ehht.h"
@@ -14,7 +14,7 @@ int test_ehht_put_get_remove()
 	void *val, *old_val;
 	char buf[1000];
 
-	table = ehht_new(num_buckets, NULL, NULL, NULL, NULL);
+	table = ehht_new_custom(num_buckets, NULL, NULL, NULL, NULL);
 
 	key = "key1";
 

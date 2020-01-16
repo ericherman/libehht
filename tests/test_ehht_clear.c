@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: LGPL-3.0-or-later */
 /* test_ehht_clear.h: test for a simple OO hashtable */
-/* Copyright (C) 2016, 2017, 2018, 2019 Eric Herman <eric@freesa.org> */
+/* Copyright (C) 2016, 2017, 2018, 2019, 2020 Eric Herman <eric@freesa.org> */
 /* https://github.com/ericherman/libehht */
 
 #include "test-ehht.h"
@@ -15,7 +15,8 @@ int test_ehht_clear()
 	size_t report[REPORT_LEN];
 	struct tracking_mem_context ctx = { 0, 0, 0, 0, 0, 0, 0 };
 
-	table = ehht_new(num_buckets, NULL, test_malloc, test_free, &ctx);
+	table =
+	    ehht_new_custom(num_buckets, NULL, test_malloc, test_free, &ctx);
 
 	table->put(table, "g", 1, "wiz");
 	table->put(table, "foo", 3, "bar");

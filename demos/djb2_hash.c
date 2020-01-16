@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: LGPL-3.0-or-later */
 /* djb2_hash.c: a re-implementation of djb2 hash for NULL-containing data */
-/* Copyright (C) 2019 Eric Herman <eric@freesa.org> */
+/* Copyright (C) 2019, 2020 Eric Herman <eric@freesa.org> */
 /* https://github.com/ericherman/libehht */
 /* See Also: http://www.cse.yorku.ca/~oz/hash.html */
 
