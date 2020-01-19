@@ -5,7 +5,7 @@
 
 #include "test-ehht.h"
 
-int test_ehht_resize()
+int test_ehht_buckets_resize()
 {
 	int failures = 0;
 	struct ehht_s *table;
@@ -20,7 +20,7 @@ int test_ehht_resize()
 		return ++failures;
 	}
 
-	failures += check_unsigned_int_m(ehht_num_buckets(table), num_buckets,
+	failures += check_unsigned_int_m(ehht_buckets_size(table), num_buckets,
 					 "init num_buckets");
 
 	x = num_buckets;
@@ -40,7 +40,7 @@ int test_ehht_resize()
 	}
 
 	num_buckets *= 2;
-	ehht_resize(table, num_buckets);
+	ehht_buckets_resize(table, num_buckets);
 
 	items_written = ehht_distribution_report(table, report, 10);
 	failures +=
@@ -69,4 +69,4 @@ int test_ehht_resize()
 	return failures;
 }
 
-TEST_EHHT_MAIN(test_ehht_resize())
+TEST_EHHT_MAIN(test_ehht_buckets_resize())

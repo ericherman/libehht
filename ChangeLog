@@ -1,3 +1,25 @@
+2020-01-19  Eric Herman <eric@freesa.org>
+
+	Even more API-breaking changes!
+	But, getting close to stable, nearly ready for release.
+
+	Bucket-related friend functions now all start with the
+	"ehht_buckets" or "ehht_bucket" prefix:
+
+	ehht_buckets_size
+	ehht_buckets_resize
+	ehht_buckets_auto_resize_load_factor
+	ehht_bucket_for_key
+
+	* src/ehht.h: change bucket-function name declarations
+	* src/ehht.c: change bucket-function name definitions
+	* README: update function names, clarify docs a bit
+	* demos/demo-ehht.c: use new names
+	* tests/test_ehht_collision_resize.c: use new names
+	* tests/test_ehht_new.c: use new names
+	* tests/test_ehht_resize.c: use new names
+
+
 2020-01-16  Eric Herman <eric@freesa.org>
 
 	More API-breaking changes!

@@ -14,7 +14,7 @@ In the simple case, the defaults will usually be fine, e.g.:
 	struct ehht_s *table;
 
 	table = ehht_new();
-	if (!t) {
+	if (!table) {
 		exit(EXIT_FAILURE);
 	}
 
@@ -54,7 +54,7 @@ Get
 ----
 
 The "get" method takes a pointer to the table, a pointer to the key,
-the length of the key in bytes, and a pointer to the value.
+the length of the key in bytes, and returns a pointer to the value.
 
 
 	val = table->get(table, buf, strlen(buf));
@@ -146,13 +146,14 @@ the key, value, and context may be used:
 External Iteration
 ------------------
 
-If "for_each" is not desired, an struct of keys can be used for
+If "for_each" is not desired, a struct of keys can be used for
 user-controlled iteration. If the buffers of keys will be pointed to
-after the struct ehht_keys_s is freed, then the caller may request
-that the keys be new copies, rather than pointers to internal keys.
+after the struct ehht_keys_s is freed, then the caller may request that
+the keys be new copies, rather than pointers to internal keys.
 
 	size_t distribution_report(struct ehht_s *table,
-				   size_t *sizes, size_t sizes_len)
+				   size_t *sizes,
+				   size_t sizes_len)
 	{
 		struct ehht_keys_s *keys;
 		int copy_keys;
@@ -165,9 +166,9 @@ that the keys be new copies, rather than pointers to internal keys.
 		copy_keys = 0;
 		keys = table->keys(table, copy_keys);
 		for (i = 0; i < keys->len; ++i) {
-			bucket = table->bucket_for_key(table,
-						       keys->keys[i].str,
-						       keys->keys[i].len);
+			bucket = ehht_bucket_for_key(table,
+						     keys->keys[i].str,
+						     keys->keys[i].len);
 			++sizes[bucket];
 		}
 		table->free_keys(table, keys);
@@ -289,32 +290,33 @@ To see how to use jumphash, you can look in the "demos" directory:
  * http://www.cse.yorku.ca/~oz/hash.html
 
 
-Num Buckets
------------
+Number of Buckets
+-----------------
 
-The "num_buckets" method returns the current number of buckets
+The "ehht_buckets_size" method returns the current number of buckets
 allocated inside the table.
 
 	size_t buckets;
 
-	buckets = ehht_num_buckets(table);
+	buckets = ehht_buckets_size(table);
 
 
 Resize
 ------
 The 'put' operation will auto-resize the hashtable if it encounters a
-collision if load factor is reached. Auto-resizing can be disabled with:
-                ehht_set_collision_resize_load_factor(table, 0.0)
-The default load-factor is 2/3.
+collision if load factor is reached.  The default load-factor is 2/3.
 
-The "ehht_resize" function allows the caller to change the number of
-buckets used by the table. If allocation fails, the bucket size
-remains unchanged.
+Auto-resizing can be disabled with:
+                ehht_buckets_auto_resize_load_factor(table, 0.0)
+
+The "ehht_buckets_resize" function allows the caller to change the
+number of buckets used by the table. If allocation fails, the bucket
+size remains unchanged.
 
 	size_t buckets, target_buckets;
 
 	target_buckets = 2048;
-	buckets = ehht_resize(table, target_buckets);
+	buckets = ehht_buckets_resize(table, target_buckets);
 	if (buckets != target_buckets) {
 		fprintf(stderr, "resize failed\n");
 	}

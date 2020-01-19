@@ -72,31 +72,40 @@ struct ehht_s {
 	size_t (*to_string)(struct ehht_s *table, char *buf, size_t buf_len);
 };
 
-typedef unsigned int (*ehht_hash_func)(const char *data, size_t data_len);
-typedef void *(*ehht_malloc_func)(size_t size, void *context);
-typedef void (*ehht_free_func)(void *ptr, void *context);
-
 Ehht_begin_C_functions
 #undef Ehht_begin_C_functions
+/*****************************************************************************/
+/* constructors and destructor */
+/*****************************************************************************/
 /* default constructor */
 struct ehht_s *ehht_new(void);
 
 /* allocator aware constructor */
+typedef unsigned int (*ehht_hash_func)(const char *data, size_t data_len);
+typedef void *(*ehht_malloc_func)(size_t size, void *context);
+typedef void (*ehht_free_func)(void *ptr, void *context);
+
 /* if hash_func is NULL, a hashing function will be provided */
 /* if ehht_malloc_func/free_func are NULL, malloc/free will be used */
-struct ehht_s *ehht_new_custom(size_t num_buckets, ehht_hash_func hash_func,
+struct ehht_s *ehht_new_custom(size_t num_buckets,
+			       ehht_hash_func hash_func,
 			       ehht_malloc_func alloc_func,
 			       ehht_free_func free_func, void *mem_context);
 
 /* destructor */
 void ehht_free(struct ehht_s *table);
+/*****************************************************************************/
 
-/* provided for testing and very special uses, not part of a hashtable API */
-void ehht_set_collision_resize_load_factor(struct ehht_s *table, double factor);
+/*****************************************************************************/
+/* implementation-exposing "friend" functions are provided for testing and
+ * other very special uses, but are not truly part of a hashtable API */
+/*****************************************************************************/
+size_t ehht_buckets_size(struct ehht_s *table);
+size_t ehht_buckets_resize(struct ehht_s *table, size_t num_buckets);
+void ehht_buckets_auto_resize_load_factor(struct ehht_s *table, double factor);
 size_t ehht_bucket_for_key(struct ehht_s *table, const char *key,
 			   size_t key_len);
-size_t ehht_num_buckets(struct ehht_s *table);
-size_t ehht_resize(struct ehht_s *table, size_t num_buckets);
+/*****************************************************************************/
 
 Ehht_end_C_functions
 #undef Ehht_end_C_functions

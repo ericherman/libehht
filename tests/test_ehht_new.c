@@ -20,8 +20,8 @@ int test_ehht_new()
 
 	failures += check_unsigned_int_m(table->size(table), 0, "ehht_size");
 	failures +=
-	    check_unsigned_int_m(ehht_num_buckets(table), num_buckets,
-				 "ehht_num_buckets");
+	    check_unsigned_int_m(ehht_buckets_size(table), num_buckets,
+				 "ehht_buckets_size");
 
 	ehht_free(table);
 	return failures;

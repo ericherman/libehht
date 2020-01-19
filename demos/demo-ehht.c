@@ -46,12 +46,12 @@ unsigned int ehht_jump(const char *data, size_t len)
 				__FILE__, __LINE__); \
 			return 1; \
 		} \
-		ehht_set_collision_resize_load_factor((*target), 0.0); \
+		ehht_buckets_auto_resize_load_factor((*target), 0.0); \
 	} while (0)
 
 #define new_sizes(target, target_sizes) \
 	do { \
-		actual_buckets = ehht_num_buckets(target); \
+		actual_buckets = ehht_buckets_size(target); \
 		if (num_buckets != actual_buckets) { \
 			fprintf(stderr, "%s:%d: %lu != %lu\n", \
 				__FILE__, __LINE__, \

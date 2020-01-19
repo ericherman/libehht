@@ -210,7 +210,7 @@ static void *ehht_put(struct ehht_s *this, const char *key, size_t key_len,
 	if (collision && table->collision_load_factor > 0.0) {
 		if (table->size >=
 		    (table->num_buckets * table->collision_load_factor)) {
-			ehht_resize(this, 0);
+			ehht_buckets_resize(this, 0);
 		}
 	}
 
@@ -351,7 +351,7 @@ static size_t ehht_to_string(struct ehht_s *this, char *buf, size_t buf_len)
 	return str_buf.buf_pos;
 }
 
-size_t ehht_resize(struct ehht_s *this, size_t num_buckets)
+size_t ehht_buckets_resize(struct ehht_s *this, size_t num_buckets)
 {
 	size_t i, old_num_buckets, new_bucket_num, size;
 	struct ehht_table_s *table;
@@ -392,7 +392,7 @@ size_t ehht_resize(struct ehht_s *this, size_t num_buckets)
 	return num_buckets;
 }
 
-size_t ehht_num_buckets(struct ehht_s *this)
+size_t ehht_buckets_size(struct ehht_s *this)
 {
 	struct ehht_table_s *table;
 
@@ -519,7 +519,7 @@ static void ehht_mem_free(void *ptr, void *context)
 	free(ptr);
 }
 
-void ehht_set_collision_resize_load_factor(struct ehht_s *this, double factor)
+void ehht_buckets_auto_resize_load_factor(struct ehht_s *this, double factor)
 {
 	struct ehht_table_s *table;
 
