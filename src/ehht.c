@@ -69,11 +69,11 @@ static void ehht_clear(struct ehht_s *this)
 {
 	struct ehht_table_s *table;
 	size_t i;
-	struct ehht_element_s *element;
 
 	table = ehht_get_table(this);
 
 	for (i = 0; i < table->num_buckets; ++i) {
+		struct ehht_element_s *element;
 		while ((element = table->buckets[i]) != NULL) {
 			table->buckets[i] = element->next;
 			ehht_free_element(table, element);
@@ -355,7 +355,7 @@ size_t ehht_buckets_resize(struct ehht_s *this, size_t num_buckets)
 {
 	size_t i, old_num_buckets, new_bucket_num, size;
 	struct ehht_table_s *table;
-	struct ehht_element_s **new_buckets, **old_buckets, *element;
+	struct ehht_element_s **new_buckets, **old_buckets;
 
 	table = ehht_get_table(this);
 
@@ -375,6 +375,7 @@ size_t ehht_buckets_resize(struct ehht_s *this, size_t num_buckets)
 	old_num_buckets = table->num_buckets;
 	old_buckets = table->buckets;
 	for (i = 0; i < old_num_buckets; ++i) {
+		struct ehht_element_s *element;
 		while ((element = old_buckets[i]) != NULL) {
 			old_buckets[i] = element->next;
 			new_bucket_num =
@@ -411,9 +412,6 @@ static int ehht_fill_keys_each(struct ehht_key_s key, void *each_val,
 {
 	struct ehht_kl_s *kls;
 	struct ehht_s *ehht;
-	struct ehht_table_s *table;
-	char *str_copy;
-	size_t size;
 
 	kls = (struct ehht_kl_s *)context;
 	ehht = kls->ehht;
@@ -426,6 +424,10 @@ static int ehht_fill_keys_each(struct ehht_key_s key, void *each_val,
 	}
 
 	if (kls->keys->keys_copied) {
+		struct ehht_table_s *table;
+		size_t size;
+		char *str_copy;
+
 		table = ehht_get_table(ehht);
 		size = sizeof(char *) * (key.len + 1);
 		str_copy = table->alloc(size, table->mem_context);
@@ -494,10 +496,10 @@ keys_alloc_failed_0:
 static void ehht_free_keys(struct ehht_s *this, struct ehht_keys_s *keys)
 {
 	struct ehht_table_s *table;
-	size_t i;
 
 	table = ehht_get_table(this);
 	if (keys->keys_copied) {
+		size_t i;
 		for (i = 0; i < keys->len; ++i) {
 			table->free((void *)keys->keys[i].str,
 				    table->mem_context);
