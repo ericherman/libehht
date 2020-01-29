@@ -24,6 +24,10 @@ $*
 *.trs
 *.tar.*
 *.gch
+coverage_html/
+coverage.info
+*.gcda
+*.gcno
 
 ################
 # test files

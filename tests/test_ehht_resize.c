@@ -5,6 +5,9 @@
 
 #include "test-ehht.h"
 
+#include <limits.h>
+#include <stdint.h>
+
 int test_ehht_buckets_resize()
 {
 	int failures = 0;
@@ -64,6 +67,11 @@ int test_ehht_buckets_resize()
 		    check_size_t_m(table->has_key(table, buf, strlen(buf)), 1,
 				   buf);
 	}
+
+	/* do not resize if there is not memory to do so */
+	ehht_buckets_resize(table, (SIZE_MAX / 64));
+	failures += check_unsigned_int_m(ehht_buckets_size(table), num_buckets,
+					 "after too large num_buckets");
 
 	ehht_free(table);
 	return failures;

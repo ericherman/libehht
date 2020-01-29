@@ -6,16 +6,26 @@
 lib_LTLIBRARIES=libehht.la
 
 CSTD_CFLAGS=-std=c89 -Wno-long-long
-#DEBUG_CFLAGS=-ggdb -O0
-DEBUG_CFLAGS=-ggdb -O2 -DNDEBUG -Wno-unused-parameter -fomit-frame-pointer
 NOISY_CFLAGS=-Wall -Wextra -pedantic -Werror
-#USE_JUMPHASH_CFLAGS=-DEHHT_USE_JUMPHASH=1
+
+#DEBUG_CFLAGS=-ggdb -O0 --coverage
+#BUILD_CFLAGS=$(DEBUG_CFLAGS)
+READY_CFLAGS=-ggdb -O2 -DNDEBUG -Wno-unused-parameter -fomit-frame-pointer
+BUILD_CFLAGS=$(READY_CFLAGS)
+
+#DEBUG_LDFLAGS="--coverage"
+#BUILD_LDFLAGS=$(DEBUG_LDFLAGS)
+READY_LDFLAGS=
+BUILD_LDFLAGS=$(READY_LDFLAGS)
+
 AM_CFLAGS=\
  $(CSTD_CFLAGS) \
- $(DEBUG_CFLAGS) \
+ $(BUILD_CFLAGS) \
  $(NOISY_CFLAGS) \
  $(USE_JUMPHASH_CFLAGS) \
  -I src/ -pipe
+
+AM_LDFLAGS=$(BUILD_LDFLAGS)
 
 # extracted from https://github.com/torvalds/linux/blob/master/scripts/Lindent
 LINDENT=indent -npro -kr -i8 -ts8 -sob -l80 -ss -ncs -cp1 -il0
@@ -80,13 +90,13 @@ spotless:
 	pushd demos && rm -rf `cat ../.gitignore | sed -e 's/#.*//'`; popd
 
 valgrind: $(check_PROGRAMS)
-	libtool --mode=execute valgrind -q ./test_ehht_new
-	libtool --mode=execute valgrind -q ./test_ehht_put_get_remove
-	libtool --mode=execute valgrind -q ./test_ehht_clear
-	libtool --mode=execute valgrind -q ./test_ehht_foreach_element
-	libtool --mode=execute valgrind -q ./test_ehht_keys
-	libtool --mode=execute valgrind -q ./test_ehht_resize
-	libtool --mode=execute valgrind -q ./test_ehht_collision_resize
+	./libtool --mode=execute valgrind -q ./test_ehht_new
+	./libtool --mode=execute valgrind -q ./test_ehht_put_get_remove
+	./libtool --mode=execute valgrind -q ./test_ehht_clear
+	./libtool --mode=execute valgrind -q ./test_ehht_foreach_element
+	./libtool --mode=execute valgrind -q ./test_ehht_keys
+	./libtool --mode=execute valgrind -q ./test_ehht_resize
+	./libtool --mode=execute valgrind -q ./test_ehht_collision_resize
 
 
 libehht_la_SOURCES=$(include_HEADERS) src/ehht.c

@@ -1,3 +1,15 @@
+2020-01-29  Eric Herman <eric@freesa.org>
+
+	Include directions for test code coverage
+
+	* Makefile.am: make it easy to add --coverage to FLAGS
+	* README: coverage instructions
+	* src/ehht.c: improve local names, minor robustness, coverage
+	* tests/test_ehht_new.c: use the *default* constructor
+	* tests/test_ehht_resize.c: test resize way too big
+	* .gitignore: coverage files
+
+
 2020-01-19  Eric Herman <eric@freesa.org>
 
 	Even more API-breaking changes!

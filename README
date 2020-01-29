@@ -335,6 +335,20 @@ The "make demo" target depends upon "simple_stats"
   * https://github.com/ericherman/simple_stats
 
 
+Test Coverage
+-------------
+Adjust Makefile.am to include --coverage AM_CLFAGS and AM_LDFLAGS then:
+
+autoreconf -iv &&
+ ./configure &&
+ make &&
+ make check &&
+ lcov --capture --directory src --output-file coverage.info &&
+ genhtml coverage.info --output-directory coverage_html
+
+Then inspect ./coverage_html/src/ehht.c.gcov.html
+
+
 Building on linux from a release tar
 --------
 tar -xf /path/to/libehht-*.tar.gz
