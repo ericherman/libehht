@@ -13,6 +13,7 @@ int test_ehht_put_get_remove()
 	size_t num_buckets = 3;
 	void *val, *old_val;
 	char buf[1000];
+	int err;
 
 	table = ehht_new_custom(num_buckets, NULL, NULL, NULL, NULL);
 
@@ -28,7 +29,9 @@ int test_ehht_put_get_remove()
 				  "ehht_get while empty");
 
 	val = "foo";
-	old_val = table->put(table, key, strlen(key), val);
+	err = 0;
+	old_val = table->put(table, key, strlen(key), val, &err);
+	failures += check_int(err, 0);
 	failures +=
 	    check_unsigned_long_m((unsigned long)old_val, (unsigned long)NULL,
 				  "ehht_put while empty");
@@ -40,7 +43,8 @@ int test_ehht_put_get_remove()
 	} else {
 		failures += check_str_m((const char *)val, "foo", "ehht_get");
 	}
-	old_val = table->put(table, key, strlen(key), "bar");
+	old_val = table->put(table, key, strlen(key), "bar", &err);
+	failures += check_int(err, 0);
 	failures += check_str_m((const char *)old_val, val, "ehht_put over");
 
 	val = table->get(table, "baz", strlen("baz"));
@@ -52,21 +56,36 @@ int test_ehht_put_get_remove()
 	failures += check_str_m((const char *)val, "bar", "ehht_get replaced");
 
 	key = "two";
-	table->put(table, key, strlen(key), "2");
+	table->put(table, key, strlen(key), "2", &err);
+	failures += check_int(err, 0);
+
 	key = "three";
-	table->put(table, key, strlen(key), "3");
+	table->put(table, key, strlen(key), "3", &err);
+	failures += check_int(err, 0);
+
 	key = "four";
-	table->put(table, key, strlen(key), "4");
+	table->put(table, key, strlen(key), "4", &err);
+	failures += check_int(err, 0);
+
 	key = "ping";
-	table->put(table, key, strlen(key), "pong");
+	table->put(table, key, strlen(key), "pong", &err);
+	failures += check_int(err, 0);
+
 	key = "whiz";
-	table->put(table, key, strlen(key), "bang");
+	table->put(table, key, strlen(key), "bang", &err);
+	failures += check_int(err, 0);
+
 	key = "seven";
-	table->put(table, key, strlen(key), "7");
+	table->put(table, key, strlen(key), "7", &err);
+	failures += check_int(err, 0);
+
 	key = "eight";
-	table->put(table, key, strlen(key), "8");
+	table->put(table, key, strlen(key), "8", &err);
+	failures += check_int(err, 0);
+
 	key = "nine";
-	table->put(table, key, strlen(key), "9");
+	table->put(table, key, strlen(key), "9", &err);
+	failures += check_int(err, 0);
 	failures += check_unsigned_int_m(table->size(table), 9, "ehht_size");
 
 	key = "ping";

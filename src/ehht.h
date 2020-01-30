@@ -44,9 +44,11 @@ struct ehht_s {
 
 	/* allocates a copy of the key parameter,
 	 * copy will be freed when the key is no longer in use by the table
-	 * returns the previous value or NULL */
+	 * returns the previous value or NULL
+	 * if memory allocation fails, and the *err in not NULL, *err will
+	 * be populated with a non-zero value */
 	void *(*put)(struct ehht_s *table, const char *key, size_t key_len,
-		     void *val);
+		     void *val, int *err);
 
 	/* returns the previous value or NULL */
 	void *(*remove)(struct ehht_s *table, const char *key, size_t key_len);
@@ -61,8 +63,9 @@ struct ehht_s {
 	int (*has_key)(struct ehht_s *table, const char *key, size_t key_len);
 
 	/* fills the keys array with (pointers or newly allocated) key strings
-	   populates the lens array with the corresponding lengths
-	   returns the number of elements populated */
+	 * populates the lens array with the corresponding lengths
+	 * returns the number of elements populated
+	 */
 	struct ehht_keys_s *(*keys) (struct ehht_s *table, int copy_keys);
 
 	void (*free_keys)(struct ehht_s *table, struct ehht_keys_s *keys);

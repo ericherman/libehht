@@ -26,17 +26,21 @@ int test_ehht_foreach_element()
 	int failures = 0;
 	struct ehht_s *table;
 	unsigned int actual, expected, num_buckets = 5;
+	int err = 0;
 
 	table = ehht_new_custom(num_buckets, NULL, NULL, NULL, NULL);
 
 	if (table == NULL) {
 		++failures;
+		return failures;
 	}
 
-	table->put(table, "g", 1, "wiz");
-	table->put(table, "foo", 3, "bar");
-	table->put(table, "whiz", 4, "bang");
-	table->put(table, "love", 4, "backend development");
+	err = 0;
+	table->put(table, "g", 1, "wiz", &err);
+	table->put(table, "foo", 3, "bar", &err);
+	table->put(table, "whiz", 4, "bang", &err);
+	table->put(table, "love", 4, "backend development", &err);
+	failures += check_int(err, 0);
 
 	expected = 3 + 3 + 4 + 4 + 4 + 19;
 	actual = 0;

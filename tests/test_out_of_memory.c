@@ -11,8 +11,10 @@ int test_out_of_memory()
 	struct ehht_s *table;
 	char buf[40];
 	size_t i;
-	struct tracking_mem_context ctx = { 0, 0, 0, 0, 0, 0, 0 };
+	struct tracking_mem_context ctx;
+	int err = 0;
 
+	memset(&ctx, 0x00, sizeof(struct tracking_mem_context));
 	ctx.malloc_multiplier = 8 * 1024;
 	table = ehht_new_custom(0, NULL, test_malloc, test_free, &ctx);
 
@@ -28,7 +30,8 @@ int test_out_of_memory()
 			fprintf(stderr, "\r%lu,", (unsigned long)i);
 		}
 		sprintf(buf, "_%lu_", (unsigned long)i);
-		table->put(table, buf, strlen(buf), NULL);
+		table->put(table, buf, strlen(buf), NULL, &err);
+		failures += check_int(err, 0);
 		if (i % 256 == 0) {
 			fprintf(stderr, "%lu ...",
 				(unsigned long)table->size(table));

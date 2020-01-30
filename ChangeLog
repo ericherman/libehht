@@ -1,3 +1,23 @@
+2020-01-30  Eric Herman <eric@freesa.org>
+	Big API-breaking change! the table->put() command now has an
+	extra argument: an int pointer for setting to non-zero if put
+	fails due to a memory allocation issue.
+
+	* src/ehht.h: add (int *err) to ehht->put() argument list
+	* src/ehht.c: put() set *err to 1 on memory allocation failure
+	* demos/demo-ehht-as-array.c: pass in &err to put
+	* demos/demo-ehht.c: &err
+	* tests/ehht-report.h: &err
+	* tests/test_ehht_clear.c: &err
+	* tests/test_ehht_collision_resize.c: &err
+	* tests/test_ehht_foreach_element.c: &err
+	* tests/test_ehht_keys.c: &err
+	* tests/test_ehht_put_get_remove.c: &err
+	* tests/test_ehht_resize.c: &err
+	* tests/test_out_of_memory.c: &err
+	* tests/test-ehht.h: sketch-in idea for allocation failure testing
+
+
 2020-01-29  Eric Herman <eric@freesa.org>
 
 	Include directions for test code coverage

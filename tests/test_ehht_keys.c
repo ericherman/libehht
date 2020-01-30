@@ -10,8 +10,8 @@ int test_ehht_keys()
 	int failures = 0;
 	struct ehht_s *table;
 	struct ehht_keys_s *ks;
-	int allocate_copies;
-	size_t i, j, num_buckets;
+	int allocate_copies, err;
+	size_t i, j, num_buckets, len;
 	size_t *found;
 	const char *e_keys[] = { "foo", "bar", "whiz", "bang", NULL };
 
@@ -22,7 +22,10 @@ int test_ehht_keys()
 		table = ehht_new_custom(num_buckets, NULL, NULL, NULL, NULL);
 
 		for (i = 0; e_keys[i] != NULL; ++i) {
-			table->put(table, e_keys[i], strlen(e_keys[i]), NULL);
+			err = 0;
+			len = strlen(e_keys[i]);
+			table->put(table, e_keys[i], len, NULL, &err);
+			failures += check_int(err, 0);
 		}
 
 		found = calloc(sizeof(size_t), table->size(table));
@@ -31,6 +34,7 @@ int test_ehht_keys()
 			return 1;
 		}
 
+		err = 0;
 		ks = table->keys(table, allocate_copies);
 		failures += check_size_t(ks->len, table->size(table));
 		for (i = 0; e_keys[i] != NULL; ++i) {

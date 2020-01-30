@@ -13,15 +13,22 @@ int test_ehht_clear()
 
 	size_t i, count, items_written;
 	size_t report[REPORT_LEN];
-	struct tracking_mem_context ctx = { 0, 0, 0, 0, 0, 0, 0 };
+	struct tracking_mem_context ctx;
+	int err;
 
+	memset(&ctx, 0x00, sizeof(struct tracking_mem_context));
 	table =
 	    ehht_new_custom(num_buckets, NULL, test_malloc, test_free, &ctx);
 
-	table->put(table, "g", 1, "wiz");
-	table->put(table, "foo", 3, "bar");
-	table->put(table, "whiz", 4, "bang");
-	table->put(table, "love", 4, "backend development");
+	err = 0;
+	table->put(table, "g", 1, "wiz", &err);
+	failures += check_int(err, 0);
+	table->put(table, "foo", 3, "bar", &err);
+	failures += check_int(err, 0);
+	table->put(table, "whiz", 4, "bang", &err);
+	failures += check_int(err, 0);
+	table->put(table, "love", 4, "backend development", &err);
+	failures += check_int(err, 0);
 
 	failures += check_unsigned_int_m(table->size(table), 4, "ehht_size");
 

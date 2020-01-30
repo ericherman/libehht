@@ -61,6 +61,7 @@ int main(void)
 	struct ehht_s *table;
 	size_t i;
 	struct kva_s *kva;
+	int err;
 
 	table = ehht_new();
 	if (table == NULL) {
@@ -68,13 +69,17 @@ int main(void)
 		exit(EXIT_FAILURE);
 	}
 
-	table->put(table, "foo", strlen("foo"), "f");
-	table->put(table, "bar", strlen("bar"), "b");
-	table->put(table, "to", strlen("to"), "t");
-	table->put(table, "long long int", strlen("long long int"), "l");
-	table->put(table, "a", strlen("a"), "a");
-	table->put(table, "whiz", strlen("whiz"), "w");
-	table->put(table, "bang", strlen("bang"), "b");
+	err = 0;
+	table->put(table, "foo", strlen("foo"), "f", &err);
+	table->put(table, "bar", strlen("bar"), "b", &err);
+	table->put(table, "to", strlen("to"), "t", &err);
+	table->put(table, "long long int", strlen("long long int"), "l", &err);
+	table->put(table, "a", strlen("a"), "a", &err);
+	table->put(table, "whiz", strlen("whiz"), "w", &err);
+	table->put(table, "bang", strlen("bang"), "b", &err);
+	if (err) {
+		exit(EXIT_FAILURE);
+	}
 
 	kva = malloc(sizeof(struct kva_s));
 	kva->len = 1 + table->size(table);

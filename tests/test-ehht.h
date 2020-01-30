@@ -20,6 +20,8 @@ struct tracking_mem_context {
 	unsigned fails;
 	unsigned max_used;
 	unsigned malloc_multiplier;
+	unsigned attempts;
+	unsigned attempts_to_fail_bitmask;
 };
 
 void *test_malloc(size_t size, void *context)
@@ -31,6 +33,9 @@ void *test_malloc(size_t size, void *context)
 
 	ptr = NULL;
 	ctx = (struct tracking_mem_context *)context;
+	if (0x01 & (ctx->attempts_to_fail_bitmask >> ctx->attempts++)) {
+		return NULL;
+	}
 	if (ctx->malloc_multiplier) {
 		size2 = size * ctx->malloc_multiplier;
 	} else {

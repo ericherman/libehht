@@ -97,16 +97,21 @@ int main(int argc, char *argv[])
 
 	}
 	while (!feof(file)) {
+		int err;
 		if (!fscanf(file, WORD_SCANF_FMT, buf)) {
 			continue;
 		}
 		size = strlen(buf);
 
-		default_table->put(default_table, buf, size, NULL);
-		leveldb_table->put(leveldb_table, buf, size, NULL);
-		djb2_table->put(djb2_table, buf, size, NULL);
-		ehht_jump_table->put(ehht_jump_table, buf, size, NULL);
-		djb2_jump_table->put(djb2_jump_table, buf, size, NULL);
+		err = 0;
+		default_table->put(default_table, buf, size, NULL, &err);
+		leveldb_table->put(leveldb_table, buf, size, NULL, &err);
+		djb2_table->put(djb2_table, buf, size, NULL, &err);
+		ehht_jump_table->put(ehht_jump_table, buf, size, NULL, &err);
+		djb2_jump_table->put(djb2_jump_table, buf, size, NULL, &err);
+		if (err) {
+			exit(EXIT_FAILURE);
+		}
 	}
 	fclose(file);
 

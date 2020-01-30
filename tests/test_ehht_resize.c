@@ -15,6 +15,7 @@ int test_ehht_buckets_resize()
 	size_t i, x, items_written, num_buckets, big_bucket1, big_bucket2;
 	size_t report[10];
 	char buf[24];
+	int err = 0;
 
 	num_buckets = 4;
 	table = ehht_new_custom(num_buckets, NULL, NULL, NULL, NULL);
@@ -29,7 +30,8 @@ int test_ehht_buckets_resize()
 	x = num_buckets;
 	for (i = 0; i < x; ++i) {
 		sprintf(buf, "_%lu_", (unsigned long)i);
-		table->put(table, buf, strlen(buf), NULL);
+		table->put(table, buf, strlen(buf), NULL, &err);
+		failures += check_int(err, 0);
 	}
 
 	items_written = ehht_distribution_report(table, report, 10);

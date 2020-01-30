@@ -15,6 +15,7 @@
 #endif
 
 #include "../src/ehht.h"
+#include <stdlib.h>
 
 Ehht_report_begin_C_functions
 #undef Ehht_report_begin_C_functions
@@ -33,6 +34,9 @@ size_t ehht_distribution_report(struct ehht_s *table, size_t *sizes,
 
 	copy_keys = 0;
 	keys = table->keys(table, copy_keys);
+	if (!keys) {
+		exit(EXIT_FAILURE);
+	}
 	for (i = 0; i < keys->len; ++i) {
 		bucket = ehht_bucket_for_key(table, keys->keys[i].str,
 					     keys->keys[i].len);

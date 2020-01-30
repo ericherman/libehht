@@ -19,6 +19,7 @@ int test_ehht_collision_resize_buckets(void)
 	void *val;
 	ehht_hash_func first_char_func = ehht_first_char_bogus_hashcode;
 	size_t num_buckets = 10;
+	int err = 0;
 
 	table = ehht_new_custom(num_buckets, first_char_func, NULL, NULL, NULL);
 	ehht_buckets_auto_resize_load_factor(table, 0.75);
@@ -27,61 +28,71 @@ int test_ehht_collision_resize_buckets(void)
 
 	val = NULL;
 	key = "a1";
-	table->put(table, key, strlen(key), val);
+	table->put(table, key, strlen(key), val, &err);
+	failures += check_int(err, 0);
 	failures += check_unsigned_long(num_buckets, ehht_buckets_size(table));
 
 	key = "a2";
-	table->put(table, key, strlen(key), val);
+	table->put(table, key, strlen(key), val, &err);
+	failures += check_int(err, 0);
 	failures +=
 	    check_unsigned_long_m(num_buckets, ehht_buckets_size(table),
 				  "premature split? a2");
 
 	key = "c3";
-	table->put(table, key, strlen(key), val);
+	table->put(table, key, strlen(key), val, &err);
+	failures += check_int(err, 0);
 	failures +=
 	    check_unsigned_long_m(num_buckets, ehht_buckets_size(table),
 				  "premature split? c3");
 
 	key = "d4";
-	table->put(table, key, strlen(key), val);
+	table->put(table, key, strlen(key), val, &err);
+	failures += check_int(err, 0);
 	failures +=
 	    check_unsigned_long_m(num_buckets, ehht_buckets_size(table),
 				  "premature split? d4");
 
 	key = "e5";
-	table->put(table, key, strlen(key), val);
+	table->put(table, key, strlen(key), val, &err);
+	failures += check_int(err, 0);
 	failures +=
 	    check_unsigned_long_m(num_buckets, ehht_buckets_size(table),
 				  "premature split? e5");
 
 	key = "f6";
-	table->put(table, key, strlen(key), val);
+	table->put(table, key, strlen(key), val, &err);
+	failures += check_int(err, 0);
 	failures +=
 	    check_unsigned_long_m(num_buckets, ehht_buckets_size(table),
 				  "premature split? f6");
 
 	key = "g7";
-	table->put(table, key, strlen(key), val);
+	table->put(table, key, strlen(key), val, &err);
+	failures += check_int(err, 0);
 	failures +=
 	    check_unsigned_long_m(num_buckets, ehht_buckets_size(table),
 				  "premature split? g7");
 
 	/* we are not above the load factor, but no a bucket collision */
 	key = "g8";
-	table->put(table, key, strlen(key), val);
+	table->put(table, key, strlen(key), val, &err);
+	failures += check_int(err, 0);
 	failures +=
 	    check_unsigned_long_m(num_buckets, ehht_buckets_size(table),
 				  "premature split? g8");
 
 	num_buckets *= 2;
 	key = "g9";
-	table->put(table, key, strlen(key), val);
+	table->put(table, key, strlen(key), val, &err);
+	failures += check_int(err, 0);
 	failures +=
 	    check_unsigned_long_m(num_buckets, ehht_buckets_size(table),
 				  "failed to split? g9");
 
 	key = "g10";
-	table->put(table, key, strlen(key), val);
+	table->put(table, key, strlen(key), val, &err);
+	failures += check_int(err, 0);
 	failures +=
 	    check_unsigned_long_m(num_buckets, ehht_buckets_size(table),
 				  "premature split? g10");

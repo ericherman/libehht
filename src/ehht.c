@@ -34,12 +34,17 @@
 			__FILE__, __LINE__, (unsigned long)(bytes), thing); \
 	} } while (0)
 
+#define Ehht_error(msg) do { \
+	if (EHHT_DEBUG) { \
+		fprintf(stderr, "%s:%d: error %s\n", __FILE__, __LINE__, msg); \
+	} } while (0)
+
 /*
-  LCOV_EXCL_LINE - Lines containing this marker will be excluded.
+  LCOV_EXCL_LINE  - Lines containing this marker will be excluded.
   LCOV_EXCL_START - Marks the beginning of an excluded section.
 		    The current line is part of this section.
-  LCOV_EXCL_STOP - Marks the end of an excluded section.
-		   The current line not part of this section.
+  LCOV_EXCL_STOP  - Marks the end of an excluded section.
+		    The current line not part of this section.
 */
 
 struct ehht_element_s {
@@ -203,7 +208,7 @@ static void *ehht_get(struct ehht_s *this, const char *key, size_t key_len)
 }
 
 static void *ehht_put(struct ehht_s *this, const char *key, size_t key_len,
-		      void *val)
+		      void *val, int *err)
 {
 	struct ehht_table_s *table;
 	struct ehht_element_s *element;
@@ -233,8 +238,10 @@ static void *ehht_put(struct ehht_s *this, const char *key, size_t key_len,
 
 	element = ehht_alloc_element(table, key, key_len, hashcode, val);
 	if (!element) {
-		fprintf(stderr, "%s:%d: ehht_put failed\n", __FILE__, __LINE__);
-		/* should this exit? set errno? something other than stderr? */
+		if (err) {
+			*err = 1;
+		}
+		Ehht_error("ehht_put failed");
 		return NULL;
 	}
 
@@ -474,6 +481,24 @@ static int ehht_has_key(struct ehht_s *this, const char *key, size_t key_len)
 	return (element == NULL) ? 0 : 1;
 }
 
+static void ehht_free_keys(struct ehht_s *this, struct ehht_keys_s *keys)
+{
+	struct ehht_table_s *table;
+
+	table = ehht_get_table(this);
+	if (keys->keys_copied) {
+		size_t i;
+		for (i = 0; i < keys->len; ++i) {
+			table->free((void *)keys->keys[i].str,
+				    table->mem_context);
+		}
+	}
+	if (keys->keys) {
+		table->free(keys->keys, table->mem_context);
+	}
+	table->free(keys, table->mem_context);
+}
+
 static struct ehht_keys_s *ehht_keys(struct ehht_s *this, int copy_keys)
 {
 	struct ehht_table_s *table;
@@ -504,29 +529,16 @@ static struct ehht_keys_s *ehht_keys(struct ehht_s *this, int copy_keys)
 			table->free(fe_ctx.keys, table->mem_context);
 			return NULL;
 		}
-
-		ehht_for_each(this, ehht_fill_keys_each, &fe_ctx);
+		/* ensure pointers are all NULL, not garbage */
+		memset(fe_ctx.keys->keys, 0x00, size);
+		if (ehht_for_each(this, ehht_fill_keys_each, &fe_ctx)) {
+			ehht_free_keys(this, fe_ctx.keys);
+			Ehht_error("ehht_keys failed");
+			return NULL;
+		}
 	}
 
 	return fe_ctx.keys;
-}
-
-static void ehht_free_keys(struct ehht_s *this, struct ehht_keys_s *keys)
-{
-	struct ehht_table_s *table;
-
-	table = ehht_get_table(this);
-	if (keys->keys_copied) {
-		size_t i;
-		for (i = 0; i < keys->len; ++i) {
-			table->free((void *)keys->keys[i].str,
-				    table->mem_context);
-		}
-	}
-	if (keys->keys) {
-		table->free(keys->keys, table->mem_context);
-	}
-	table->free(keys, table->mem_context);
 }
 
 static void *ehht_malloc(size_t size, void *context)
