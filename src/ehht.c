@@ -9,6 +9,10 @@
 #include <stdio.h>		/* fprintf */
 #include <assert.h>
 
+#ifndef Ehht_memset
+#define Ehht_memset(ptr, byte, len) memset(ptr, byte, len)
+#endif
+
 #ifndef EHHT_DEFAULT_BUCKETS
 #define EHHT_DEFAULT_BUCKETS 64
 #endif
@@ -530,7 +534,7 @@ static struct ehht_keys_s *ehht_keys(struct ehht_s *this, int copy_keys)
 			return NULL;
 		}
 		/* ensure pointers are all NULL, not garbage */
-		memset(fe_ctx.keys->keys, 0x00, size);
+		Ehht_memset(fe_ctx.keys->keys, 0x00, size);
 		if (ehht_for_each(this, ehht_fill_keys_each, &fe_ctx)) {
 			ehht_free_keys(this, fe_ctx.keys);
 			Ehht_error("ehht_keys failed");
@@ -572,7 +576,7 @@ struct ehht_s *ehht_new_custom(size_t num_buckets, ehht_hash_func hash_func,
 {
 	struct ehht_s *this;
 	struct ehht_table_s *table;
-	size_t i, size;
+	size_t size;
 
 	if (num_buckets == 0) {
 		num_buckets = EHHT_DEFAULT_BUCKETS;
@@ -613,7 +617,6 @@ struct ehht_s *ehht_new_custom(size_t num_buckets, ehht_hash_func hash_func,
 	}
 	ehht_set_table(this, table);
 
-	table->num_buckets = num_buckets;
 	size = sizeof(struct ehht_element_s *) * num_buckets;
 	table->buckets = mem_alloc(size, mem_context);
 	if (table->buckets == NULL) {
@@ -622,9 +625,9 @@ struct ehht_s *ehht_new_custom(size_t num_buckets, ehht_hash_func hash_func,
 		mem_free(this, mem_context);
 		return NULL;
 	}
-	for (i = 0; i < num_buckets; ++i) {
-		table->buckets[i] = NULL;
-	}
+	Ehht_memset(table->buckets, 0x00, sizeof(size));
+	table->num_buckets = num_buckets;
+
 	table->size = 0;
 	table->collision_load_factor = EHHT_DEFAULT_RESIZE_LOADFACTOR;
 

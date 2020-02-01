@@ -19,7 +19,6 @@ struct tracking_mem_context {
 	unsigned free_bytes;
 	unsigned fails;
 	unsigned max_used;
-	unsigned malloc_multiplier;
 	unsigned attempts;
 	unsigned attempts_to_fail_bitmask;
 };
@@ -29,19 +28,14 @@ void *test_malloc(size_t size, void *context)
 	struct tracking_mem_context *ctx;
 	unsigned char *tracking_buffer;
 	void *ptr;
-	size_t used, size2;
+	size_t used;
 
 	ptr = NULL;
 	ctx = (struct tracking_mem_context *)context;
 	if (0x01 & (ctx->attempts_to_fail_bitmask >> ctx->attempts++)) {
 		return NULL;
 	}
-	if (ctx->malloc_multiplier) {
-		size2 = size * ctx->malloc_multiplier;
-	} else {
-		size2 = size;
-	}
-	tracking_buffer = malloc(sizeof(size_t) + size2);
+	tracking_buffer = malloc(sizeof(size_t) + size);
 	if (!tracking_buffer) {
 		++ctx->fails;
 		return NULL;

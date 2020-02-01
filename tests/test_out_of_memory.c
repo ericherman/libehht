@@ -5,60 +5,42 @@
 
 #include "test-ehht.h"
 
-int test_out_of_memory()
+int test_out_of_memory_construction(unsigned allocs_to_fail)
 {
 	int failures = 0;
 	struct ehht_s *table;
-	char buf[40];
-	size_t i;
 	struct tracking_mem_context ctx;
-	int err = 0;
 
 	memset(&ctx, 0x00, sizeof(struct tracking_mem_context));
-	ctx.malloc_multiplier = 8 * 1024;
+	ctx.attempts_to_fail_bitmask = allocs_to_fail;
+
 	table = ehht_new_custom(0, NULL, test_malloc, test_free, &ctx);
-
-	if (table == NULL) {
+	if (table) {
+		if (allocs_to_fail) {
+			++failures;
+		}
+		ehht_free(table);
+	} else if (!allocs_to_fail) {
 		++failures;
-		return failures;
 	}
 
-	check_int(errno, 0);
+	failures += check_unsigned_int_m(ctx.frees, ctx.allocs, "alloc/free");
+	failures +=
+	    check_unsigned_int_m(ctx.free_bytes, ctx.alloc_bytes, "bytes");
 
-	for (i = 0; i == table->size(table); ++i) {
-		if (i % 256 == 0) {
-			fprintf(stderr, "\r%lu,", (unsigned long)i);
-		}
-		sprintf(buf, "_%lu_", (unsigned long)i);
-		table->put(table, buf, strlen(buf), NULL, &err);
-		failures += check_int(err, 0);
-		if (i % 256 == 0) {
-			fprintf(stderr, "%lu ...",
-				(unsigned long)table->size(table));
-		}
-	}
-	fprintf(stderr, "\n");
-	table->clear(table);
-	check_int(errno, ENOMEM);
-	errno = 0;
-
-	ehht_free(table);
 	return failures;
 }
 
-int main(int argc, char **argv)
+int test_out_of_memory(void)
 {
 	int failures = 0;
-	int test_oom = (argc > 1) ? atoi(argv[1]) : 0;
 
-	if (test_oom) {
-		failures += test_out_of_memory();
-	} else {
-		fprintf(stderr, "skipping test_out_of_memory\n");
-	}
+	failures += test_out_of_memory_construction(0);
+	failures += test_out_of_memory_construction(1 << 0);
+	failures += test_out_of_memory_construction(1 << 1);
+	failures += test_out_of_memory_construction(1 << 2);
 
-	if (failures) {
-		fprintf(stderr, "%d failures in total\n", failures);
-	}
-	return failures ? 1 : 0;
+	return failures;
 }
+
+TEST_EHHT_MAIN(test_out_of_memory())
