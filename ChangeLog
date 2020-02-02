@@ -25,7 +25,7 @@
 	* Makefile.am: include test_out_of_memory in "make valgrind"
 	* tests/test-ehht.h: swap stderr with a log buffer
 	* tests/test_out_of_memory.c: test all 11 OOM conditions
-	* tests/test_ehht_resize.c: capture err output, no stderr spam
+	* tests/test_ehht_resize.c: black-hole err output, avoid stderr spam
 	* tests/test_ehht_clear.c: ehht_new_custom
 	* tests/test_ehht_collision_resize.c: ehht_new_custom
 	* tests/test_ehht_foreach_element.c: ehht_new_custom

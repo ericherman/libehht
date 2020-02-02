@@ -16,16 +16,11 @@ int test_ehht_buckets_resize(void)
 	size_t report[10];
 	char buf[24];
 	int err = 0;
-	struct ehht_sprintf_context_s err_ctx = { NULL, 0 };
-
-	err_ctx.size = 80 * 1000;
-	err_ctx.buf = calloc(err_ctx.size, 1);
-	assert(err_ctx.buf != NULL);
+	int black_hole_err_msgs = 0;
+	void *v = &black_hole_err_msgs;	/* anything non-NULL will do */
 
 	num_buckets = 4;
-	table =
-	    ehht_new_custom(num_buckets, NULL, NULL, NULL, NULL, ehht_sprintf,
-			    &err_ctx);
+	table = ehht_new_custom(num_buckets, NULL, NULL, NULL, NULL, NULL, &v);
 
 	if (table == NULL) {
 		return ++failures;
@@ -85,7 +80,6 @@ int test_ehht_buckets_resize(void)
 
 	ehht_free(table);
 
-	free(err_ctx.buf);
 	return failures;
 }
 

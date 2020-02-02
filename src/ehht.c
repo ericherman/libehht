@@ -29,18 +29,18 @@
 #endif
 
 #define Ehht_error_malloc(logfunc, logctx, err_num, bytes, thing) \
-	do { \
+	do { if (logfunc) { \
 		logfunc(logctx, \
 			"%s:%d Error %u: could not allocate %lu bytes (%s)\n", \
 			__FILE__, __LINE__, err_num, (unsigned long)(bytes), \
 			thing); \
-	} while (0)
+	} } while (0)
 
 #define Ehht_error(logfunc, logctx, err_num, msg) \
-	do { \
+	do { if (logfunc) { \
 		logfunc(logctx, "%s:%d Error %u: %s\n", __FILE__, __LINE__, \
 			err_num, msg); \
-	} while (0)
+	} } while (0)
 
 /*
   LCOV_EXCL_LINE  - Lines containing this marker will be excluded.
@@ -622,7 +622,7 @@ struct ehht_s *ehht_new_custom(size_t num_buckets, ehht_hash_func hash_func,
 	if (mem_free == NULL) {
 		mem_free = ehht_mem_free;
 	}
-	if (err_func == NULL) {
+	if (err_func == NULL && err_context == NULL) {
 		err_func = ehht_fprintf;
 	}
 
@@ -657,6 +657,13 @@ struct ehht_s *ehht_new_custom(size_t num_buckets, ehht_hash_func hash_func,
 	Ehht_memset(table, 0x00, size);
 	ehht_set_table(this, table);
 
+	table->hash_func = hash_func;
+	table->alloc = mem_alloc;
+	table->free = mem_free;
+	table->mem_context = mem_context;
+	table->err_printf = err_func;
+	table->err_context = err_context;
+
 	size = sizeof(struct ehht_element_s *) * num_buckets;
 	table->buckets = mem_alloc(size, mem_context);
 	if (table->buckets == NULL) {
@@ -667,16 +674,9 @@ struct ehht_s *ehht_new_custom(size_t num_buckets, ehht_hash_func hash_func,
 	}
 	Ehht_memset(table->buckets, 0x00, size);
 	table->num_buckets = num_buckets;
-
 	table->size = 0;
-	table->collision_load_factor = EHHT_DEFAULT_RESIZE_LOADFACTOR;
 
-	table->hash_func = hash_func;
-	table->alloc = mem_alloc;
-	table->free = mem_free;
-	table->mem_context = mem_context;
-	table->err_printf = err_func;
-	table->err_context = err_context;
+	table->collision_load_factor = EHHT_DEFAULT_RESIZE_LOADFACTOR;
 
 	return this;
 }
