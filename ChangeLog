@@ -1,3 +1,39 @@
+2020-02-02  Eric Herman <eric@freesa.org>
+	API-breaking change! ehht_new_custom(...) now takes an optional
+	argument for error printing function and context. The default
+	is "fprintf(stderr, errmsg)". The test tests/test_out_of_memory.c
+	in combination with the helpers in tests/test-ehht.h contains a
+	hands-on example of capturing the error messages to a char buf[].
+
+	The test_out_of_memory tests ensure that all 11 places in ehht.c
+	which allocate memory are exercised as if malloc returned NULL.
+	These tests ensure that in each case there are not leaks, and
+	the system stays in "sane" and reasonable state.
+
+	To ease debugging, all variables are initialized to 0 or NULL.
+	Of course, these are typically optimized away with "-O2".
+
+	To support the embedded/standalone/no-libc case, 'Ehht_memset'
+	and 'Ehht_memcopy' are defined and used through-out. Naturally,
+	they are #defined to memset and memcpy but if ehht is added to
+	embedded code, and these are #defined against alternative
+	versions, this can be leveraged to avoid adding LibC bloat in
+	firmware.
+
+	* src/ehht.h: allow custom error printing, or fprintf(stderr,...)
+	* src/ehht.c: allow custom error printing, zero vars, Ehht_memset
+	* Makefile.am: include test_out_of_memory in "make valgrind"
+	* tests/test-ehht.h: swap stderr with a log buffer
+	* tests/test_out_of_memory.c: test all 11 OOM conditions
+	* tests/test_ehht_resize.c: capture err output, no stderr spam
+	* tests/test_ehht_clear.c: ehht_new_custom
+	* tests/test_ehht_collision_resize.c: ehht_new_custom
+	* tests/test_ehht_foreach_element.c: ehht_new_custom
+	* tests/test_ehht_keys.c: ehht_new_custom
+	* tests/test_ehht_new.c: ehht_new_custom
+	* tests/test_ehht_put_get_remove.c:ehht_new_custom
+	* demos/demo-ehht.c: ehht_new_custom
+
 2020-01-30  Eric Herman <eric@freesa.org>
 	Big API-breaking change! the table->put() command now has an
 	extra argument: an int pointer for setting to non-zero if put

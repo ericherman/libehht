@@ -8,7 +8,7 @@
 #include <limits.h>
 #include <stdint.h>
 
-int test_ehht_buckets_resize()
+int test_ehht_buckets_resize(void)
 {
 	int failures = 0;
 	struct ehht_s *table;
@@ -16,9 +16,16 @@ int test_ehht_buckets_resize()
 	size_t report[10];
 	char buf[24];
 	int err = 0;
+	struct ehht_sprintf_context_s err_ctx = { NULL, 0 };
+
+	err_ctx.size = 80 * 1000;
+	err_ctx.buf = calloc(err_ctx.size, 1);
+	assert(err_ctx.buf != NULL);
 
 	num_buckets = 4;
-	table = ehht_new_custom(num_buckets, NULL, NULL, NULL, NULL);
+	table =
+	    ehht_new_custom(num_buckets, NULL, NULL, NULL, NULL, ehht_sprintf,
+			    &err_ctx);
 
 	if (table == NULL) {
 		return ++failures;
@@ -72,10 +79,13 @@ int test_ehht_buckets_resize()
 
 	/* do not resize if there is not memory to do so */
 	ehht_buckets_resize(table, (SIZE_MAX / 64));
-	failures += check_unsigned_int_m(ehht_buckets_size(table), num_buckets,
-					 "after too large num_buckets");
+	failures +=
+	    check_unsigned_int_m(ehht_buckets_size(table), num_buckets,
+				 "after too large num_buckets");
 
 	ehht_free(table);
+
+	free(err_ctx.buf);
 	return failures;
 }
 

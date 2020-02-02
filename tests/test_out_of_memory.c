@@ -5,7 +5,8 @@
 
 #include "test-ehht.h"
 
-int test_out_of_memory_construction(unsigned allocs_to_fail)
+int test_out_of_memory_construction(struct ehht_sprintf_context_s *err_ctx,
+				    uint64_t allocs_to_fail)
 {
 	int failures = 0;
 	struct ehht_s *table;
@@ -14,7 +15,9 @@ int test_out_of_memory_construction(unsigned allocs_to_fail)
 	memset(&ctx, 0x00, sizeof(struct tracking_mem_context));
 	ctx.attempts_to_fail_bitmask = allocs_to_fail;
 
-	table = ehht_new_custom(0, NULL, test_malloc, test_free, &ctx);
+	table =
+	    ehht_new_custom(0, NULL, test_malloc, test_free, &ctx, ehht_sprintf,
+			    err_ctx);
 	if (table) {
 		if (allocs_to_fail) {
 			++failures;
@@ -31,26 +34,30 @@ int test_out_of_memory_construction(unsigned allocs_to_fail)
 	return failures;
 }
 
-int test_out_of_memory_put(unsigned allocs_to_fail)
+int test_out_of_memory_put(struct ehht_sprintf_context_s *err_ctx,
+			   uint64_t allocs_to_fail)
 {
 	int failures = 0;
 	struct ehht_s *table;
 	struct tracking_mem_context ctx;
-	size_t i;
+	size_t i, num_buckets;
 	int err;
 	char buf[80];
 
 	memset(&ctx, 0x00, sizeof(struct tracking_mem_context));
 	ctx.attempts_to_fail_bitmask = allocs_to_fail;
 
-	table = ehht_new_custom(0, NULL, test_malloc, test_free, &ctx);
+	num_buckets = 10;
+	table =
+	    ehht_new_custom(num_buckets, NULL, test_malloc, test_free, &ctx,
+			    ehht_sprintf, err_ctx);
 	if (!table) {
 		fprintf(stderr, "%s:%d: ehht_new_custom\n", __FILE__, __LINE__);
 		return 1;
 	}
 
 	err = 0;
-	for (i = 0; i < 10; ++i) {
+	for (i = 0; i < 100; ++i) {
 		sprintf(buf, "%u", (unsigned)i);
 		table->put(table, buf, strlen(buf), NULL, &err);
 		if (err && !allocs_to_fail) {
@@ -70,7 +77,8 @@ int test_out_of_memory_put(unsigned allocs_to_fail)
 	return failures;
 }
 
-int test_out_of_memory_keys(unsigned allocs_to_fail)
+int test_out_of_memory_keys(struct ehht_sprintf_context_s *err_ctx,
+			    uint64_t allocs_to_fail)
 {
 	int failures = 0;
 	struct ehht_s *table;
@@ -83,7 +91,9 @@ int test_out_of_memory_keys(unsigned allocs_to_fail)
 	memset(&ctx, 0x00, sizeof(struct tracking_mem_context));
 	ctx.attempts_to_fail_bitmask = allocs_to_fail;
 
-	table = ehht_new_custom(0, NULL, test_malloc, test_free, &ctx);
+	table =
+	    ehht_new_custom(0, NULL, test_malloc, test_free, &ctx, ehht_sprintf,
+			    err_ctx);
 	if (!table) {
 		fprintf(stderr, "%s:%d: ehht_new_custom\n", __FILE__, __LINE__);
 		return 1;
@@ -130,24 +140,42 @@ int test_out_of_memory_keys(unsigned allocs_to_fail)
 int test_out_of_memory(void)
 {
 	int failures = 0;
+	struct ehht_sprintf_context_s ctx = { NULL, 0 };
+	size_t i;
 
-	failures += test_out_of_memory_construction(0);
-	failures += test_out_of_memory_construction(1 << 0);
-	failures += test_out_of_memory_construction(1 << 1);
-	failures += test_out_of_memory_construction(1 << 2);
+	ctx.size = 80 * 1000;
+	ctx.buf = calloc(ctx.size, 1);
+	assert(ctx.buf != NULL);
 
-	failures += test_out_of_memory_put(0);
-	failures += test_out_of_memory_put(1 << 4);
-	failures += test_out_of_memory_put(1 << 5);
-	failures += test_out_of_memory_put(1 << 6);
-	failures += test_out_of_memory_put(1 << 7);
+	failures += test_out_of_memory_construction(&ctx, 0);
+	failures += test_out_of_memory_construction(&ctx, 1UL << 0);
+	failures += test_out_of_memory_construction(&ctx, 1UL << 1);
+	failures += test_out_of_memory_construction(&ctx, 1UL << 2);
 
-	failures += test_out_of_memory_keys(0);
-	failures += test_out_of_memory_keys(1 << 23);
-	failures += test_out_of_memory_keys(1 << 24);
-	failures += test_out_of_memory_keys(1 << 25);
-	failures += test_out_of_memory_keys(1 << 27);
-	failures += test_out_of_memory_keys(1 << 28);
+	failures += test_out_of_memory_put(&ctx, 0);
+	for (i = 4; i < 64; ++i) {
+		failures += test_out_of_memory_put(&ctx, 1UL << i);
+	}
+
+	failures += test_out_of_memory_keys(&ctx, 0);
+	failures += test_out_of_memory_keys(&ctx, 1UL << 23);
+	failures += test_out_of_memory_keys(&ctx, 1UL << 24);
+	failures += test_out_of_memory_keys(&ctx, 1UL << 25);
+	failures += test_out_of_memory_keys(&ctx, 1UL << 27);
+	failures += test_out_of_memory_keys(&ctx, 1UL << 28);
+
+	for (i = 1; i <= 11; ++i) {
+		char errmsg[10];
+		char *found = NULL;
+
+		sprintf(errmsg, "Error %u:", (unsigned)i);
+		found = strstr(ctx.buf, errmsg);
+		if (found == NULL) {
+			failures += check_str(found, errmsg);
+		}
+	}
+
+	free(ctx.buf);
 
 	return failures;
 }

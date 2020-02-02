@@ -21,14 +21,15 @@ int foreach_thing(struct ehht_key_s each_key, void *each_val, void *context)
 	return 0;
 }
 
-int test_ehht_foreach_element()
+int test_ehht_foreach_element(void)
 {
 	int failures = 0;
 	struct ehht_s *table;
 	unsigned int actual, expected, num_buckets = 5;
 	int err = 0;
 
-	table = ehht_new_custom(num_buckets, NULL, NULL, NULL, NULL);
+	table =
+	    ehht_new_custom(num_buckets, NULL, NULL, NULL, NULL, NULL, NULL);
 
 	if (table == NULL) {
 		++failures;

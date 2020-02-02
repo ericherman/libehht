@@ -40,7 +40,7 @@ unsigned int ehht_jump(const char *data, size_t len)
 #define new_table(target, buckets, hash_pfunc) \
 	do { \
 		(*target) = ehht_new_custom(buckets, hash_pfunc, \
-				NULL, NULL, NULL); \
+				NULL, NULL, NULL, NULL, NULL); \
 		if (!(*target)) { \
 			fprintf(stderr, "%s:%d: ehht_new returned NULL", \
 				__FILE__, __LINE__); \

@@ -5,7 +5,7 @@
 
 #include "test-ehht.h"
 
-int test_ehht_new()
+int test_ehht_new(void)
 {
 	int failures = 0;
 	struct ehht_s *table;

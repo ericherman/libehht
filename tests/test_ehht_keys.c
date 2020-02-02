@@ -5,7 +5,7 @@
 
 #include "test-ehht.h"
 
-int test_ehht_keys()
+int test_ehht_keys(void)
 {
 	int failures = 0;
 	struct ehht_s *table;
@@ -19,7 +19,9 @@ int test_ehht_keys()
 
 	for (allocate_copies = 0; allocate_copies < 2; ++allocate_copies) {
 
-		table = ehht_new_custom(num_buckets, NULL, NULL, NULL, NULL);
+		table =
+		    ehht_new_custom(num_buckets, NULL, NULL, NULL, NULL, NULL,
+				    NULL);
 
 		for (i = 0; e_keys[i] != NULL; ++i) {
 			err = 0;

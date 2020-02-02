@@ -87,13 +87,15 @@ struct ehht_s *ehht_new(void);
 typedef unsigned int (*ehht_hash_func)(const char *data, size_t data_len);
 typedef void *(*ehht_malloc_func)(size_t size, void *context);
 typedef void (*ehht_free_func)(void *ptr, void *context);
+typedef int (*ehht_log_error_func)(void *err_context, const char *format, ...);
 
 /* if hash_func is NULL, a hashing function will be provided */
 /* if ehht_malloc_func/free_func are NULL, malloc/free will be used */
 struct ehht_s *ehht_new_custom(size_t num_buckets,
 			       ehht_hash_func hash_func,
 			       ehht_malloc_func alloc_func,
-			       ehht_free_func free_func, void *mem_context);
+			       ehht_free_func free_func, void *mem_context,
+			       ehht_log_error_func err_func, void *err_context);
 
 /* destructor */
 void ehht_free(struct ehht_s *table);

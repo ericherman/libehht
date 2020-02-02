@@ -97,6 +97,7 @@ valgrind: $(check_PROGRAMS)
 	./libtool --mode=execute valgrind -q ./test_ehht_keys
 	./libtool --mode=execute valgrind -q ./test_ehht_resize
 	./libtool --mode=execute valgrind -q ./test_ehht_collision_resize
+	./libtool --mode=execute valgrind -q ./test_out_of_memory
 
 
 libehht_la_SOURCES=$(include_HEADERS) src/ehht.c

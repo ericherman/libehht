@@ -5,7 +5,7 @@
 
 #include "test-ehht.h"
 
-int test_ehht_put_get_remove()
+int test_ehht_put_get_remove(void)
 {
 	int failures = 0;
 	struct ehht_s *table;
@@ -15,7 +15,8 @@ int test_ehht_put_get_remove()
 	char buf[1000];
 	int err;
 
-	table = ehht_new_custom(num_buckets, NULL, NULL, NULL, NULL);
+	table =
+	    ehht_new_custom(num_buckets, NULL, NULL, NULL, NULL, NULL, NULL);
 
 	key = "key1";
 

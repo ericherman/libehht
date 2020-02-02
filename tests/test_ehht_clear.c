@@ -5,7 +5,7 @@
 
 #include "test-ehht.h"
 
-int test_ehht_clear()
+int test_ehht_clear(void)
 {
 	int failures = 0;
 	struct ehht_s *table;
@@ -18,7 +18,8 @@ int test_ehht_clear()
 
 	memset(&ctx, 0x00, sizeof(struct tracking_mem_context));
 	table =
-	    ehht_new_custom(num_buckets, NULL, test_malloc, test_free, &ctx);
+	    ehht_new_custom(num_buckets, NULL, test_malloc, test_free, &ctx,
+			    NULL, NULL);
 
 	err = 0;
 	table->put(table, "g", 1, "wiz", &err);

@@ -21,7 +21,9 @@ int test_ehht_collision_resize_buckets(void)
 	size_t num_buckets = 10;
 	int err = 0;
 
-	table = ehht_new_custom(num_buckets, first_char_func, NULL, NULL, NULL);
+	table =
+	    ehht_new_custom(num_buckets, first_char_func, NULL, NULL, NULL,
+			    NULL, NULL);
 	ehht_buckets_auto_resize_load_factor(table, 0.75);
 
 	failures += check_unsigned_long(num_buckets, ehht_buckets_size(table));
