@@ -79,6 +79,22 @@ static struct ehht_table_s *ehht_get_table(struct ehht_s *this)
 	return (struct ehht_table_s *)this->data;
 }
 
+static int ehht_fprintf(void *err_context, const char *format, ...)
+{
+	int ret = 0;
+	va_list args;
+
+	assert(err_context == NULL);
+
+	va_start(args, format);
+
+	ret = vfprintf(stderr, format, args);
+
+	va_end(args);
+
+	return ret;
+}
+
 static void ehht_free_element(struct ehht_table_s *table,
 			      struct ehht_element_s *element)
 {
@@ -578,22 +594,6 @@ void ehht_buckets_auto_resize_load_factor(struct ehht_s *this, double factor)
 
 	table = ehht_get_table(this);
 	table->collision_load_factor = factor;
-}
-
-static int ehht_fprintf(void *err_context, const char *format, ...)
-{
-	int ret = 0;
-	va_list args;
-
-	assert(err_context == NULL);
-
-	va_start(args, format);
-
-	ret = vfprintf(stderr, format, args);
-
-	va_end(args);
-
-	return ret;
 }
 
 struct ehht_s *ehht_new(void)
