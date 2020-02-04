@@ -1,3 +1,30 @@
+2020-02-04  Eric Herman <eric@freesa.org>
+
+	Added the ability to avoid copying keys on put(). This is not
+	typically what makes sense, however there is sometimes a call
+	for this. If the keys are mutated while in use in the table,
+	results are undefined. If the keys are freed, expect a crash.
+	After creation, or when the table is empty, this behavior can
+	be set with a call to:
+
+	int ehht_trust_keys_immutable(struct ehht_s *this, int val);
+
+	The ehht_trust_keys_immutable function returns error code of
+	zero on success or non-zero on error.
+
+	Clarified that ehht_new_custom error printing functions will
+	in the case of NULL, NULL do nothing. If the function is NULL
+	and the err_context is non-NULL, the context is assumed to be
+	a FILE * (e.g.:stderr).
+
+	* src/ehht.h: comments, ehht_trust_keys_immutable
+	* src/ehht.c: ehht_trust_keys_immutable, flush err_context
+	* tests/test_flyweight.c: test ehht_trust_keys_immutable
+	* tests/test_ehht_resize.c: check error msg printing
+	* Makefile.am: test_flyweight, test_ehht_resize_CFLAGS
+	* .gitignore: test_flyweight
+
+
 2020-02-02  Eric Herman <eric@freesa.org>
 	API-breaking change! ehht_new_custom(...) now takes an optional
 	argument for error printing function and context. The default

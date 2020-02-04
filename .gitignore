@@ -39,6 +39,7 @@ test_ehht_new
 test_ehht_put_get_remove
 test_ehht_resize
 test_ehht_collision_resize
+test_flyweight
 test_out_of_memory
 test-*-dynamic
 test-*-static

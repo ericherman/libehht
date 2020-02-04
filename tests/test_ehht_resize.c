@@ -5,6 +5,7 @@
 
 #include "test-ehht.h"
 
+#include <stdio.h>
 #include <limits.h>
 #include <stdint.h>
 
@@ -16,11 +17,16 @@ int test_ehht_buckets_resize(void)
 	size_t report[10];
 	char buf[24];
 	int err = 0;
-	int black_hole_err_msgs = 0;
-	void *v = &black_hole_err_msgs;	/* anything non-NULL will do */
+	FILE *memfile = NULL;
+	char *logbuf = NULL;
+	size_t sizeloc = 0;
+	char *found = NULL;
+
+	memfile = open_memstream(&logbuf, &sizeloc);
 
 	num_buckets = 4;
-	table = ehht_new_custom(num_buckets, NULL, NULL, NULL, NULL, NULL, &v);
+	table =
+	    ehht_new_custom(num_buckets, NULL, NULL, NULL, NULL, NULL, memfile);
 
 	if (table == NULL) {
 		return ++failures;
@@ -79,6 +85,16 @@ int test_ehht_buckets_resize(void)
 				 "after too large num_buckets");
 
 	ehht_free(table);
+
+	fflush(memfile);
+	fclose(memfile);
+
+	found = strstr(logbuf, "Error 4:");
+	if (found == NULL) {
+		failures += check_str(logbuf, "Error 4:");
+	}
+
+	free(logbuf);
 
 	return failures;
 }

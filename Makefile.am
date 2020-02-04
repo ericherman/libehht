@@ -58,6 +58,7 @@ check_PROGRAMS=\
  test_ehht_keys \
  test_ehht_resize \
  test_ehht_collision_resize \
+ test_flyweight \
  test_out_of_memory
 
 
@@ -97,6 +98,7 @@ valgrind: $(check_PROGRAMS)
 	./libtool --mode=execute valgrind -q ./test_ehht_keys
 	./libtool --mode=execute valgrind -q ./test_ehht_resize
 	./libtool --mode=execute valgrind -q ./test_ehht_collision_resize
+	./libtool --mode=execute valgrind -q ./test_flyweight
 	./libtool --mode=execute valgrind -q ./test_out_of_memory
 
 
@@ -136,10 +138,15 @@ test_ehht_put_get_remove_LDADD=$(T_COMMON_LDADD)
 test_ehht_resize_SOURCES=tests/test_ehht_resize.c \
  $(T_COMMON_SOURCES)
 test_ehht_resize_LDADD=$(T_COMMON_LDADD)
+test_ehht_resize_CFLAGS=$(AM_CLFAGS) -std=gnu89
 
 test_ehht_collision_resize_SOURCES=tests/test_ehht_collision_resize.c \
  $(T_COMMON_SOURCES)
 test_ehht_collision_resize_LDADD=$(T_COMMON_LDADD)
+
+test_flyweight_SOURCES=tests/test_flyweight.c \
+ $(T_COMMON_SOURCES)
+test_flyweight_LDADD=$(T_COMMON_LDADD)
 
 test_out_of_memory_SOURCES=tests/test_out_of_memory.c \
  $(T_COMMON_SOURCES)

@@ -91,6 +91,9 @@ typedef int (*ehht_log_error_func)(void *err_context, const char *format, ...);
 
 /* if hash_func is NULL, a hashing function will be provided */
 /* if ehht_malloc_func/free_func are NULL, malloc/free will be used */
+/* if err_func is NULL and err_context is NULL, errors will not produce msgs
+   but, if err_func is NULL and err_context is a FILE * (e.g.: stderr), then
+   messages will be printed to the FILE *err_context */
 struct ehht_s *ehht_new_custom(size_t num_buckets,
 			       ehht_hash_func hash_func,
 			       ehht_malloc_func alloc_func,
@@ -110,6 +113,12 @@ size_t ehht_buckets_resize(struct ehht_s *table, size_t num_buckets);
 void ehht_buckets_auto_resize_load_factor(struct ehht_s *table, double factor);
 size_t ehht_bucket_for_key(struct ehht_s *table, const char *key,
 			   size_t key_len);
+/* The keys are not copied into the hashtable, rather referenced.
+   If the key is modified, the behavior is undefined.
+   If the key is freed while still in use by the hash, expect a crash
+   To change this value, the table must be empty.
+   Returns non-zero on error. */
+int ehht_trust_keys_immutable(struct ehht_s *this, int val);
 /*****************************************************************************/
 
 Ehht_end_C_functions

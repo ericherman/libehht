@@ -67,6 +67,7 @@ struct ehht_table_s {
 	double collision_load_factor;
 	ehht_log_error_func err_printf;
 	void *err_context;
+	int trust_keys_immutable;
 };
 
 static void ehht_set_table(struct ehht_s *this, struct ehht_table_s *table)
@@ -83,12 +84,13 @@ static int ehht_fprintf(void *err_context, const char *format, ...)
 {
 	int ret = 0;
 	va_list args;
+	FILE *log;
 
-	assert(err_context == NULL);
+	log = (FILE *)err_context;
 
 	va_start(args, format);
 
-	ret = vfprintf(stderr, format, args);
+	ret = vfprintf(log, format, args);
 
 	va_end(args);
 
@@ -98,7 +100,9 @@ static int ehht_fprintf(void *err_context, const char *format, ...)
 static void ehht_free_element(struct ehht_table_s *table,
 			      struct ehht_element_s *element)
 {
-	table->free((char *)element->key.str, table->mem_context);
+	if (!table->trust_keys_immutable) {
+		table->free((char *)element->key.str, table->mem_context);
+	}
 	table->free(element, table->mem_context);
 }
 
@@ -155,20 +159,25 @@ static struct ehht_element_s *ehht_alloc_element(struct ehht_table_s *table,
 	}
 	Ehht_memset(element, 0x00, size);
 
-	size = key_len + 1;
-	assert(size > 0);
-	key_copy = table->alloc(size, table->mem_context);
-	if (!key_copy) {
-		Ehht_error_malloc(table->err_printf, table->err_context, 2,
-				  size, "key copy");
-		ehht_free_element(table, element);
-		return NULL;
-	}
-	Ehht_memset(key_copy, 0x00, size);
-	Ehht_memcpy(key_copy, key, key_len);
-	key_copy[key_len] = '\0';
+	if (table->trust_keys_immutable) {
+		element->key.str = key;
+	} else {
+		size = key_len + 1;
+		assert(size > 0);
+		key_copy = table->alloc(size, table->mem_context);
+		if (!key_copy) {
+			Ehht_error_malloc(table->err_printf, table->err_context,
+					  2, size, "key copy");
+			ehht_free_element(table, element);
+			return NULL;
+		}
+		Ehht_memset(key_copy, 0x00, size);
+		Ehht_memcpy(key_copy, key, key_len);
+		key_copy[key_len] = '\0';
 
-	element->key.str = key_copy;
+		element->key.str = key_copy;
+	}
+
 	element->key.len = key_len;
 	element->key.hashcode = hashcode;
 	element->val = val;
@@ -596,9 +605,33 @@ void ehht_buckets_auto_resize_load_factor(struct ehht_s *this, double factor)
 	table->collision_load_factor = factor;
 }
 
+int ehht_trust_keys_immutable(struct ehht_s *this, int val)
+{
+	struct ehht_table_s *table = NULL;
+	int new_val = val ? 1 : 0;
+
+	table = ehht_get_table(this);
+	if (table->size && new_val != table->trust_keys_immutable) {
+		Ehht_error(table->err_printf, table->err_context, 12,
+			   "invalid attempt to change key immutablity");
+		return 1;
+	}
+	table->trust_keys_immutable = new_val;
+	return 0;
+}
+
 struct ehht_s *ehht_new(void)
 {
-	return ehht_new_custom(0, NULL, NULL, NULL, NULL, NULL, NULL);
+	size_t num_buckets = 0;
+	ehht_hash_func hash_func = NULL;
+	ehht_malloc_func mem_alloc = NULL;
+	ehht_free_func mem_free = NULL;
+	void *mem_context = NULL;
+	ehht_log_error_func err_func = NULL;
+	void *err_context = stderr;
+
+	return ehht_new_custom(num_buckets, hash_func, mem_alloc, mem_free,
+			       mem_context, err_func, err_context);
 }
 
 struct ehht_s *ehht_new_custom(size_t num_buckets, ehht_hash_func hash_func,
@@ -622,7 +655,7 @@ struct ehht_s *ehht_new_custom(size_t num_buckets, ehht_hash_func hash_func,
 	if (mem_free == NULL) {
 		mem_free = ehht_mem_free;
 	}
-	if (err_func == NULL && err_context == NULL) {
+	if (err_func == NULL && err_context != NULL) {
 		err_func = ehht_fprintf;
 	}
 
@@ -677,6 +710,7 @@ struct ehht_s *ehht_new_custom(size_t num_buckets, ehht_hash_func hash_func,
 	table->size = 0;
 
 	table->collision_load_factor = EHHT_DEFAULT_RESIZE_LOADFACTOR;
+	table->trust_keys_immutable = 0;
 
 	return this;
 }
@@ -694,6 +728,10 @@ void ehht_free(struct ehht_s *this)
 	table = ehht_get_table(this);
 
 	this->clear(this);
+	if (table->err_printf == ehht_fprintf) {
+		assert(table->err_context);
+		fflush(table->err_context);
+	}
 
 	free_func = table->free;
 	mem_context = table->mem_context;
