@@ -70,13 +70,17 @@ struct ehht_table_s {
 	int trust_keys_immutable;
 };
 
+/* LCOV_EXCL_START - static function not seen even with -O0 */
 static void ehht_set_table(struct ehht_s *this, struct ehht_table_s *table)
 {
+/* LCOV_EXCL_STOP */
 	this->data = (void *)table;
-}
+}				/* LCOV_EXCL_LINE */
 
+/* LCOV_EXCL_START */
 static struct ehht_table_s *ehht_get_table(struct ehht_s *this)
 {
+/* LCOV_EXCL_STOP */
 	return (struct ehht_table_s *)this->data;
 }
 
