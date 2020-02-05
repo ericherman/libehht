@@ -8,7 +8,11 @@ lib_LTLIBRARIES=libehht.la
 CSTD_CFLAGS=-std=c89 -Wno-long-long
 NOISY_CFLAGS=-Wall -Wextra -pedantic -Werror
 
-#DEBUG_CFLAGS=-ggdb -O0 --coverage
+#DEBUG_CFLAGS=-ggdb -O0 \
+#	-fno-inline-small-functions \
+#	-fkeep-inline-functions \
+#	-fkeep-static-functions \
+#	--coverage
 #BUILD_CFLAGS=$(DEBUG_CFLAGS)
 READY_CFLAGS=-ggdb -O2 -DNDEBUG -Wno-unused-parameter -fomit-frame-pointer
 BUILD_CFLAGS=$(READY_CFLAGS)
