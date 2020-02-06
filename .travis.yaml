@@ -1,0 +1,14 @@
+# vim ft=yaml
+# travis-ci.org definition
+
+sudo: false
+
+language: c
+os: linux
+compiler: gcc
+
+script:
+  - autoreconf -iv
+  - ./configure
+  - make -j
+  - make check
