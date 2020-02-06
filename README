@@ -347,6 +347,12 @@ version of the hashtable, after construction set this property:
 	ehht_trust_keys_immutable(table, 1);
 
 
+Tests as Examples
+-----------------
+The some of tests in the "tests" directory make use of the plugable
+allocation, hashing, and logging functions. If the usage above is
+not clear, see if the tests serve as examles which shed more light.
+
 
 Dependencies
 ------------
