@@ -8,19 +8,17 @@ lib_LTLIBRARIES=libehht.la
 CSTD_CFLAGS=-std=c89 -Wno-long-long
 NOISY_CFLAGS=-Wall -Wextra -pedantic -Werror
 
-#DEBUG_CFLAGS=-ggdb -O0 \
-#	-fno-inline-small-functions \
-#	-fkeep-inline-functions \
-#	-fkeep-static-functions \
-#	--coverage
-#BUILD_CFLAGS=$(DEBUG_CFLAGS)
-READY_CFLAGS=-ggdb -O2 -DNDEBUG -Wno-unused-parameter -fomit-frame-pointer
-BUILD_CFLAGS=$(READY_CFLAGS)
-
-#DEBUG_LDFLAGS="--coverage"
-#BUILD_LDFLAGS=$(DEBUG_LDFLAGS)
-READY_LDFLAGS=
-BUILD_LDFLAGS=$(READY_LDFLAGS)
+if DEBUG
+BUILD_CFLAGS=-ggdb -O0 \
+	-fno-inline-small-functions \
+	-fkeep-inline-functions \
+	-fkeep-static-functions \
+	--coverage
+BUILD_LDFLAGS="--coverage"
+else
+BUILD_CFLAGS=-ggdb -O2 -DNDEBUG -Wno-unused-parameter -fomit-frame-pointer
+BUILD_LDFLAGS=
+endif
 
 AM_CFLAGS=\
  $(CSTD_CFLAGS) \

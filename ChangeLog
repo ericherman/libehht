@@ -1,3 +1,13 @@
+2020-02-06  Eric Herman <eric@freesa.org>
+
+	support "./configure --enable-debug"
+	Add a bit more to README
+
+	* configure.ac: enable-debug
+	* Makefile.am: respect "if DEBUG"
+	* README: add --enable-debug to coverage instructions
+		also add flyweight, and correct put() syntax
+
 2020-02-04  Eric Herman <eric@freesa.org>
 
 	Added the ability to avoid copying keys on put(). This is not

@@ -34,20 +34,29 @@ Put
 ----
 
 The "put" method takes a pointer to the table struct, a pointer to
-key, the length of the key in bytes, and a pointer to a value. The
-key is copied by the hashtable, thus the caller is welcome to use a
-mutable buffer when put-ing objects into the table. The return value
-is whatever value was previously pointed to by the key, or NULL.
+key, the length of the key in bytes, a pointer to a value, and a a
+pointer to an optional errcode. The key is copied by the hashtable,
+thus the caller is welcome to use a mutable buffer when put-ing
+objects into the table. The return value is whatever value was
+previously pointed to by the key, or NULL. The *errcode int pointer
+will only be touched if memory allocation fails.
 
 
 	void *previous_val;
 	char buf[80];
+	int err;
 
 	strcpy(buf, "foo");
-	previous_val = table->put(table, buf, strlen(buf), "bar");
+	err = 0;
+	previous_val = table->put(table, buf, strlen(buf), "bar", &err);
 
 	strcpy(buf, "whiz");
-	previous_val = table->put(table, buf, strlen(buf), "bang");
+	previous_val = table->put(table, buf, strlen(buf), "bang", &err);
+
+	if (err) {
+		fprintf(stderr, "A call to put failed?\n");
+		exit(EXIT_FAILURE);
+	}
 
 
 Get
@@ -269,6 +278,9 @@ hashing functions:
 					  struct tracking_context_s *ctx,
 					  int clear_context)
 	{
+		ehht_log_error_func log_func = NULL; /* fprintf */
+		void *log_ctx = stderr;
+
 		if (clear_context) {
 			ctx->allocs = 0;
 			ctx->alloc_bytes = 0;
@@ -279,10 +291,11 @@ hashing functions:
 			ctx->peak_usage = 0;
 		}
 		return ehht_new_custom(buckets, djb2_hash, tracking_malloc,
-				      tracking_free, ctx);
+				      tracking_free, ctx, log_func, log_ctx);
 	}
 
 If the number of buckets is 0 at construction, a default is chosen.
+
 
 To see how to use jumphash, you can look in the "demos" directory:
  * https://github.com/ericherman/libehht/blob/master/demos/demo-ehht.c
@@ -322,6 +335,16 @@ size remains unchanged.
 	}
 
 
+"Flyweight" hashtables
+----------------------
+It is possible to configure the hashtable to _not_ copy keys, but
+rather retain only pointers to the keys. Obviously these keys should
+be immutable for the lifetime of the hash, and should not be free()d
+until no longer in use by the hashtable. To enable a "flyweight"
+version of the hashtable, after construction set this property:
+
+	struct ehht_s *table = ehht_new();
+	ehht_trust_keys_immutable(table, 1);
 
 
 
@@ -329,7 +352,11 @@ Dependencies
 ------------
 The "make", "make check", and "make install" targets have no
 external dependencies.  The files "src/ehht.c" and "src/ehht.h" can
-be added directly into your project.
+be added directly into your project. When using them in an embedded
+firmware, I have typically pasted the code directly into my firmware
+file and deleted functions like "to_string" and "for_each". Since
+LibC bloat can be quite pronounced in firmware, it can usually be
+avoided with function pointers and #define Ehht_memset, Ehht_memcpy.
 
 The "make demo" target depends upon "simple_stats"
   * https://github.com/ericherman/simple_stats
@@ -337,16 +364,13 @@ The "make demo" target depends upon "simple_stats"
 
 Test Coverage
 -------------
-Adjust Makefile.am to include --coverage AM_CLFAGS and AM_LDFLAGS then:
-
 autoreconf -iv &&
- ./configure &&
+ ./configure --enable-debug &&
  make &&
  make check &&
  lcov --capture --directory src --output-file coverage.info &&
- genhtml coverage.info --output-directory coverage_html
-
-Then inspect ./coverage_html/src/ehht.c.gcov.html
+ genhtml coverage.info --output-directory coverage_html &&
+ ${BROWSER} ./coverage_html/src/ehht.c.gcov.html
 
 
 Building on linux from a release tar
