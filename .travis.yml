@@ -1,14 +1,19 @@
-# vim ft=yaml
-# travis-ci.org definition
-
 sudo: false
-
 language: c
 os: linux
 compiler: gcc
-
 script:
-  - autoreconf -iv
-  - ./configure
-  - make -j
-  - make check
+	- autoreconf -iv
+	- "./configure"
+	- make -j
+	- make check
+deploy:
+	provider: releases
+	api_key:
+		secure: MNsSkPOGihIGdAEZHKBfDWN15/I6alEPX3HEE6bRpNBBvq4KchAABvzn18AgLo7x0FcrGSroRzUOORwAzfjAOjbGmtAtF4hbmOUpugfwOyUJANWWTGTURXLhSTTm4IwOT8lYeVxYh2SGwOoolNk4vDMj7lAoBhNNaj/7/th8d05DWVGfmTlfvYwpzuKlITtTRGWisid9wVRAazCzmwgnJ2gRQDDratbTDgiz1AAu3qmY2tbKAQiBaQpyGqMY0P52qYgvDblOEIY+3gc8wcln3nKccL+Le7TKlVwzlpzUaH+FGMwzn51ZsnyyPC1VAVNnEAF6CbCY33Wc7f4wpAPV4qIg/j0tSt+vQyeXaMjPKu9xfo1XybH/QRNr5k/9bIxO2AJgWPRqFAvTqQ1bk/7EKNU9ctRH+v624pQOKMZ4cIymhm4NLkl8PxsDWdt+d9wSKrPKEj2Mh4uVu54Ds2JY+Ss+KfPprWPm/jxwD7zCitZ+JtqhlMa0QvuX0KICvovzRBzDJfylIAxUjj5SpYKEAXkyPiRi2shlNRlvLyXO/td/mIC7Hjb5BGtoobd6WKuSA7FEEHlvrWuPY+zUt3lxAL9MFekvyu+fjwXA1MHvNPXrjPRIR5etRZqekCBqLIRlkqG541Xe8lMYeopcvk3q1YJNCOeN7rBJ2t5T5bBHTvE=
+	file_glob: true
+	file: libehht-*.tar.gz
+	skip_cleanup: true
+	on:
+		repo: ericherman/libehht
+		tags: true
