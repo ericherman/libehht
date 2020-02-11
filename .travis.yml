@@ -7,6 +7,7 @@ script:
 	- "./configure"
 	- make -j
 	- make check
+	- make distcheck
 deploy:
 	provider: releases
 	api_key:
