@@ -13,7 +13,7 @@
 #include "../src/ehht.h"
 #include "ehht-report.h"
 #define REPORT_LEN 10
-#include "echeck.h"
+#include "../submodules/libecheck/src/echeck.h"
 
 struct tracking_mem_context {
 	uint64_t allocs;

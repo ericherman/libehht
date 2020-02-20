@@ -1,5 +1,18 @@
 2020-02-06  Eric Herman <eric@freesa.org>
 
+	replace copies of libecheck files with git submodule
+
+	* .gitmodules: https://github.com/ericherman/libecheck.git
+	* submodules/libecheck: add latest libecheck
+	* .travis.yml: submodule init
+	* Makefile.am: new location of echeck.?
+	* tests/test-ehht.h: new location of echeck.h
+	* configure.ac: 2.0.4-dev -> 2.0.5-dev
+	* tests/echeck.c: deleted
+	* tests/echeck.h: deleted
+
+2020-02-06  Eric Herman <eric@freesa.org>
+
 	support "./configure --enable-debug"
 	Add a bit more to README
 

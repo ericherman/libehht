@@ -37,7 +37,11 @@ SSTATS=../simple_stats/sstats
 
 ACLOCAL_AMFLAGS=-I m4 --install
 
-EXTRA_DIST=COPYING COPYING.LESSER
+EXTRA_DIST=COPYING COPYING.LESSER \
+	submodules/libecheck/COPYING \
+	submodules/libecheck/COPYING.LESSER \
+	submodules/libecheck/src/echeck.h \
+	submodules/libecheck/src/echeck.c
 
 DEMOS=$(bin_PROGRAMS)
 bin_PROGRAMS=demo-ehht demo-ehht-as-array
@@ -91,6 +95,11 @@ spotless:
 	pushd src && rm -rf `cat ../.gitignore | sed -e 's/#.*//'`; popd
 	pushd tests && rm -rf `cat ../.gitignore | sed -e 's/#.*//'`; popd
 	pushd demos && rm -rf `cat ../.gitignore | sed -e 's/#.*//'`; popd
+	pushd submodules/libecheck && \
+		rm -rf `cat ../../.gitignore | sed -e 's/#.*//'` \
+		rm -rf `cat .gitignore | sed -e 's/#.*//'`; \
+		popd
+
 
 valgrind: $(check_PROGRAMS)
 	./libtool --mode=execute valgrind -q ./test_ehht_new
@@ -111,8 +120,8 @@ include_HEADERS=src/ehht.h
 TESTS=$(check_PROGRAMS)
 
 T_COMMON_SOURCES=\
- tests/echeck.h \
- tests/echeck.c \
+ submodules/libecheck/src/echeck.h \
+ submodules/libecheck/src/echeck.c \
  tests/test-ehht.h \
  $(include_HEADERS)
 T_COMMON_LDADD=libehht.la
