@@ -101,16 +101,43 @@ spotless:
 		popd
 
 
-valgrind: $(check_PROGRAMS)
+vg-test_ehht_new: test_ehht_new
 	./libtool --mode=execute valgrind -q ./test_ehht_new
+
+vg-test_ehht_put_get_remove: test_ehht_put_get_remove
 	./libtool --mode=execute valgrind -q ./test_ehht_put_get_remove
+
+vg-test_ehht_clear: test_ehht_clear
 	./libtool --mode=execute valgrind -q ./test_ehht_clear
+
+vg-test_ehht_foreach_element: test_ehht_foreach_element
 	./libtool --mode=execute valgrind -q ./test_ehht_foreach_element
+
+vg-test_ehht_keys: test_ehht_keys
 	./libtool --mode=execute valgrind -q ./test_ehht_keys
+
+vg-test_ehht_resize: test_ehht_resize
 	./libtool --mode=execute valgrind -q ./test_ehht_resize
+
+vg-test_ehht_collision_resize: test_ehht_collision_resize
 	./libtool --mode=execute valgrind -q ./test_ehht_collision_resize
+
+vg-test_flyweight: test_flyweight
 	./libtool --mode=execute valgrind -q ./test_flyweight
+
+vg-test_out_of_memory: test_out_of_memory
 	./libtool --mode=execute valgrind -q ./test_out_of_memory
+
+valgrind: \
+	vg-test_ehht_new \
+	vg-test_ehht_put_get_remove \
+	vg-test_ehht_clear \
+	vg-test_ehht_foreach_element \
+	vg-test_ehht_keys \
+	vg-test_ehht_resize \
+	vg-test_ehht_collision_resize \
+	vg-test_flyweight \
+	vg-test_out_of_memory
 
 
 libehht_la_SOURCES=$(include_HEADERS) src/ehht.c
