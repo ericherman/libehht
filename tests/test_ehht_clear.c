@@ -13,10 +13,10 @@ int test_ehht_clear(void)
 
 	size_t i, count, items_written;
 	size_t report[REPORT_LEN];
-	struct oom_injecting_context_s ctx;
+	oom_injecting_context_s ctx;
 	int err;
 
-	memset(&ctx, 0x00, sizeof(struct oom_injecting_context_s));
+	memset(&ctx, 0x00, sizeof(oom_injecting_context_s));
 	table =
 	    ehht_new_custom(num_buckets, NULL, oom_injecting_malloc,
 			    oom_injecting_free, &ctx, NULL, NULL);

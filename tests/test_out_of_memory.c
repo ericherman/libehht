@@ -10,9 +10,9 @@ int test_out_of_memory_construction(struct ehht_sprintf_context_s *err_ctx,
 {
 	int failures = 0;
 	struct ehht_s *table;
-	struct oom_injecting_context_s ctx;
+	oom_injecting_context_s ctx;
 
-	memset(&ctx, 0x00, sizeof(struct oom_injecting_context_s));
+	memset(&ctx, 0x00, sizeof(oom_injecting_context_s));
 	ctx.attempts_to_fail_bitmask = allocs_to_fail;
 
 	table =
@@ -39,12 +39,12 @@ int test_out_of_memory_put(struct ehht_sprintf_context_s *err_ctx,
 {
 	int failures = 0;
 	struct ehht_s *table;
-	struct oom_injecting_context_s ctx;
+	oom_injecting_context_s ctx;
 	size_t i, num_buckets;
 	int err;
 	char buf[80];
 
-	memset(&ctx, 0x00, sizeof(struct oom_injecting_context_s));
+	memset(&ctx, 0x00, sizeof(oom_injecting_context_s));
 	ctx.attempts_to_fail_bitmask = allocs_to_fail;
 
 	num_buckets = 10;
@@ -82,13 +82,13 @@ int test_out_of_memory_keys(struct ehht_sprintf_context_s *err_ctx,
 {
 	int failures = 0;
 	struct ehht_s *table;
-	struct oom_injecting_context_s ctx;
+	oom_injecting_context_s ctx;
 	size_t i;
 	int err, allocate_copies;
 	char buf[80];
 	struct ehht_keys_s *ks;
 
-	memset(&ctx, 0x00, sizeof(struct oom_injecting_context_s));
+	memset(&ctx, 0x00, sizeof(oom_injecting_context_s));
 	ctx.attempts_to_fail_bitmask = allocs_to_fail;
 
 	table =
