@@ -16,7 +16,7 @@ int test_ehht_clear(void)
 	oom_injecting_context_s ctx;
 	int err;
 
-	memset(&ctx, 0x00, sizeof(oom_injecting_context_s));
+	oom_injecting_context_init(&ctx);
 	table =
 	    ehht_new_custom(num_buckets, NULL, oom_injecting_malloc,
 			    oom_injecting_free, &ctx, NULL, NULL);
