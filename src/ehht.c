@@ -53,8 +53,8 @@ struct ehht_table_s {
 	struct ehht_element_s **buckets;
 	size_t size;
 	ehht_hash_func hash_func;
-	ehht_malloc_func alloc;
-	ehht_free_func free;
+	context_malloc_func alloc;
+	context_free_func free;
 	void *mem_context;
 	double collision_load_factor;
 	ehht_log_error_func err_printf;
@@ -577,18 +577,6 @@ static struct ehht_keys_s *ehht_keys(struct ehht_s *this, int copy_keys)
 	return fe_ctx.keys;
 }
 
-static void *ehht_malloc(void *context, size_t size)
-{
-	assert(context == NULL);
-	return malloc(size);
-}
-
-static void ehht_mem_free(void *context, void *ptr)
-{
-	assert(context == NULL);
-	free(ptr);
-}
-
 void ehht_buckets_auto_resize_load_factor(struct ehht_s *this, double factor)
 {
 	struct ehht_table_s *table = NULL;
@@ -616,8 +604,8 @@ struct ehht_s *ehht_new(void)
 {
 	size_t num_buckets = 0;
 	ehht_hash_func hash_func = NULL;
-	ehht_malloc_func mem_alloc = NULL;
-	ehht_free_func mem_free = NULL;
+	context_malloc_func mem_alloc = NULL;
+	context_free_func mem_free = NULL;
 	void *mem_context = NULL;
 	ehht_log_error_func err_func = NULL;
 	void *err_context = stderr;
@@ -627,8 +615,8 @@ struct ehht_s *ehht_new(void)
 }
 
 struct ehht_s *ehht_new_custom(size_t num_buckets, ehht_hash_func hash_func,
-			       ehht_malloc_func mem_alloc,
-			       ehht_free_func mem_free, void *mem_context,
+			       context_malloc_func mem_alloc,
+			       context_free_func mem_free, void *mem_context,
 			       ehht_log_error_func err_func, void *err_context)
 {
 	struct ehht_s *this = NULL;
@@ -641,11 +629,10 @@ struct ehht_s *ehht_new_custom(size_t num_buckets, ehht_hash_func hash_func,
 	if (hash_func == NULL) {
 		hash_func = ehht_kr2_hashcode;
 	}
-	if (mem_alloc == NULL) {
-		mem_alloc = ehht_malloc;
-	}
-	if (mem_free == NULL) {
-		mem_free = ehht_mem_free;
+	if (mem_alloc == NULL || mem_free == NULL) {
+		mem_alloc = context_stdlib_malloc;
+		mem_free = context_stdlib_free;
+		mem_context = NULL;
 	}
 	if (err_func == NULL && err_context != NULL) {
 		err_func = ehht_fprintf;
@@ -710,7 +697,7 @@ struct ehht_s *ehht_new_custom(size_t num_buckets, ehht_hash_func hash_func,
 void ehht_free(struct ehht_s *this)
 {
 	struct ehht_table_s *table = NULL;
-	ehht_free_func ctx_free = NULL;
+	context_free_func ctx_free = NULL;
 	void *mem_context = NULL;
 
 	if (this == NULL) {

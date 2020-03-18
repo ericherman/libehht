@@ -10,14 +10,14 @@ int test_out_of_memory_construction(struct ehht_sprintf_context_s *err_ctx,
 {
 	int failures = 0;
 	struct ehht_s *table;
-	struct tracking_mem_context ctx;
+	struct oom_injecting_context_s ctx;
 
-	memset(&ctx, 0x00, sizeof(struct tracking_mem_context));
+	memset(&ctx, 0x00, sizeof(struct oom_injecting_context_s));
 	ctx.attempts_to_fail_bitmask = allocs_to_fail;
 
 	table =
-	    ehht_new_custom(0, NULL, test_malloc, test_free, &ctx, ehht_sprintf,
-			    err_ctx);
+	    ehht_new_custom(0, NULL, oom_injecting_malloc, oom_injecting_free,
+			    &ctx, ehht_sprintf, err_ctx);
 	if (table) {
 		if (allocs_to_fail) {
 			++failures;
@@ -39,18 +39,18 @@ int test_out_of_memory_put(struct ehht_sprintf_context_s *err_ctx,
 {
 	int failures = 0;
 	struct ehht_s *table;
-	struct tracking_mem_context ctx;
+	struct oom_injecting_context_s ctx;
 	size_t i, num_buckets;
 	int err;
 	char buf[80];
 
-	memset(&ctx, 0x00, sizeof(struct tracking_mem_context));
+	memset(&ctx, 0x00, sizeof(struct oom_injecting_context_s));
 	ctx.attempts_to_fail_bitmask = allocs_to_fail;
 
 	num_buckets = 10;
 	table =
-	    ehht_new_custom(num_buckets, NULL, test_malloc, test_free, &ctx,
-			    ehht_sprintf, err_ctx);
+	    ehht_new_custom(num_buckets, NULL, oom_injecting_malloc,
+			    oom_injecting_free, &ctx, ehht_sprintf, err_ctx);
 	if (!table) {
 		fprintf(stderr, "%s:%d: ehht_new_custom\n", __FILE__, __LINE__);
 		return 1;
@@ -82,18 +82,18 @@ int test_out_of_memory_keys(struct ehht_sprintf_context_s *err_ctx,
 {
 	int failures = 0;
 	struct ehht_s *table;
-	struct tracking_mem_context ctx;
+	struct oom_injecting_context_s ctx;
 	size_t i;
 	int err, allocate_copies;
 	char buf[80];
 	struct ehht_keys_s *ks;
 
-	memset(&ctx, 0x00, sizeof(struct tracking_mem_context));
+	memset(&ctx, 0x00, sizeof(struct oom_injecting_context_s));
 	ctx.attempts_to_fail_bitmask = allocs_to_fail;
 
 	table =
-	    ehht_new_custom(0, NULL, test_malloc, test_free, &ctx, ehht_sprintf,
-			    err_ctx);
+	    ehht_new_custom(0, NULL, oom_injecting_malloc, oom_injecting_free,
+			    &ctx, ehht_sprintf, err_ctx);
 	if (!table) {
 		fprintf(stderr, "%s:%d: ehht_new_custom\n", __FILE__, __LINE__);
 		return 1;

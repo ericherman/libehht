@@ -15,22 +15,22 @@ int test_flyweight(void)
 	size_t alloc_bytes_diff = 0;
 	int err = 0;
 	struct ehht_s *table = NULL;
-	struct tracking_mem_context ctx;
+	struct oom_injecting_context_s ctx;
 	char *key1 = NULL;
 	char *key2 = NULL;
 	char *key3 = NULL;
 	char errmsg[10];
 	char *found = NULL;
 
-	memset(&ctx, 0x00, sizeof(struct tracking_mem_context));
+	memset(&ctx, 0x00, sizeof(struct oom_injecting_context_s));
 
 	err_ctx.size = 80 * 1000;
 	err_ctx.buf = calloc(err_ctx.size, 1);
 	assert(err_ctx.buf != NULL);
 
 	table =
-	    ehht_new_custom(0, NULL, test_malloc, test_free, &ctx, ehht_sprintf,
-			    &err_ctx);
+	    ehht_new_custom(0, NULL, oom_injecting_malloc, oom_injecting_free,
+			    &ctx, ehht_sprintf, &err_ctx);
 	assert(table);
 
 	keysize = 500;

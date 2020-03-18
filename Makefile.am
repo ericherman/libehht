@@ -24,8 +24,8 @@ AM_CFLAGS=\
  $(CSTD_CFLAGS) \
  $(BUILD_CFLAGS) \
  $(NOISY_CFLAGS) \
- $(USE_JUMPHASH_CFLAGS) \
- -I src/ -pipe
+ -I./submodules/context-alloc/src \
+ -fPIC -I src/ -pipe
 
 AM_LDFLAGS=$(BUILD_LDFLAGS)
 
@@ -38,6 +38,12 @@ SSTATS=../simple_stats/sstats
 ACLOCAL_AMFLAGS=-I m4 --install
 
 EXTRA_DIST=COPYING COPYING.LESSER \
+	submodules/context-alloc/COPYING \
+	submodules/context-alloc/COPYING.LESSER \
+	submodules/context-alloc/src/context-alloc.h \
+	submodules/context-alloc/src/context-alloc.c
+	submodules/context-alloc/util/oom-injecting-malloc.h \
+	submodules/context-alloc/util/oom-injecting-malloc.c \
 	submodules/libecheck/COPYING \
 	submodules/libecheck/COPYING.LESSER \
 	submodules/libecheck/src/echeck.h \
@@ -95,8 +101,10 @@ spotless:
 	pushd src && rm -rf `cat ../.gitignore | sed -e 's/#.*//'`; popd
 	pushd tests && rm -rf `cat ../.gitignore | sed -e 's/#.*//'`; popd
 	pushd demos && rm -rf `cat ../.gitignore | sed -e 's/#.*//'`; popd
+	pushd submodules/context-alloc && \
+		rm -rf `cat .gitignore | sed -e 's/#.*//'`; \
+		popd
 	pushd submodules/libecheck && \
-		rm -rf `cat ../../.gitignore | sed -e 's/#.*//'` \
 		rm -rf `cat .gitignore | sed -e 's/#.*//'`; \
 		popd
 
@@ -140,15 +148,20 @@ valgrind: \
 	vg-test_out_of_memory
 
 
-libehht_la_SOURCES=$(include_HEADERS) src/ehht.c
+libehht_la_SOURCES=$(include_HEADERS) \
+		submodules/context-alloc/src/context-alloc.c \
+		src/ehht.c
 
-include_HEADERS=src/ehht.h
+include_HEADERS=src/ehht.h \
+		submodules/context-alloc/src/context-alloc.h
 
 TESTS=$(check_PROGRAMS)
 
 T_COMMON_SOURCES=\
  submodules/libecheck/src/echeck.h \
  submodules/libecheck/src/echeck.c \
+ submodules/context-alloc/util/oom-injecting-malloc.h \
+ submodules/context-alloc/util/oom-injecting-malloc.c \
  tests/test-ehht.h \
  $(include_HEADERS)
 T_COMMON_LDADD=libehht.la
@@ -176,7 +189,7 @@ test_ehht_put_get_remove_LDADD=$(T_COMMON_LDADD)
 test_ehht_resize_SOURCES=tests/test_ehht_resize.c \
  $(T_COMMON_SOURCES)
 test_ehht_resize_LDADD=$(T_COMMON_LDADD)
-test_ehht_resize_CFLAGS=$(AM_CLFAGS) -std=gnu89
+test_ehht_resize_CFLAGS=$(AM_CFLAGS) -std=gnu89
 
 test_ehht_collision_resize_SOURCES=tests/test_ehht_collision_resize.c \
  $(T_COMMON_SOURCES)

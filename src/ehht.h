@@ -77,6 +77,7 @@ struct ehht_s {
 
 Ehht_begin_C_functions
 #undef Ehht_begin_C_functions
+#include <context-alloc.h>
 /*****************************************************************************/
 /* constructors and destructor */
 /*****************************************************************************/
@@ -85,8 +86,6 @@ struct ehht_s *ehht_new(void);
 
 /* allocator aware constructor */
 typedef unsigned int (*ehht_hash_func)(const char *data, size_t data_len);
-typedef void *(*ehht_malloc_func)(void *context, size_t size);
-typedef void (*ehht_free_func)(void *context, void *ptr);
 typedef int (*ehht_log_error_func)(void *err_context, const char *format, ...);
 
 /* if hash_func is NULL, a hashing function will be provided */
@@ -96,8 +95,8 @@ typedef int (*ehht_log_error_func)(void *err_context, const char *format, ...);
    messages will be printed to the FILE *err_context */
 struct ehht_s *ehht_new_custom(size_t num_buckets,
 			       ehht_hash_func hash_func,
-			       ehht_malloc_func alloc_func,
-			       ehht_free_func free_func, void *mem_context,
+			       context_malloc_func alloc_func,
+			       context_free_func free_func, void *mem_context,
 			       ehht_log_error_func err_func, void *err_context);
 
 /* destructor */

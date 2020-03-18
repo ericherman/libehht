@@ -1,11 +1,19 @@
 2020-03-18  Eric Herman <eric@freesa.org>
 
 	API Breaking Change! malloc/free function arguments order swap
+	use context-alloc in code and oom_injecting_malloc in tests
+	https://github.com/ericherman/context-alloc
 
-	* src/ehht.h: context pointer first
-	* src/ehht.c: context pointer first
-	* tests/test-ehht.h: argument order
+	* src/ehht.h: context pointer first, use context-alloc
+	* src/ehht.c: context pointer first, use context-alloc
+	* tests/test-ehht.h: argument order, use oom_injecting_malloc
+	* tests/test_ehht_clear.c: use oom_injecting_malloc
+	* tests/test_flyweight.c: oom_injecting_malloc
+	* tests/test_out_of_memory.c: oom_injecting_malloc
 	* configure.ac: 2.0.5-dev -> 2.0.6-dev
+	* Makefile.am: use context-alloc
+	* .gitmodules: add context-alloc, git submodule update --remote
+	* submodules/context-alloc: added
 
 2020-02-06  Eric Herman <eric@freesa.org>
 
