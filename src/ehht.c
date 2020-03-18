@@ -93,9 +93,9 @@ static void ehht_free_element(struct ehht_table_s *table,
 			      struct ehht_element_s *element)
 {
 	if (!table->trust_keys_immutable) {
-		table->free((char *)element->key.str, table->mem_context);
+		table->free(table->mem_context, (char *)element->key.str);
 	}
-	table->free(element, table->mem_context);
+	table->free(table->mem_context, element);
 }
 
 static void ehht_clear(struct ehht_s *this)
@@ -143,7 +143,7 @@ static struct ehht_element_s *ehht_alloc_element(struct ehht_table_s *table,
 	size_t size = 0;
 
 	size = sizeof(struct ehht_element_s);
-	element = table->alloc(size, table->mem_context);
+	element = table->alloc(table->mem_context, size);
 	if (element == NULL) {
 		Ehht_error_malloc(table->err_printf, table->err_context, 1,
 				  size, "struct ehht_element_s");
@@ -156,7 +156,7 @@ static struct ehht_element_s *ehht_alloc_element(struct ehht_table_s *table,
 	} else {
 		size = key_len + 1;
 		assert(size > 0);
-		key_copy = table->alloc(size, table->mem_context);
+		key_copy = table->alloc(table->mem_context, size);
 		if (!key_copy) {
 			Ehht_error_malloc(table->err_printf, table->err_context,
 					  2, size, "key copy");
@@ -414,7 +414,7 @@ size_t ehht_buckets_resize(struct ehht_s *this, size_t num_buckets)
 	assert(num_buckets > 1);
 	size = sizeof(struct ehht_element_s *) * num_buckets;
 	assert(size > 0);
-	new_buckets = table->alloc(size, table->mem_context);
+	new_buckets = table->alloc(table->mem_context, size);
 	if (new_buckets == NULL) {
 		Ehht_error_malloc(table->err_printf, table->err_context, 4,
 				  size, "buckets");
@@ -439,7 +439,7 @@ size_t ehht_buckets_resize(struct ehht_s *this, size_t num_buckets)
 	table->buckets = new_buckets;
 	table->num_buckets = num_buckets;
 
-	table->free(old_buckets, table->mem_context);
+	table->free(table->mem_context, old_buckets);
 	return num_buckets;
 }
 
@@ -482,7 +482,7 @@ static int ehht_fill_keys_each(struct ehht_key_s key, void *each_val,
 
 		size = sizeof(char *) * (key.len + 1);
 		assert(size > 0);
-		key_copy = table->alloc(size, table->mem_context);
+		key_copy = table->alloc(table->mem_context, size);
 		if (!key_copy) {
 			Ehht_error_malloc(table->err_printf, table->err_context,
 					  5, size, "key copy");
@@ -522,14 +522,14 @@ static void ehht_free_keys(struct ehht_s *this, struct ehht_keys_s *keys)
 	if (keys->keys_copied) {
 		size_t i;
 		for (i = 0; i < keys->len; ++i) {
-			table->free((void *)keys->keys[i].str,
-				    table->mem_context);
+			void *ptr = (void *)keys->keys[i].str;
+			table->free(table->mem_context, ptr);
 		}
 	}
 	if (keys->keys) {
-		table->free(keys->keys, table->mem_context);
+		table->free(table->mem_context, keys->keys);
 	}
-	table->free(keys, table->mem_context);
+	table->free(table->mem_context, keys);
 }
 
 static struct ehht_keys_s *ehht_keys(struct ehht_s *this, int copy_keys)
@@ -543,7 +543,7 @@ static struct ehht_keys_s *ehht_keys(struct ehht_s *this, int copy_keys)
 	fe_ctx.ehht = this;
 
 	size = sizeof(struct ehht_keys_s);
-	fe_ctx.keys = table->alloc(size, table->mem_context);
+	fe_ctx.keys = table->alloc(table->mem_context, size);
 	if (!fe_ctx.keys) {
 		Ehht_error_malloc(table->err_printf, table->err_context, 6,
 				  size, "struct ehht_keys_s");
@@ -558,11 +558,11 @@ static struct ehht_keys_s *ehht_keys(struct ehht_s *this, int copy_keys)
 	if (size == 0) {
 		fe_ctx.keys->keys = NULL;
 	} else {
-		fe_ctx.keys->keys = table->alloc(size, table->mem_context);
+		fe_ctx.keys->keys = table->alloc(table->mem_context, size);
 		if (!fe_ctx.keys->keys) {
 			Ehht_error_malloc(table->err_printf, table->err_context,
 					  7, size, "key list");
-			table->free(fe_ctx.keys, table->mem_context);
+			table->free(table->mem_context, fe_ctx.keys);
 			return NULL;
 		}
 		Ehht_memset(fe_ctx.keys->keys, 0x00, size);
@@ -577,13 +577,13 @@ static struct ehht_keys_s *ehht_keys(struct ehht_s *this, int copy_keys)
 	return fe_ctx.keys;
 }
 
-static void *ehht_malloc(size_t size, void *context)
+static void *ehht_malloc(void *context, size_t size)
 {
 	assert(context == NULL);
 	return malloc(size);
 }
 
-static void ehht_mem_free(void *ptr, void *context)
+static void ehht_mem_free(void *context, void *ptr)
 {
 	assert(context == NULL);
 	free(ptr);
@@ -652,7 +652,7 @@ struct ehht_s *ehht_new_custom(size_t num_buckets, ehht_hash_func hash_func,
 	}
 
 	size = sizeof(struct ehht_s);
-	this = mem_alloc(size, mem_context);
+	this = mem_alloc(mem_context, size);
 	if (this == NULL) {
 		Ehht_error_malloc(err_func, err_context, 9, size,
 				  "struct ehht_s");
@@ -672,11 +672,11 @@ struct ehht_s *ehht_new_custom(size_t num_buckets, ehht_hash_func hash_func,
 	this->to_string = ehht_to_string;
 
 	size = sizeof(struct ehht_table_s);
-	table = mem_alloc(size, mem_context);
+	table = mem_alloc(mem_context, size);
 	if (table == NULL) {
 		Ehht_error_malloc(err_func, err_context, 10, size,
 				  "struct ehht_table_s");
-		mem_free(this, mem_context);
+		mem_free(mem_context, this);
 		return NULL;
 	}
 	Ehht_memset(table, 0x00, size);
@@ -690,11 +690,11 @@ struct ehht_s *ehht_new_custom(size_t num_buckets, ehht_hash_func hash_func,
 	table->err_context = err_context;
 
 	size = sizeof(struct ehht_element_s *) * num_buckets;
-	table->buckets = mem_alloc(size, mem_context);
+	table->buckets = mem_alloc(mem_context, size);
 	if (table->buckets == NULL) {
 		Ehht_error_malloc(err_func, err_context, 11, size, "buckets");
-		mem_free(table, mem_context);
-		mem_free(this, mem_context);
+		mem_free(mem_context, table);
+		mem_free(mem_context, this);
 		return NULL;
 	}
 	Ehht_memset(table->buckets, 0x00, size);
@@ -710,7 +710,7 @@ struct ehht_s *ehht_new_custom(size_t num_buckets, ehht_hash_func hash_func,
 void ehht_free(struct ehht_s *this)
 {
 	struct ehht_table_s *table = NULL;
-	ehht_free_func free_func = NULL;
+	ehht_free_func ctx_free = NULL;
 	void *mem_context = NULL;
 
 	if (this == NULL) {
@@ -725,10 +725,10 @@ void ehht_free(struct ehht_s *this)
 		fflush(table->err_context);
 	}
 
-	free_func = table->free;
+	ctx_free = table->free;
 	mem_context = table->mem_context;
 
-	free_func(table->buckets, mem_context);
-	free_func(table, mem_context);
-	free_func(this, mem_context);
+	ctx_free(mem_context, table->buckets);
+	ctx_free(mem_context, table);
+	ctx_free(mem_context, this);
 }

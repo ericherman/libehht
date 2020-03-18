@@ -5,7 +5,7 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ([2.69])
-AC_INIT([libehht], [2.0.5-dev], [eric@freesa.org])
+AC_INIT([libehht], [2.0.6-dev], [eric@freesa.org])
 AC_CONFIG_SRCDIR([src/ehht.h])
 AC_CONFIG_HEADERS([config.h])
 AC_CONFIG_AUX_DIR([build-aux])

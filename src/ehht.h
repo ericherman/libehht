@@ -85,8 +85,8 @@ struct ehht_s *ehht_new(void);
 
 /* allocator aware constructor */
 typedef unsigned int (*ehht_hash_func)(const char *data, size_t data_len);
-typedef void *(*ehht_malloc_func)(size_t size, void *context);
-typedef void (*ehht_free_func)(void *ptr, void *context);
+typedef void *(*ehht_malloc_func)(void *context, size_t size);
+typedef void (*ehht_free_func)(void *context, void *ptr);
 typedef int (*ehht_log_error_func)(void *err_context, const char *format, ...);
 
 /* if hash_func is NULL, a hashing function will be provided */

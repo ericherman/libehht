@@ -26,7 +26,7 @@ struct tracking_mem_context {
 	uint64_t attempts_to_fail_bitmask;
 };
 
-void *test_malloc(size_t size, void *context)
+void *test_malloc(void *context, size_t size)
 {
 	struct tracking_mem_context *ctx = NULL;
 	unsigned char *tracking_buffer = NULL;
@@ -62,7 +62,7 @@ void *test_malloc(size_t size, void *context)
 	return ptr;
 }
 
-void test_free(void *ptr, void *context)
+void test_free(void *context, void *ptr)
 {
 	struct tracking_mem_context *ctx = NULL;
 	unsigned char *tracking_buffer = NULL;
