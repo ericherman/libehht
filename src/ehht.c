@@ -64,11 +64,14 @@ struct ehht_table_s {
 
 static void ehht_set_table(struct ehht_s *this, struct ehht_table_s *table)
 {
+	assert(this);
 	this->data = (void *)table;
 }
 
 static struct ehht_table_s *ehht_get_table(struct ehht_s *this)
 {
+	assert(this);
+	assert(this->data);
 	return (struct ehht_table_s *)this->data;
 }
 
@@ -76,7 +79,10 @@ static int ehht_fprintf(void *err_context, const char *format, ...)
 {
 	int ret = 0;
 	va_list args;
-	FILE *log;
+	FILE *log = NULL;
+
+	assert(err_context);
+	assert(format);
 
 	log = (FILE *)err_context;
 
@@ -629,12 +635,20 @@ struct ehht_s *ehht_new_custom(size_t num_buckets, ehht_hash_func hash_func,
 	if (hash_func == NULL) {
 		hash_func = ehht_kr2_hashcode;
 	}
-	if (mem_alloc == NULL || mem_free == NULL) {
+	if ((mem_alloc == NULL) || (mem_free == NULL)) {
+		assert((mem_alloc == NULL) && (mem_free == NULL));
 		mem_alloc = context_stdlib_malloc;
 		mem_free = context_stdlib_free;
 		mem_context = NULL;
 	}
 	if (err_func == NULL && err_context != NULL) {
+		/* in this case, err_context is assumed to be a FILE pointer
+		 * e.g.: stderr */
+#ifdef NDEBUG
+		assert(ferror((FILE *)err_context) == 0);
+		fflush((FILE *)err_context);
+		clearerr((FILE *)err_context);
+#endif
 		err_func = ehht_fprintf;
 	}
 
