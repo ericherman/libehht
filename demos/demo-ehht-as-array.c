@@ -12,20 +12,20 @@
 
 #define MAKE_VALGRIND_HAPPY 1
 
-struct kv_s {
-	struct ehht_key_s key;
+struct kv {
+	struct ehht_key key;
 	void *val;
 };
 
-struct kva_s {
+struct kva {
 	size_t pos;
 	size_t len;
-	struct kv_s *kvs;
+	struct kv *kvs;
 };
 
-int to_array(struct ehht_key_s key, void *val, void *ctx)
+int to_array(struct ehht_key key, void *val, void *ctx)
 {
-	struct kva_s *kva;
+	struct kva *kva;
 	char *str;
 
 	kva = ctx;
@@ -46,7 +46,7 @@ int to_array(struct ehht_key_s key, void *val, void *ctx)
 
 int comp_key_lens(const void *a, const void *b)
 {
-	const struct kv_s *l, *r;
+	const struct kv *l, *r;
 	l = a;
 	r = b;
 
@@ -58,9 +58,9 @@ int comp_key_lens(const void *a, const void *b)
 
 int main(void)
 {
-	struct ehht_s *table;
+	struct ehht *table;
 	size_t i;
-	struct kva_s *kva;
+	struct kva *kva;
 	int err;
 
 	table = ehht_new();
@@ -81,14 +81,14 @@ int main(void)
 		exit(EXIT_FAILURE);
 	}
 
-	kva = malloc(sizeof(struct kva_s));
+	kva = malloc(sizeof(struct kva));
 	kva->len = 1 + table->size(table);
 	kva->pos = 0;
-	kva->kvs = calloc(sizeof(struct kv_s), kva->len);
+	kva->kvs = calloc(sizeof(struct kv), kva->len);
 
 	table->for_each(table, to_array, kva);
 
-	qsort(kva->kvs, kva->pos, sizeof(struct kv_s), comp_key_lens);
+	qsort(kva->kvs, kva->pos, sizeof(struct kv), comp_key_lens);
 
 	for (i = 0; i < kva->pos; ++i) {
 		printf("kva->kvs[%u].str=%s"

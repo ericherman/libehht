@@ -3,53 +3,90 @@
 /* Copyright (C) 2016, 2017, 2018, 2019, 2020 Eric Herman <eric@freesa.org> */
 /* https://github.com/ericherman/libehht */
 
-#include "test-ehht.h"
+#include "ehht.h"
+#include "echeck.h"
 
-int test_flyweight(void)
+unsigned test_flyweight(void)
 {
-	int failures = 0;
-	struct ehht_sprintf_context_s err_ctx = { NULL, 0 };
+	const size_t bytes_len = 500 * sizeof(size_t);
+	unsigned char bytes[500 * sizeof(size_t)];
+	struct eembed_allocator *orig = eembed_global_allocator;
+	struct eembed_allocator *ea = NULL;
+
+	unsigned failures = 0;
 	size_t keysize = 0;
 	size_t alloc_bytes_before_puts = 0;
 	size_t alloc_bytes_after_puts = 0;
 	size_t alloc_bytes_diff = 0;
 	int err = 0;
-	struct ehht_s *table = NULL;
-	oom_injecting_context_s ctx;
+	struct ehht *table = NULL;
+	struct echeck_err_injecting_context ctx;
+	struct eembed_allocator wrap;
+	struct eembed_allocator *real = NULL;
+	struct eembed_log *log = eembed_err_log;
+	size_t num_buckets = 5;
+
 	char *key1 = NULL;
 	char *key2 = NULL;
 	char *key3 = NULL;
-	char errmsg[10];
-	char *found = NULL;
 
-	oom_injecting_context_init(&ctx);
+	if (!EEMBED_HOSTED) {
+		ea = eembed_bytes_allocator(bytes, bytes_len);
+		if (check_ptr_not_null(ea)) {
+			return 1;
+		}
+		eembed_global_allocator = ea;
+	}
 
-	err_ctx.size = 80 * 1000;
-	err_ctx.buf = calloc(err_ctx.size, 1);
-	assert(err_ctx.buf != NULL);
+	real = eembed_global_allocator;
+	echeck_err_injecting_allocator_init(&wrap, real, &ctx, log);
 
-	table =
-	    ehht_new_custom(0, NULL, oom_injecting_malloc, oom_injecting_free,
-			    &ctx, ehht_sprintf, &err_ctx);
-	assert(table);
+	table = ehht_new_custom(num_buckets, NULL, &wrap, log);
+	if (check_ptr_not_null(table)) {
+		++failures;
+		goto end_test_flyweight;
+	}
 
-	keysize = 500;
-	key1 = calloc(sizeof(char), (keysize + 1));
-	memset(key1, 'A', keysize);
+	keysize = (bytes_len / 8) - 10;
+	key1 = real->calloc(real, sizeof(char), (keysize + 1));
+	if (check_ptr_not_null(key1)) {
+		++failures;
+		goto end_test_flyweight;
+	}
+	eembed_memset(key1, 'A', keysize);
 
-	key2 = calloc(sizeof(char), (keysize + 1));
-	memset(key2, 'B', keysize);
+	key2 = real->calloc(real, sizeof(char), (keysize + 1));
+	if (check_ptr_not_null(key2)) {
+		++failures;
+		goto end_test_flyweight;
+	}
+	eembed_memset(key2, 'B', keysize);
 
-	key3 = calloc(sizeof(char), (keysize + 1));
-	memset(key3, 'C', keysize);
+	key3 = real->calloc(real, sizeof(char), (keysize + 1));
+	if (check_ptr_not_null(key3)) {
+		++failures;
+		goto end_test_flyweight;
+	}
+	eembed_memset(key3, 'C', keysize);
 
 	alloc_bytes_before_puts = ctx.alloc_bytes;
 
 	err = 0;
 	table->put(table, key1, keysize, "A0", &err);
+	if (err) {
+		log->append_s(log, "A0 Err: ");
+		log->append_l(log, err);
+		log->append_s(log, "?");
+		log->append_eol(log);
+		++failures;
+		goto end_test_flyweight;
+	}
 	table->put(table, key2, keysize, "B0", &err);
 	if (err) {
-		fprintf(stderr, "Err: %d?A\n", err);
+		log->append_s(log, "B0 Err: ");
+		log->append_l(log, err);
+		log->append_s(log, "?");
+		log->append_eol(log);
 		++failures;
 		goto end_test_flyweight;
 	}
@@ -57,8 +94,10 @@ int test_flyweight(void)
 	alloc_bytes_after_puts = ctx.alloc_bytes;
 	alloc_bytes_diff = alloc_bytes_after_puts - alloc_bytes_before_puts;
 
-	if (alloc_bytes_diff < (2 * keysize)) {
-		fprintf(stderr, "failed to alloc key copies?\n");
+	err =
+	    check_int_m(alloc_bytes_diff >= (2 * keysize) ? 1 : 0, 1,
+			"failed to alloc key copies?");
+	if (err) {
 		++failures;
 		goto end_test_flyweight;
 	}
@@ -69,15 +108,6 @@ int test_flyweight(void)
 	err = ehht_trust_keys_immutable(table, 1);
 	failures +=
 	    check_int_m(err ? 1 : 0, 1, "ehht_trust_keys_immutable 1, invalid");
-	sprintf(errmsg, "Error %d:", 12);
-	found = strstr(err_ctx.buf, errmsg);
-	if (found == NULL) {
-		failures += check_str(found, errmsg);
-		if (strlen(err_ctx.buf)) {
-			fprintf(stderr, "%s\n", err_ctx.buf);
-		}
-	}
-	memset(err_ctx.buf, 0x00, err_ctx.size);
 	table->put(table, key3, keysize, "C0", &err);
 
 	table->clear(table);
@@ -88,9 +118,20 @@ int test_flyweight(void)
 
 	err = 0;
 	table->put(table, key1, keysize, "A1", &err);
+	if (err) {
+		log->append_s(log, "A1 Err: ");
+		log->append_l(log, err);
+		log->append_s(log, "?");
+		log->append_eol(log);
+		++failures;
+		goto end_test_flyweight;
+	}
 	table->put(table, key2, keysize, "B2", &err);
 	if (err) {
-		fprintf(stderr, "Err: %d?\n", err);
+		log->append_s(log, "B2 Err: ");
+		log->append_l(log, err);
+		log->append_s(log, "?");
+		log->append_eol(log);
 		++failures;
 		goto end_test_flyweight;
 	}
@@ -98,8 +139,9 @@ int test_flyweight(void)
 	alloc_bytes_after_puts = ctx.alloc_bytes;
 	alloc_bytes_diff = alloc_bytes_after_puts - alloc_bytes_before_puts;
 
-	if (alloc_bytes_diff > keysize) {
-		fprintf(stderr, "alloc'd key copies?\n");
+	err = check_int_m(alloc_bytes_diff <= keysize ? 1 : 0, 1,
+			  "alloc'd key copies?");
+	if (err) {
 		++failures;
 		goto end_test_flyweight;
 	}
@@ -110,16 +152,14 @@ end_test_flyweight:
 	table->clear(table);
 	ehht_free(table);
 
-	if (strlen(err_ctx.buf)) {
-		++failures;
-		fprintf(stderr, "%s\n", err_ctx.buf);
+	real->free(real, key3);
+	real->free(real, key2);
+	real->free(real, key1);
+
+	if (!EEMBED_HOSTED) {
+		eembed_global_allocator = orig;
 	}
-
-	free(key3);
-	free(key2);
-	free(key1);
-
 	return failures;
 }
 
-TEST_EHHT_MAIN(test_flyweight())
+ECHECK_TEST_MAIN(test_flyweight)

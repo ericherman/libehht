@@ -4,19 +4,7 @@
 /* https://github.com/ericherman/libehht */
 
 #include "ehht.h"
-#include <stdlib.h>		/* malloc calloc */
-#include <string.h>		/* memcpy memcmp */
-#include <stdio.h>		/* fprintf */
-#include <assert.h>
-#include <stdarg.h>
-
-#ifndef Ehht_memset
-#define Ehht_memset(ptr, byte, len) memset(ptr, byte, len)
-#endif
-
-#ifndef Ehht_memcpy
-#define Ehht_memcpy(dest, src, len) memcpy(dest, src, len)
-#endif
+#include "eembed.h"
 
 #ifndef EHHT_DEFAULT_BUCKETS
 #define EHHT_DEFAULT_BUCKETS 64
@@ -28,91 +16,82 @@
 #define EHHT_DEFAULT_RESIZE_LOADFACTOR (2.0/3.0)
 #endif
 
-#define Ehht_error_malloc(logfunc, logctx, err_num, bytes, thing) \
-	do { if (logfunc) { \
-		logfunc(logctx, \
-			"%s:%d Error %u: could not allocate %lu bytes (%s)\n", \
-			__FILE__, __LINE__, err_num, (unsigned long)(bytes), \
-			thing); \
+#define Ehht_error_malloc(log, err_num, bytes, thing) \
+	do { if (log) { \
+		log->append_s(log, __FILE__); \
+		log->append_s(log, ":"); \
+		log->append_ul(log, __LINE__); \
+		log->append_s(log, " Error "); \
+		log->append_l(log, err_num); \
+		log->append_s(log, ": could not allocate "); \
+		log->append_ul(log, bytes); \
+		log->append_s(log, " bytes ("); \
+		log->append_s(log, thing); \
+		log->append_s(log, ")"); \
+		log->append_eol(log); \
 	} } while (0)
 
-#define Ehht_error(logfunc, logctx, err_num, msg) \
-	do { if (logfunc) { \
-		logfunc(logctx, "%s:%d Error %u: %s\n", __FILE__, __LINE__, \
-			err_num, msg); \
+#define Ehht_error(log, err_num, msg) \
+	do { if (log) { \
+		log->append_s(log, __FILE__); \
+		log->append_s(log, ":"); \
+		log->append_ul(log, __LINE__); \
+		log->append_s(log, " Error "); \
+		log->append_l(log, err_num); \
+		log->append_s(log, ": "); \
+		log->append_s(log, msg); \
+		log->append_eol(log); \
 	} } while (0)
 
-struct ehht_element_s {
-	struct ehht_key_s key;
+struct ehht_element {
+	struct ehht_key key;
 	void *val;
-	struct ehht_element_s *next;
+	struct ehht_element *next;
 };
 
-struct ehht_table_s {
+struct ehht_table {
 	size_t num_buckets;
-	struct ehht_element_s **buckets;
+	struct ehht_element **buckets;
 	size_t size;
 	ehht_hash_func hash_func;
-	context_malloc_func alloc;
-	context_free_func free;
-	void *mem_context;
+	struct eembed_allocator *ea;
+	struct eembed_log *log;
 	double collision_load_factor;
-	ehht_log_error_func err_printf;
-	void *err_context;
 	int trust_keys_immutable;
 };
 
-static void ehht_set_table(struct ehht_s *this, struct ehht_table_s *table)
+static void ehht_set_table(struct ehht *ht, struct ehht_table *table)
 {
-	assert(this);
-	this->data = (void *)table;
+	eembed_assert(ht);
+	ht->data = (void *)table;
 }
 
-static struct ehht_table_s *ehht_get_table(struct ehht_s *this)
+static struct ehht_table *ehht_get_table(struct ehht *ht)
 {
-	assert(this);
-	assert(this->data);
-	return (struct ehht_table_s *)this->data;
+	eembed_assert(ht);
+	eembed_assert(ht->data);
+	return (struct ehht_table *)ht->data;
 }
 
-static int ehht_fprintf(void *err_context, const char *format, ...)
+static void ehht_free_element(struct ehht_table *table,
+			      struct ehht_element *element)
 {
-	int ret = 0;
-	va_list args;
-	FILE *log = NULL;
-
-	assert(err_context);
-	assert(format);
-
-	log = (FILE *)err_context;
-
-	va_start(args, format);
-
-	ret = vfprintf(log, format, args);
-
-	va_end(args);
-
-	return ret;
-}
-
-static void ehht_free_element(struct ehht_table_s *table,
-			      struct ehht_element_s *element)
-{
+	struct eembed_allocator *ea = table->ea;
 	if (!table->trust_keys_immutable) {
-		table->free(table->mem_context, (char *)element->key.str);
+		ea->free(ea, (char *)element->key.str);
 	}
-	table->free(table->mem_context, element);
+	ea->free(ea, element);
 }
 
-static void ehht_clear(struct ehht_s *this)
+static void ehht_clear(struct ehht *ht)
 {
-	struct ehht_table_s *table = NULL;
+	struct ehht_table *table = NULL;
 	size_t i = 0;
 
-	table = ehht_get_table(this);
+	table = ehht_get_table(ht);
 
 	for (i = 0; i < table->num_buckets; ++i) {
-		struct ehht_element_s *element = NULL;
+		struct ehht_element *element = NULL;
 		while ((element = table->buckets[i]) != NULL) {
 			table->buckets[i] = element->next;
 			ehht_free_element(table, element);
@@ -127,50 +106,50 @@ static size_t ehht_bucket_for_hashcode(unsigned int hashcode,
 	return (size_t)(hashcode % num_buckets);
 }
 
-size_t ehht_bucket_for_key(struct ehht_s *this, const char *key, size_t key_len)
+size_t ehht_bucket_for_key(struct ehht *ht, const char *key, size_t key_len)
 {
-	struct ehht_table_s *table = NULL;
+	struct ehht_table *table = NULL;
 	unsigned int hashcode = 0;
 
-	table = ehht_get_table(this);
+	table = ehht_get_table(ht);
 	hashcode = table->hash_func(key, key_len);
 
 	return ehht_bucket_for_hashcode(hashcode, table->num_buckets);
 }
 
-static struct ehht_element_s *ehht_alloc_element(struct ehht_table_s *table,
-						 const char *key,
-						 size_t key_len,
-						 unsigned int hashcode,
-						 void *val)
+static struct ehht_element *ehht_alloc_element(struct ehht_table *table,
+					       const char *key,
+					       size_t key_len,
+					       unsigned int hashcode, void *val)
 {
+	struct eembed_allocator *ea = NULL;
 	char *key_copy = NULL;
-	struct ehht_element_s *element = NULL;
+	struct ehht_element *element = NULL;
 	size_t size = 0;
 
-	size = sizeof(struct ehht_element_s);
-	element = table->alloc(table->mem_context, size);
+	size = sizeof(struct ehht_element);
+	ea = table->ea;
+	element = ea->malloc(ea, size);
 	if (element == NULL) {
-		Ehht_error_malloc(table->err_printf, table->err_context, 1,
-				  size, "struct ehht_element_s");
+		Ehht_error_malloc(table->log, 1, size, "struct ehht_element");
 		return NULL;
 	}
-	Ehht_memset(element, 0x00, size);
+	eembed_memset(element, 0x00, size);
 
 	if (table->trust_keys_immutable) {
 		element->key.str = key;
 	} else {
 		size = key_len + 1;
-		assert(size > 0);
-		key_copy = table->alloc(table->mem_context, size);
+		eembed_assert(size > 0);
+		ea = table->ea;
+		key_copy = ea->malloc(ea, size);
 		if (!key_copy) {
-			Ehht_error_malloc(table->err_printf, table->err_context,
-					  2, size, "key copy");
+			Ehht_error_malloc(table->log, 2, size, "key copy");
 			ehht_free_element(table, element);
 			return NULL;
 		}
-		Ehht_memset(key_copy, 0x00, size);
-		Ehht_memcpy(key_copy, key, key_len);
+		eembed_memset(key_copy, 0x00, size);
+		eembed_memcpy(key_copy, key, key_len);
 		key_copy[key_len] = '\0';
 
 		element->key.str = key_copy;
@@ -202,10 +181,10 @@ unsigned int ehht_kr2_hashcode(const char *data, size_t len)
 	return hash;
 }
 
-static struct ehht_element_s *ehht_get_element(struct ehht_table_s *table,
-					       const char *key, size_t key_len)
+static struct ehht_element *ehht_get_element(struct ehht_table *table,
+					     const char *key, size_t key_len)
 {
-	struct ehht_element_s *element = NULL;
+	struct ehht_element *element = NULL;
 	unsigned int hashcode = 0;
 	size_t bucket_num = 0;
 
@@ -215,7 +194,7 @@ static struct ehht_element_s *ehht_get_element(struct ehht_table_s *table,
 	element = table->buckets[bucket_num];
 	while (element != NULL) {
 		if (element->key.len == key_len) {
-			if (memcmp(key, element->key.str, key_len) == 0) {
+			if (eembed_memcmp(key, element->key.str, key_len) == 0) {
 				return element;
 			}
 		}
@@ -224,28 +203,28 @@ static struct ehht_element_s *ehht_get_element(struct ehht_table_s *table,
 	return NULL;
 }
 
-static void *ehht_get(struct ehht_s *this, const char *key, size_t key_len)
+static void *ehht_get(struct ehht *ht, const char *key, size_t key_len)
 {
-	struct ehht_table_s *table = NULL;
-	struct ehht_element_s *element = NULL;
+	struct ehht_table *table = NULL;
+	struct ehht_element *element = NULL;
 
-	table = ehht_get_table(this);
+	table = ehht_get_table(ht);
 
 	element = ehht_get_element(table, key, key_len);
 	return (element == NULL) ? NULL : element->val;
 }
 
-static void *ehht_put(struct ehht_s *this, const char *key, size_t key_len,
+static void *ehht_put(struct ehht *ht, const char *key, size_t key_len,
 		      void *val, int *err)
 {
-	struct ehht_table_s *table = NULL;
-	struct ehht_element_s *element = NULL;
+	struct ehht_table *table = NULL;
+	struct ehht_element *element = NULL;
 	void *old_val = NULL;
 	unsigned int hashcode = 0;
 	unsigned int collision = 0;
 	size_t bucket_num = 0;
 
-	table = ehht_get_table(this);
+	table = ehht_get_table(ht);
 
 	element = ehht_get_element(table, key, key_len);
 	old_val = (element == NULL) ? NULL : element->val;
@@ -261,7 +240,7 @@ static void *ehht_put(struct ehht_s *this, const char *key, size_t key_len,
 	if (collision && table->collision_load_factor > 0.0) {
 		if (table->size >=
 		    (table->num_buckets * table->collision_load_factor)) {
-			ehht_buckets_resize(this, 0);
+			ehht_buckets_resize(ht, 0);
 		}
 	}
 
@@ -270,8 +249,7 @@ static void *ehht_put(struct ehht_s *this, const char *key, size_t key_len,
 		if (err) {
 			*err = 1;
 		}
-		Ehht_error(table->err_printf, table->err_context, 3,
-			   "ehht_put failed");
+		Ehht_error(table->log, 3, "ehht_put failed");
 		return NULL;
 	}
 
@@ -282,16 +260,16 @@ static void *ehht_put(struct ehht_s *this, const char *key, size_t key_len,
 	return NULL;
 }
 
-static void *ehht_remove(struct ehht_s *this, const char *key, size_t key_len)
+static void *ehht_remove(struct ehht *ht, const char *key, size_t key_len)
 {
-	struct ehht_table_s *table = NULL;
-	struct ehht_element_s *element = NULL;
-	struct ehht_element_s **ptr_to_element = NULL;
+	struct ehht_table *table = NULL;
+	struct ehht_element *element = NULL;
+	struct ehht_element **ptr_to_element = NULL;
 	void *old_val = 0;
 	unsigned int hashcode = 0;
 	size_t bucket_num = 0;
 
-	table = ehht_get_table(this);
+	table = ehht_get_table(ht);
 
 	element = ehht_get_element(table, key, key_len);
 	if (element == NULL) {
@@ -317,17 +295,17 @@ static void *ehht_remove(struct ehht_s *this, const char *key, size_t key_len)
 	return old_val;
 }
 
-static int ehht_for_each(struct ehht_s *this,
-			 int (*func)(struct ehht_key_s each_key,
+static int ehht_for_each(struct ehht *ht,
+			 int (*func)(struct ehht_key each_key,
 				     void *each_val, void *context),
 			 void *context)
 {
-	struct ehht_table_s *table = NULL;
+	struct ehht_table *table = NULL;
 	size_t i = 0;
 	size_t end = 0;
-	struct ehht_element_s *element = NULL;
+	struct ehht_element *element = NULL;
 
-	table = ehht_get_table(this);
+	table = ehht_get_table(ht);
 
 	end = 0;
 	for (i = 0; i < table->num_buckets && !end; ++i) {
@@ -340,99 +318,82 @@ static int ehht_for_each(struct ehht_s *this,
 	return end;
 }
 
-static size_t ehht_size(struct ehht_s *this)
+static size_t ehht_size(struct ehht *ht)
 {
-	struct ehht_table_s *table = NULL;
+	struct ehht_table *table = NULL;
+	size_t size = 0;
 
-	table = ehht_get_table(this);
-	return table->size;
+	table = ehht_get_table(ht);
+	size = table->size;
+
+	return size;
 }
 
-struct ehht_str_buf_s {
-	char *buf;
-	size_t buf_len;
-	size_t buf_pos;
-};
-
-static int ehht_to_string_each(struct ehht_key_s key, void *each_val,
+static int ehht_to_string_each(struct ehht_key key, void *each_val,
 			       void *context)
 {
+	struct eembed_log *slog = (struct eembed_log *)context;
 
-	struct ehht_str_buf_s *str_buf = NULL;
-	char *buf = NULL;
-	const char *fmt = NULL;
-	size_t bytes_to_write = 0;
-	int bytes_written = 0;
-
-	str_buf = (struct ehht_str_buf_s *)context;
-	buf = str_buf->buf + str_buf->buf_pos;
-
-	fmt = "'%s' => %p, ";
-	bytes_to_write = key.len + (__WORDSIZE / 4) + strlen(fmt);
-	if (str_buf->buf_len < (str_buf->buf_pos + bytes_to_write)) {
-		return -1;
-	}
-
-	bytes_written = sprintf(buf, fmt, key.len ? key.str : "", each_val);
-	if (bytes_written > 0) {
-		str_buf->buf_pos += ((unsigned int)bytes_written);
-	}
+	slog->append_s(slog, "'");
+	slog->append_s(slog, key.len ? key.str : "");
+	slog->append_s(slog, "' => ");
+	slog->append_vp(slog, each_val);
+	slog->append_s(slog, ", ");
 
 	return 0;
 }
 
-static size_t ehht_to_string(struct ehht_s *this, char *buf, size_t buf_len)
+static size_t ehht_to_string(struct ehht *ht, char *buf, size_t buf_len)
 {
-	struct ehht_str_buf_s str_buf = { NULL, 0, 0 };
-	int bytes_written = 0;
+	struct eembed_str_buf str_buf = { NULL, 0 };
+	struct eembed_log log =
+	    { NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL };
+	struct eembed_log *slog = NULL;
 
-	str_buf.buf = buf;
-	str_buf.buf_len = buf_len;
-	str_buf.buf_pos = 0;
+	slog = eembed_char_buf_log_init(&log, &str_buf, buf, buf_len);
+	if (!slog) {
+		return 0;
+	}
 
-	bytes_written = sprintf(buf, "{ ");
-	if (bytes_written > 0) {
-		str_buf.buf_pos += ((unsigned int)bytes_written);
-	}
-	ehht_for_each(this, ehht_to_string_each, &str_buf);
-	bytes_written = sprintf(str_buf.buf + str_buf.buf_pos, "}");
-	if (bytes_written > 0) {
-		str_buf.buf_pos += ((unsigned int)bytes_written);
-	}
-	return str_buf.buf_pos;
+	slog->append_s(slog, "{ ");
+	ehht_for_each(ht, ehht_to_string_each, slog);
+	slog->append_s(slog, "}");
+
+	return eembed_strnlen(buf, buf_len);
 }
 
-size_t ehht_buckets_resize(struct ehht_s *this, size_t num_buckets)
+size_t ehht_buckets_resize(struct ehht *ht, size_t num_buckets)
 {
 	size_t i = 0;
 	size_t old_num_buckets = 0;
 	size_t new_bucket_num = 0;
 	size_t size = 0;
-	struct ehht_table_s *table = NULL;
-	struct ehht_element_s **new_buckets = NULL;
-	struct ehht_element_s **old_buckets = NULL;
+	struct ehht_table *table = NULL;
+	struct ehht_element **new_buckets = NULL;
+	struct ehht_element **old_buckets = NULL;
+	struct eembed_allocator *ea = NULL;
 
-	table = ehht_get_table(this);
+	table = ehht_get_table(ht);
+	ea = table->ea;
 
 	if (num_buckets == 0) {
 		num_buckets = table->num_buckets * 2;
 	}
-	assert(num_buckets > 1);
-	size = sizeof(struct ehht_element_s *) * num_buckets;
-	assert(size > 0);
-	new_buckets = table->alloc(table->mem_context, size);
+	eembed_assert(num_buckets > 1);
+	size = sizeof(struct ehht_element *) * num_buckets;
+	eembed_assert(size > 0);
+	new_buckets = ea->malloc(ea, size);
 	if (new_buckets == NULL) {
-		Ehht_error_malloc(table->err_printf, table->err_context, 4,
-				  size, "buckets");
+		Ehht_error_malloc(table->log, 4, size, "buckets");
 		return table->num_buckets;
 	}
-	assert(size > 0);
-	Ehht_memset(new_buckets, 0x00, size);
+	eembed_assert(size > 0);
+	eembed_memset(new_buckets, 0x00, size);
 
 	old_num_buckets = table->num_buckets;
 	old_buckets = table->buckets;
 	for (i = 0; i < old_num_buckets; ++i) {
-		struct ehht_element_s *element = NULL;
+		struct ehht_element *element = NULL;
 		while ((element = old_buckets[i]) != NULL) {
 			old_buckets[i] = element->next;
 			new_bucket_num =
@@ -445,58 +406,60 @@ size_t ehht_buckets_resize(struct ehht_s *this, size_t num_buckets)
 	table->buckets = new_buckets;
 	table->num_buckets = num_buckets;
 
-	table->free(table->mem_context, old_buckets);
+	ea->free(ea, old_buckets);
 	return num_buckets;
 }
 
-size_t ehht_buckets_size(struct ehht_s *this)
+size_t ehht_buckets_size(struct ehht *ht)
 {
-	struct ehht_table_s *table = NULL;
+	struct ehht_table *table = NULL;
 
-	table = ehht_get_table(this);
+	table = ehht_get_table(ht);
 	return table->num_buckets;
 }
 
-struct ehht_keys_foreach_context_s {
-	struct ehht_s *ehht;
-	struct ehht_keys_s *keys;
+struct ehht_keys_foreach_context {
+	struct ehht *ehht;
+	struct ehht_keys *keys;
 	size_t pos;
 };
 
-static int ehht_fill_keys_each(struct ehht_key_s key, void *each_val,
+static int ehht_fill_keys_each(struct ehht_key key, void *each_val,
 			       void *context)
 {
-	struct ehht_keys_foreach_context_s *fe_ctx = NULL;
-	struct ehht_s *ehht = NULL;
+	struct ehht_keys_foreach_context *fe_ctx = NULL;
+	struct ehht *ehht = NULL;
+	struct eembed_allocator *ea = NULL;
 
-	fe_ctx = (struct ehht_keys_foreach_context_s *)context;
+	fe_ctx = (struct ehht_keys_foreach_context *)context;
 	ehht = fe_ctx->ehht;
 
-	assert(each_val == ehht->get(ehht, key.str, key.len));
-	assert(fe_ctx->pos < fe_ctx->keys->len);
+	eembed_assert(each_val == ehht->get(ehht, key.str, key.len));
+	(void)each_val;
 
+	eembed_assert(fe_ctx->pos < fe_ctx->keys->len);
 	if (fe_ctx->pos >= fe_ctx->keys->len) {
 		return 1;
 	}
 
 	if (fe_ctx->keys->keys_copied) {
-		struct ehht_table_s *table = NULL;
+		struct ehht_table *table = NULL;
 		size_t size = 0;
 		char *key_copy = NULL;
 
 		table = ehht_get_table(ehht);
 
 		size = sizeof(char *) * (key.len + 1);
-		assert(size > 0);
-		key_copy = table->alloc(table->mem_context, size);
+		eembed_assert(size > 0);
+		ea = table->ea;
+		key_copy = ea->malloc(ea, size);
 		if (!key_copy) {
-			Ehht_error_malloc(table->err_printf, table->err_context,
-					  5, size, "key copy");
+			Ehht_error_malloc(table->log, 5, size, "key copy");
 			return 1;
 		}
-		Ehht_memset(key_copy, 0x00, size);
+		eembed_memset(key_copy, 0x00, size);
 
-		Ehht_memcpy(key_copy, key.str, key.len + 1);
+		eembed_memcpy(key_copy, key.str, key.len + 1);
 		fe_ctx->keys->keys[fe_ctx->pos].str = key_copy;
 		fe_ctx->keys->keys[fe_ctx->pos].len = key.len;
 		fe_ctx->keys->keys[fe_ctx->pos].hashcode = key.hashcode;
@@ -509,73 +472,74 @@ static int ehht_fill_keys_each(struct ehht_key_s key, void *each_val,
 	return 0;
 }
 
-static int ehht_has_key(struct ehht_s *this, const char *key, size_t key_len)
+static int ehht_has_key(struct ehht *ht, const char *key, size_t key_len)
 {
-	struct ehht_table_s *table = NULL;
-	struct ehht_element_s *element = NULL;
+	struct ehht_table *table = NULL;
+	struct ehht_element *element = NULL;
 
-	table = ehht_get_table(this);
+	table = ehht_get_table(ht);
 
 	element = ehht_get_element(table, key, key_len);
 	return (element == NULL) ? 0 : 1;
 }
 
-static void ehht_free_keys(struct ehht_s *this, struct ehht_keys_s *keys)
+static void ehht_free_keys(struct ehht *ht, struct ehht_keys *keys)
 {
-	struct ehht_table_s *table = NULL;
+	struct ehht_table *table = NULL;
+	struct eembed_allocator *ea = NULL;
 
-	table = ehht_get_table(this);
+	table = ehht_get_table(ht);
+	ea = table->ea;
+
 	if (keys->keys_copied) {
 		size_t i;
 		for (i = 0; i < keys->len; ++i) {
 			void *ptr = (void *)keys->keys[i].str;
-			table->free(table->mem_context, ptr);
+			ea->free(ea, ptr);
 		}
 	}
 	if (keys->keys) {
-		table->free(table->mem_context, keys->keys);
+		ea->free(ea, keys->keys);
 	}
-	table->free(table->mem_context, keys);
+	ea->free(ea, keys);
 }
 
-static struct ehht_keys_s *ehht_keys(struct ehht_s *this, int copy_keys)
-{
-	struct ehht_table_s *table = NULL;
-	struct ehht_keys_foreach_context_s fe_ctx = { NULL, NULL, 0 };
+static struct ehht_keys *ehht_keys (struct ehht *ht, int copy_keys) {
+	struct ehht_table *table = NULL;
+	struct eembed_allocator *ea = NULL;
+	struct ehht_keys_foreach_context fe_ctx = { NULL, NULL, 0 };
 	size_t size = 0;
 
-	table = ehht_get_table(this);
+	table = ehht_get_table(ht);
+	ea = table->ea;
 
-	fe_ctx.ehht = this;
+	fe_ctx.ehht = ht;
 
-	size = sizeof(struct ehht_keys_s);
-	fe_ctx.keys = table->alloc(table->mem_context, size);
+	size = sizeof(struct ehht_keys);
+	fe_ctx.keys = ea->malloc(ea, size);
 	if (!fe_ctx.keys) {
-		Ehht_error_malloc(table->err_printf, table->err_context, 6,
-				  size, "struct ehht_keys_s");
+		Ehht_error_malloc(table->log, 6, size, "struct ehht_keys");
 		return NULL;
 	}
-	Ehht_memset(fe_ctx.keys, 0x00, size);
+	eembed_memset(fe_ctx.keys, 0x00, size);
 	fe_ctx.pos = 0;
-	fe_ctx.keys->len = this->size(this);
+	fe_ctx.keys->len = ht->size(ht);
 	fe_ctx.keys->keys_copied = copy_keys;
 
-	size = sizeof(struct ehht_key_s) * fe_ctx.keys->len;
+	size = sizeof(struct ehht_key) * fe_ctx.keys->len;
 	if (size == 0) {
 		fe_ctx.keys->keys = NULL;
 	} else {
-		fe_ctx.keys->keys = table->alloc(table->mem_context, size);
+		fe_ctx.keys->keys = ea->malloc(ea, size);
 		if (!fe_ctx.keys->keys) {
-			Ehht_error_malloc(table->err_printf, table->err_context,
-					  7, size, "key list");
-			table->free(table->mem_context, fe_ctx.keys);
+			Ehht_error_malloc(table->log, 7, size, "key list");
+			ea->free(ea, fe_ctx.keys);
 			return NULL;
 		}
-		Ehht_memset(fe_ctx.keys->keys, 0x00, size);
-		if (ehht_for_each(this, ehht_fill_keys_each, &fe_ctx)) {
-			ehht_free_keys(this, fe_ctx.keys);
-			Ehht_error(table->err_printf, table->err_context, 8,
-				   "ehht_keys failed");
+		eembed_memset(fe_ctx.keys->keys, 0x00, size);
+		if (ehht_for_each(ht, ehht_fill_keys_each, &fe_ctx)) {
+			ehht_free_keys(ht, fe_ctx.keys);
+			Ehht_error(table->log, 8, "ehht_keys failed");
 			return NULL;
 		}
 	}
@@ -583,22 +547,22 @@ static struct ehht_keys_s *ehht_keys(struct ehht_s *this, int copy_keys)
 	return fe_ctx.keys;
 }
 
-void ehht_buckets_auto_resize_load_factor(struct ehht_s *this, double factor)
+void ehht_buckets_auto_resize_load_factor(struct ehht *ht, double factor)
 {
-	struct ehht_table_s *table = NULL;
+	struct ehht_table *table = NULL;
 
-	table = ehht_get_table(this);
+	table = ehht_get_table(ht);
 	table->collision_load_factor = factor;
 }
 
-int ehht_trust_keys_immutable(struct ehht_s *this, int val)
+int ehht_trust_keys_immutable(struct ehht *ht, int val)
 {
-	struct ehht_table_s *table = NULL;
+	struct ehht_table *table = NULL;
 	int new_val = val ? 1 : 0;
 
-	table = ehht_get_table(this);
+	table = ehht_get_table(ht);
 	if (table->size && new_val != table->trust_keys_immutable) {
-		Ehht_error(table->err_printf, table->err_context, 12,
+		Ehht_error(table->log, 12,
 			   "invalid attempt to change key immutablity");
 		return 1;
 	}
@@ -606,27 +570,22 @@ int ehht_trust_keys_immutable(struct ehht_s *this, int val)
 	return 0;
 }
 
-struct ehht_s *ehht_new(void)
+struct ehht *ehht_new(void)
 {
 	size_t num_buckets = 0;
+	struct eembed_allocator *ea = NULL;
 	ehht_hash_func hash_func = NULL;
-	context_malloc_func mem_alloc = NULL;
-	context_free_func mem_free = NULL;
-	void *mem_context = NULL;
-	ehht_log_error_func err_func = NULL;
-	void *err_context = stderr;
+	struct eembed_log *log = NULL;
 
-	return ehht_new_custom(num_buckets, hash_func, mem_alloc, mem_free,
-			       mem_context, err_func, err_context);
+	return ehht_new_custom(num_buckets, hash_func, ea, log);
 }
 
-struct ehht_s *ehht_new_custom(size_t num_buckets, ehht_hash_func hash_func,
-			       context_malloc_func mem_alloc,
-			       context_free_func mem_free, void *mem_context,
-			       ehht_log_error_func err_func, void *err_context)
+struct ehht *ehht_new_custom(size_t num_buckets, ehht_hash_func hash_func,
+			     struct eembed_allocator *ea,
+			     struct eembed_log *log)
 {
-	struct ehht_s *this = NULL;
-	struct ehht_table_s *table = NULL;
+	struct ehht *ht = NULL;
+	struct ehht_table *table = NULL;
 	size_t size = 0;
 
 	if (num_buckets == 0) {
@@ -635,101 +594,79 @@ struct ehht_s *ehht_new_custom(size_t num_buckets, ehht_hash_func hash_func,
 	if (hash_func == NULL) {
 		hash_func = ehht_kr2_hashcode;
 	}
-	if ((mem_alloc == NULL) || (mem_free == NULL)) {
-		assert((mem_alloc == NULL) && (mem_free == NULL));
-		mem_alloc = context_stdlib_malloc;
-		mem_free = context_stdlib_free;
-		mem_context = NULL;
+	if (ea == NULL) {
+		ea = eembed_global_allocator;
 	}
-	if (err_func == NULL && err_context != NULL) {
-		/* in this case, err_context is assumed to be a FILE pointer
-		 * e.g.: stderr */
-#ifdef NDEBUG
-		assert(ferror((FILE *)err_context) == 0);
-		fflush((FILE *)err_context);
-		clearerr((FILE *)err_context);
-#endif
-		err_func = ehht_fprintf;
+	if (log == NULL) {
+		log = eembed_err_log;
 	}
 
-	size = sizeof(struct ehht_s);
-	this = mem_alloc(mem_context, size);
-	if (this == NULL) {
-		Ehht_error_malloc(err_func, err_context, 9, size,
-				  "struct ehht_s");
+	size = sizeof(struct ehht);
+	ht = ea->malloc(ea, size);
+	if (ht == NULL) {
+		Ehht_error_malloc(log, 9, size, "struct ehht");
 		return NULL;
 	}
-	Ehht_memset(this, 0x00, size);
+	eembed_memset(ht, 0x00, size);
 
-	this->get = ehht_get;
-	this->put = ehht_put;
-	this->remove = ehht_remove;
-	this->size = ehht_size;
-	this->clear = ehht_clear;
-	this->for_each = ehht_for_each;
-	this->has_key = ehht_has_key;
-	this->keys = ehht_keys;
-	this->free_keys = ehht_free_keys;
-	this->to_string = ehht_to_string;
+	ht->get = ehht_get;
+	ht->put = ehht_put;
+	ht->remove = ehht_remove;
+	ht->size = ehht_size;
+	ht->clear = ehht_clear;
+	ht->for_each = ehht_for_each;
+	ht->has_key = ehht_has_key;
+	ht->keys = ehht_keys;
+	ht->free_keys = ehht_free_keys;
+	ht->to_string = ehht_to_string;
 
-	size = sizeof(struct ehht_table_s);
-	table = mem_alloc(mem_context, size);
+	size = sizeof(struct ehht_table);
+	table = ea->malloc(ea, size);
 	if (table == NULL) {
-		Ehht_error_malloc(err_func, err_context, 10, size,
-				  "struct ehht_table_s");
-		mem_free(mem_context, this);
+		Ehht_error_malloc(log, 10, size, "struct ehht_table");
+		ea->free(ea, ht);
 		return NULL;
 	}
-	Ehht_memset(table, 0x00, size);
-	ehht_set_table(this, table);
+	eembed_memset(table, 0x00, size);
+	ehht_set_table(ht, table);
 
 	table->hash_func = hash_func;
-	table->alloc = mem_alloc;
-	table->free = mem_free;
-	table->mem_context = mem_context;
-	table->err_printf = err_func;
-	table->err_context = err_context;
+	table->ea = ea;
+	table->log = log;
 
-	size = sizeof(struct ehht_element_s *) * num_buckets;
-	table->buckets = mem_alloc(mem_context, size);
+	size = sizeof(struct ehht_element *) * num_buckets;
+	table->buckets = ea->malloc(ea, size);
 	if (table->buckets == NULL) {
-		Ehht_error_malloc(err_func, err_context, 11, size, "buckets");
-		mem_free(mem_context, table);
-		mem_free(mem_context, this);
+		Ehht_error_malloc(table->log, 11, size, "buckets");
+		ea->free(ea, table);
+		ea->free(ea, ht);
 		return NULL;
 	}
-	Ehht_memset(table->buckets, 0x00, size);
+	eembed_memset(table->buckets, 0x00, size);
 	table->num_buckets = num_buckets;
 	table->size = 0;
 
 	table->collision_load_factor = EHHT_DEFAULT_RESIZE_LOADFACTOR;
 	table->trust_keys_immutable = 0;
 
-	return this;
+	return ht;
 }
 
-void ehht_free(struct ehht_s *this)
+void ehht_free(struct ehht *ht)
 {
-	struct ehht_table_s *table = NULL;
-	context_free_func ctx_free = NULL;
-	void *mem_context = NULL;
+	struct ehht_table *table = NULL;
+	struct eembed_allocator *ea = NULL;
 
-	if (this == NULL) {
+	if (ht == NULL) {
 		return;
 	}
 
-	table = ehht_get_table(this);
+	table = ehht_get_table(ht);
+	ea = table->ea;
 
-	this->clear(this);
-	if (table->err_printf == ehht_fprintf) {
-		assert(table->err_context);
-		fflush(table->err_context);
-	}
+	ht->clear(ht);
 
-	ctx_free = table->free;
-	mem_context = table->mem_context;
-
-	ctx_free(mem_context, table->buckets);
-	ctx_free(mem_context, table);
-	ctx_free(mem_context, this);
+	ea->free(ea, table->buckets);
+	ea->free(ea, table);
+	ea->free(ea, ht);
 }

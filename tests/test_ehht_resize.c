@@ -3,33 +3,54 @@
 /* Copyright (C) 2016, 2017, 2018, 2019, 2020 Eric Herman <eric@freesa.org> */
 /* https://github.com/ericherman/libehht */
 
-#include "test-ehht.h"
+#include "ehht.h"
+#include "ehht-report.h"
+#include "echeck.h"
 
-#include <stdio.h>
-#include <limits.h>
-#include <stdint.h>
-
-int test_ehht_buckets_resize(void)
+unsigned test_ehht_buckets_resize(void)
 {
-	int failures = 0;
-	struct ehht_s *table;
-	size_t i, x, items_written, num_buckets, big_bucket1, big_bucket2;
-	size_t report[10];
-	char buf[24];
-	int err = 0;
-	FILE *memfile = NULL;
-	char *logbuf = NULL;
-	size_t sizeloc = 0;
-	char *found = NULL;
+	const size_t bytes_len = 250 * sizeof(size_t);
+	unsigned char bytes[250 * sizeof(size_t)];
+	struct eembed_allocator *orig = eembed_global_allocator;
+	struct eembed_allocator *ea = NULL;
 
-	memfile = open_memstream(&logbuf, &sizeloc);
+	unsigned failures = 0;
+	struct ehht *table = NULL;
+	size_t i, x, items_written, num_buckets, big_bucket1, big_bucket2;
+	const size_t report_len = 10;
+	size_t report[10];
+	const size_t buf_len = 24;
+	char buf[24];
+	char msg[40];
+	int err = 0;
+	const size_t logbuf_len = 250;
+	char logbuf[250];
+	struct eembed_log slog;
+	struct eembed_str_buf str_buf;
+	struct eembed_log *log = NULL;
+
+	if (!EEMBED_HOSTED) {
+		ea = eembed_bytes_allocator(bytes, bytes_len);
+		if (check_ptr_not_null(ea)) {
+			return 1;
+		}
+		eembed_global_allocator = ea;
+	}
+
+	msg[0] = '\0';
+	buf[0] = '\0';
+	log = eembed_char_buf_log_init(&slog, &str_buf, logbuf, logbuf_len);
+	if (check_ptr_not_null(log)) {
+		++failures;
+		goto test_ehht_buckets_resize_end;
+	}
 
 	num_buckets = 4;
-	table =
-	    ehht_new_custom(num_buckets, NULL, NULL, NULL, NULL, NULL, memfile);
+	table = ehht_new_custom(num_buckets, NULL, NULL, log);
 
 	if (table == NULL) {
-		return ++failures;
+		++failures;
+		goto test_ehht_buckets_resize_end;
 	}
 
 	failures += check_unsigned_int_m(ehht_buckets_size(table), num_buckets,
@@ -37,12 +58,12 @@ int test_ehht_buckets_resize(void)
 
 	x = num_buckets;
 	for (i = 0; i < x; ++i) {
-		sprintf(buf, "_%lu_", (unsigned long)i);
-		table->put(table, buf, strlen(buf), NULL, &err);
+		eembed_ulong_to_str(buf, buf_len, i);
+		table->put(table, buf, eembed_strlen(buf), NULL, &err);
 		failures += check_int(err, 0);
 	}
 
-	items_written = ehht_distribution_report(table, report, 10);
+	items_written = ehht_distribution_report(table, report, report_len);
 	failures += check_unsigned_int_m(items_written, num_buckets,
 					 "first items_written");
 	big_bucket1 = 0;
@@ -55,7 +76,7 @@ int test_ehht_buckets_resize(void)
 	num_buckets *= 2;
 	ehht_buckets_resize(table, num_buckets);
 
-	items_written = ehht_distribution_report(table, report, 10);
+	items_written = ehht_distribution_report(table, report, report_len);
 	failures +=
 	    check_unsigned_int_m(items_written, table->size(table),
 				 "second items_written");
@@ -67,36 +88,33 @@ int test_ehht_buckets_resize(void)
 		}
 	}
 
-	sprintf(buf, "max1: %lu, max2: %lu", (unsigned long)big_bucket1,
-		(unsigned long)big_bucket2);
-	failures += check_unsigned_int_m((big_bucket2 <= big_bucket1), 1, buf);
-
+	msg[0] = '\0';
+	eembed_strcat(msg, "max1: ");
+	eembed_strcat(msg, eembed_ulong_to_str(buf, buf_len, big_bucket1));
+	eembed_strcat(msg, "max2: ");
+	eembed_strcat(msg, eembed_ulong_to_str(buf, buf_len, big_bucket2));
+	failures += check_unsigned_int_m((big_bucket2 > big_bucket1), 0, msg);
 	for (i = 0; i < x; ++i) {
-		sprintf(buf, "_%lu_", (unsigned long)i);
+		eembed_ulong_to_str(buf, buf_len, i);
 		failures +=
-		    check_size_t_m(table->has_key(table, buf, strlen(buf)), 1,
-				   buf);
+		    check_size_t_m(table->has_key
+				   (table, buf, eembed_strlen(buf)), 1, buf);
 	}
 
 	/* do not resize if there is not memory to do so */
 	ehht_buckets_resize(table, (SIZE_MAX / 64));
 	failures +=
-	    check_unsigned_int_m(ehht_buckets_size(table), num_buckets,
+	    check_unsigned_int_m(ehht_buckets_size
+				 (table), num_buckets,
 				 "after too large num_buckets");
-
 	ehht_free(table);
+	failures += check_str_contains(logbuf, "Error 4:");
 
-	fflush(memfile);
-	fclose(memfile);
-
-	found = strstr(logbuf, "Error 4:");
-	if (found == NULL) {
-		failures += check_str(logbuf, "Error 4:");
+test_ehht_buckets_resize_end:
+	if (!EEMBED_HOSTED) {
+		eembed_global_allocator = orig;
 	}
-
-	free(logbuf);
-
 	return failures;
 }
 
-TEST_EHHT_MAIN(test_ehht_buckets_resize())
+ECHECK_TEST_MAIN(test_ehht_buckets_resize)

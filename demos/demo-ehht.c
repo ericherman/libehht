@@ -9,8 +9,8 @@
 #include <errno.h>		/* errno strerror */
 #include <stdint.h>		/* int32_t */
 
-#include "../src/ehht.h"
-#include "../tests/ehht-report.h"
+#include "ehht.h"
+#include "ehht-report.h"
 
 #ifndef MAKE_VALGRIND_HAPPY
 #define MAKE_VALGRIND_HAPPY 0
@@ -39,8 +39,7 @@ unsigned int ehht_jump(const char *data, size_t len)
 
 #define new_table(target, buckets, hash_pfunc) \
 	do { \
-		(*target) = ehht_new_custom(buckets, hash_pfunc, \
-				NULL, NULL, NULL, NULL, NULL); \
+		(*target) = ehht_new_custom(buckets, hash_pfunc, NULL, NULL); \
 		if (!(*target)) { \
 			fprintf(stderr, "%s:%d: ehht_new returned NULL", \
 				__FILE__, __LINE__); \
@@ -69,8 +68,8 @@ unsigned int ehht_jump(const char *data, size_t len)
 
 int main(int argc, char *argv[])
 {
-	struct ehht_s *default_table, *leveldb_table, *djb2_table;
-	struct ehht_s *ehht_jump_table, *djb2_jump_table;
+	struct ehht *default_table, *leveldb_table, *djb2_table;
+	struct ehht *ehht_jump_table, *djb2_jump_table;
 	size_t i, size, actual_buckets;
 	size_t *default_sizes, *leveldb_sizes, *djb2_sizes;
 	size_t *ehht_jump_sizes, *djb2_jump_sizes;

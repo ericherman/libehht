@@ -11,7 +11,7 @@ Default Construction
 
 In the simple case, the defaults will usually be fine, e.g.:
 
-	struct ehht_s *table;
+	struct ehht *table;
 
 	table = ehht_new();
 	if (!table) {
@@ -117,7 +117,7 @@ the table, until the iterator function returns a non-zero value.
 
 This is an example prototype for a function usable with "for_each":
 
-	int add_lens(struct ehht_key_s each_key, void *each_val, void *context);
+	int add_lens(struct ehht_key each_key, void *each_val, void *context);
 
 Calling "for_each" would be done as so:
 
@@ -130,7 +130,7 @@ Calling "for_each" would be done as so:
 This is an example implementation of "add_lens", which shows how
 the key, value, and context may be used:
 
-	int add_lens(struct ehht_key_s each_key, void *each_val, void *context)
+	int add_lens(struct ehht_key each_key, void *each_val, void *context)
 	{
 		int halt_iteration;
 		unsigned long *i;
@@ -157,14 +157,14 @@ External Iteration
 
 If "for_each" is not desired, a struct of keys can be used for
 user-controlled iteration. If the buffers of keys will be pointed to
-after the struct ehht_keys_s is freed, then the caller may request that
+after the struct ehht_keys is freed, then the caller may request that
 the keys be new copies, rather than pointers to internal keys.
 
-	size_t distribution_report(struct ehht_s *table,
+	size_t distribution_report(struct ehht *table,
 				   size_t *sizes,
 				   size_t sizes_len)
 	{
-		struct ehht_keys_s *keys;
+		struct ehht_keys *keys;
 		int copy_keys;
 		size_t i, bucket;
 
@@ -206,7 +206,7 @@ Custom Construction
 Here is an example of constructing an ehht with custom allocation and
 hashing functions:
 
-	struct tracking_context_s {
+	struct tracking_context {
 		unsigned allocs;
 		unsigned alloc_fails;
 		unsigned frees;
@@ -218,13 +218,13 @@ hashing functions:
 
 	void *tracking_malloc(size_t size, void *context)
 	{
-		struct tracking_context_s *ctx;
+		struct tracking_context *ctx;
 		unsigned char *tracking_buffer;
 		void *ptr;
 		size_t used;
 
 		ptr = NULL;
-		ctx = (struct tracking_context_s *)context;
+		ctx = (struct tracking_context *)context;
 		tracking_buffer = malloc(sizeof(size_t) + size);
 		if (!tracking_buffer) {
 			++ctx->alloc_fails;
@@ -244,11 +244,11 @@ hashing functions:
 
 	void tracking_free(void *ptr, void *context)
 	{
-		struct tracking_context_s *ctx;
+		struct tracking_context *ctx;
 		unsigned char *tracking_buffer;
 		size_t size;
 
-		ctx = (struct tracking_context_s *)context;
+		ctx = (struct tracking_context *)context;
 		if (ptr == NULL) {
 			++ctx->null_frees;
 			return;
@@ -274,8 +274,8 @@ hashing functions:
 		return hash;
 	}
 
-	struct ehht_s *new_tracking_table(size_t buckets,
-					  struct tracking_context_s *ctx,
+	struct ehht *new_tracking_table(size_t buckets,
+					  struct tracking_context *ctx,
 					  int clear_context)
 	{
 		ehht_log_error_func log_func = NULL; /* fprintf */
@@ -343,7 +343,7 @@ be immutable for the lifetime of the hash, and should not be free()d
 until no longer in use by the hashtable. To enable a "flyweight"
 version of the hashtable, after construction set this property:
 
-	struct ehht_s *table = ehht_new();
+	struct ehht *table = ehht_new();
 	ehht_trust_keys_immutable(table, 1);
 
 

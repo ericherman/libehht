@@ -16,108 +16,104 @@
 #define Ehht_end_C_functions
 #endif
 
+Ehht_begin_C_functions
+#undef Ehht_begin_C_functions
 #include <stddef.h>		/* size_t */
+    struct eembed_log;		/* emmbed.h */
+struct eembed_allocator;	/* emmbed.h */
 
-struct ehht_key_s {
+struct ehht_key {
 	const char *str;
 	size_t len;
 	unsigned hashcode;
 };
 
-struct ehht_keys_s {
-	struct ehht_key_s *keys;
+struct ehht_keys {
+	struct ehht_key *keys;
 	size_t len;
 	int keys_copied;
 };
 
 /* passed parameter functions */
-typedef int (*ehht_iterator_func)(struct ehht_key_s each_key,
+typedef int (*ehht_iterator_func)(struct ehht_key each_key,
 				  void *each_val, void *context);
 
 /* interface */
-struct ehht_s {
+struct ehht {
 	/* private */
 	void *data;
 
 	/* public methods */
-	void *(*get)(struct ehht_s *table, const char *key, size_t key_len);
+	void *(*get)(struct ehht *table, const char *key, size_t key_len);
 
 	/* allocates a copy of the key parameter,
 	 * copy will be freed when the key is no longer in use by the table
 	 * returns the previous value or NULL
 	 * if memory allocation fails, and the *err in not NULL, *err will
 	 * be populated with a non-zero value */
-	void *(*put)(struct ehht_s *table, const char *key, size_t key_len,
+	void *(*put)(struct ehht *table, const char *key, size_t key_len,
 		     void *val, int *err);
 
 	/* returns the previous value or NULL */
-	void *(*remove)(struct ehht_s *table, const char *key, size_t key_len);
+	void *(*remove)(struct ehht *table, const char *key, size_t key_len);
 
-	size_t (*size)(struct ehht_s *table);
+	size_t (*size)(struct ehht *table);
 
-	void (*clear)(struct ehht_s *table);
+	void (*clear)(struct ehht *table);
 
-	int (*for_each)(struct ehht_s *table, ehht_iterator_func func,
+	int (*for_each)(struct ehht *table, ehht_iterator_func func,
 			void *context);
 
-	int (*has_key)(struct ehht_s *table, const char *key, size_t key_len);
+	int (*has_key)(struct ehht *table, const char *key, size_t key_len);
 
 	/* fills the keys array with (pointers or newly allocated) key strings
 	 * populates the lens array with the corresponding lengths
 	 * returns the number of elements populated
 	 */
-	struct ehht_keys_s *(*keys) (struct ehht_s *table, int copy_keys);
+	struct ehht_keys *(*keys) (struct ehht *table, int copy_keys);
 
-	void (*free_keys)(struct ehht_s *table, struct ehht_keys_s *keys);
+	void (*free_keys)(struct ehht *table, struct ehht_keys *keys);
 
 	/* returns the number of characters written to "buf"
 	   (excluding the null byte terminator) */
-	size_t (*to_string)(struct ehht_s *table, char *buf, size_t buf_len);
+	size_t (*to_string)(struct ehht *table, char *buf, size_t buf_len);
 };
 
-Ehht_begin_C_functions
-#undef Ehht_begin_C_functions
-#include <context-alloc.h>
 /*****************************************************************************/
 /* constructors and destructor */
 /*****************************************************************************/
 /* default constructor */
-struct ehht_s *ehht_new(void);
+struct ehht *ehht_new(void);
 
 /* allocator aware constructor */
 typedef unsigned int (*ehht_hash_func)(const char *data, size_t data_len);
-typedef int (*ehht_log_error_func)(void *err_context, const char *format, ...);
 
 /* if hash_func is NULL, a hashing function will be provided */
-/* if ehht_malloc_func/free_func are NULL, malloc/free will be used */
-/* if err_func is NULL and err_context is NULL, errors will not produce msgs
-   but, if err_func is NULL and err_context is a FILE * (e.g.: stderr), then
-   messages will be printed to the FILE *err_context */
-struct ehht_s *ehht_new_custom(size_t num_buckets,
-			       ehht_hash_func hash_func,
-			       context_malloc_func alloc_func,
-			       context_free_func free_func, void *mem_context,
-			       ehht_log_error_func err_func, void *err_context);
+/* if ea is NULL, eembed_global_alloctor will be used */
+/* if log is NULL, eembed_err_log will be used */
+struct ehht *ehht_new_custom(size_t num_buckets,
+			     ehht_hash_func hash_func,
+			     struct eembed_allocator *ea,
+			     struct eembed_log *log);
 
 /* destructor */
-void ehht_free(struct ehht_s *table);
+void ehht_free(struct ehht *table);
 /*****************************************************************************/
 
 /*****************************************************************************/
 /* implementation-exposing "friend" functions are provided for testing and
  * other very special uses, but are not truly part of a hashtable API */
 /*****************************************************************************/
-size_t ehht_buckets_size(struct ehht_s *table);
-size_t ehht_buckets_resize(struct ehht_s *table, size_t num_buckets);
-void ehht_buckets_auto_resize_load_factor(struct ehht_s *table, double factor);
-size_t ehht_bucket_for_key(struct ehht_s *table, const char *key,
-			   size_t key_len);
+size_t ehht_buckets_size(struct ehht *table);
+size_t ehht_buckets_resize(struct ehht *table, size_t num_buckets);
+void ehht_buckets_auto_resize_load_factor(struct ehht *table, double factor);
+size_t ehht_bucket_for_key(struct ehht *table, const char *key, size_t key_len);
 /* The keys are not copied into the hashtable, rather referenced.
    If the key is modified, the behavior is undefined.
    If the key is freed while still in use by the hash, expect a crash
    To change this value, the table must be empty.
    Returns non-zero on error. */
-int ehht_trust_keys_immutable(struct ehht_s *this, int val);
+int ehht_trust_keys_immutable(struct ehht *ht, int val);
 /*****************************************************************************/
 
 Ehht_end_C_functions

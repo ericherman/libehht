@@ -3,23 +3,41 @@
 /* Copyright (C) 2016, 2017, 2018, 2019, 2020 Eric Herman <eric@freesa.org> */
 /* https://github.com/ericherman/libehht */
 
-#include "test-ehht.h"
+#include "ehht.h"
+#include "ehht-report.h"
+#include "echeck.h"
 
-int test_ehht_clear(void)
+unsigned test_ehht_clear(void)
 {
-	int failures = 0;
-	struct ehht_s *table;
-	size_t num_buckets = 5;
+	const size_t bytes_len = 250 * sizeof(size_t);
+	unsigned char bytes[250 * sizeof(size_t)];
+	struct eembed_allocator *orig = eembed_global_allocator;
+	struct eembed_allocator *ea = NULL;
 
+	unsigned failures = 0;
+	struct ehht *table;
+	size_t num_buckets = 5;
 	size_t i, count, items_written;
-	size_t report[REPORT_LEN];
-	oom_injecting_context_s ctx;
+	const size_t REPORT_LEN = 10;
+	size_t report[10];
+	struct echeck_err_injecting_context ctx;
+	struct eembed_allocator wrap;
+	struct eembed_allocator *real = NULL;
+	struct eembed_log *log = eembed_err_log;
+
 	int err;
 
-	oom_injecting_context_init(&ctx);
-	table =
-	    ehht_new_custom(num_buckets, NULL, oom_injecting_malloc,
-			    oom_injecting_free, &ctx, NULL, NULL);
+	if (!EEMBED_HOSTED) {
+		ea = eembed_bytes_allocator(bytes, bytes_len);
+		if (check_ptr_not_null(ea)) {
+			return 1;
+		}
+		eembed_global_allocator = ea;
+	}
+
+	real = eembed_global_allocator;
+	echeck_err_injecting_allocator_init(&wrap, real, &ctx, log);
+	table = ehht_new_custom(num_buckets, NULL, &wrap, log);
 
 	err = 0;
 	table->put(table, "g", 1, "wiz", &err);
@@ -62,7 +80,10 @@ int test_ehht_clear(void)
 	    check_unsigned_int_m(ctx.free_bytes, ctx.alloc_bytes, "bytes");
 	failures += check_unsigned_int_m(ctx.fails, 0, "free NULL pointers");
 
+	if (!EEMBED_HOSTED) {
+		eembed_global_allocator = orig;
+	}
 	return failures;
 }
 
-TEST_EHHT_MAIN(test_ehht_clear())
+ECHECK_TEST_MAIN(test_ehht_clear)

@@ -3,12 +3,26 @@
 /* Copyright (C) 2016, 2017, 2018, 2019, 2020 Eric Herman <eric@freesa.org> */
 /* https://github.com/ericherman/libehht */
 
-#include "test-ehht.h"
+#include "ehht.h"
+#include "echeck.h"
 
-int test_ehht_new(void)
+unsigned test_ehht_new(void)
 {
-	int failures = 0;
-	struct ehht_s *table;
+	const size_t bytes_len = 250 * sizeof(size_t);
+	unsigned char bytes[250 * sizeof(size_t)];
+	struct eembed_allocator *orig = eembed_global_allocator;
+	struct eembed_allocator *ea = NULL;
+
+	unsigned failures = 0;
+	struct ehht *table = NULL;
+
+	if (!EEMBED_HOSTED) {
+		ea = eembed_bytes_allocator(bytes, bytes_len);
+		if (check_ptr_not_null(ea)) {
+			return 1;
+		}
+		eembed_global_allocator = ea;
+	}
 
 	table = ehht_new();
 
@@ -19,7 +33,11 @@ int test_ehht_new(void)
 	failures += check_unsigned_int_m(table->size(table), 0, "ehht_size");
 
 	ehht_free(table);
+
+	if (!EEMBED_HOSTED) {
+		eembed_global_allocator = orig;
+	}
 	return failures;
 }
 
-TEST_EHHT_MAIN(test_ehht_new())
+ECHECK_TEST_MAIN(test_ehht_new)

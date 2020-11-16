@@ -3,37 +3,50 @@
 /* Copyright (C) 2016, 2017, 2018, 2019, 2020 Eric Herman <eric@freesa.org> */
 /* https://github.com/ericherman/libehht */
 
-#include "test-ehht.h"
+#include "ehht.h"
+#include "echeck.h"
 
-int foreach_thing(struct ehht_key_s each_key, void *each_val, void *context)
+int foreach_thing(struct ehht_key each_key, void *each_val, void *context)
 {
 
-	unsigned int *i;
-	const char *val;
+	unsigned int *i = NULL;
+	const char *val = NULL;
 
 	i = (unsigned int *)context;
 	val = (const char *)each_val;
 
 	if (each_key.len > 2) {
-		*i += (strlen(each_key.str) + strlen(val));
+		*i += (eembed_strlen(each_key.str) + eembed_strlen(val));
 	}
 
 	return 0;
 }
 
-int test_ehht_foreach_element(void)
+unsigned test_ehht_foreach_element(void)
 {
-	int failures = 0;
-	struct ehht_s *table;
+	const size_t bytes_len = 250 * sizeof(size_t);
+	unsigned char bytes[250 * sizeof(size_t)];
+	struct eembed_allocator *orig = eembed_global_allocator;
+	struct eembed_allocator *ea = NULL;
+
+	unsigned failures = 0;
+	struct ehht *table = NULL;
 	unsigned int actual, expected, num_buckets = 5;
 	int err = 0;
 
-	table =
-	    ehht_new_custom(num_buckets, NULL, NULL, NULL, NULL, NULL, NULL);
+	if (!EEMBED_HOSTED) {
+		ea = eembed_bytes_allocator(bytes, bytes_len);
+		if (check_ptr_not_null(ea)) {
+			return 1;
+		}
+		eembed_global_allocator = ea;
+	}
+
+	table = ehht_new_custom(num_buckets, NULL, NULL, NULL);
 
 	if (table == NULL) {
 		++failures;
-		return failures;
+		goto test_ehht_foreach_element_end;
 	}
 
 	err = 0;
@@ -53,7 +66,12 @@ int test_ehht_foreach_element(void)
 	failures += check_unsigned_int_m(table->size(table), 4, "ehht_size");
 
 	ehht_free(table);
+
+test_ehht_foreach_element_end:
+	if (!EEMBED_HOSTED) {
+		eembed_global_allocator = orig;
+	}
 	return failures;
 }
 
-TEST_EHHT_MAIN(test_ehht_foreach_element())
+ECHECK_TEST_MAIN(test_ehht_foreach_element)

@@ -3,12 +3,16 @@
 # Copyright (C) 2016, 2017, 2018, 2019, 2020 Eric Herman <eric@freesa.org>
 # https://github.com/ericherman/libehht
 
+SHELL=/bin/bash
+BROWSER=firefox
+
 lib_LTLIBRARIES=libehht.la
 
 CSTD_CFLAGS=-std=c89 -Wno-long-long
 NOISY_CFLAGS=-Wall -Wextra -pedantic -Werror
 
 if DEBUG
+# ASAN_OPTIONS='allocator_may_return_null=1'
 BUILD_CFLAGS=-ggdb -O0 \
 	-fno-inline-small-functions \
 	-fkeep-inline-functions \
@@ -16,15 +20,24 @@ BUILD_CFLAGS=-ggdb -O0 \
 	--coverage
 BUILD_LDFLAGS="--coverage"
 else
-BUILD_CFLAGS=-ggdb -O2 -DNDEBUG -Wno-unused-parameter -fomit-frame-pointer
+BUILD_CFLAGS=-ggdb -O2 -DNDEBUG -fomit-frame-pointer
 BUILD_LDFLAGS=
+endif
+
+# ./configure --enable-fauxfreestanding
+if FAUX_FREESTANDING
+BUILD_ENV_CFLAGS=-DFAUX_FREESTANDING=1 -DEEMBED_HOSTED=0
+else
+BUILD_ENV_CFLAGS=
 endif
 
 AM_CFLAGS=\
  $(CSTD_CFLAGS) \
+ $(BUILD_ENV_CFLAGS) \
  $(BUILD_CFLAGS) \
  $(NOISY_CFLAGS) \
- -I./submodules/context-alloc/src \
+ -I./src \
+ -I./submodules/libecheck/src/ \
  -fPIC -I src/ -pipe
 
 AM_LDFLAGS=$(BUILD_LDFLAGS)
@@ -38,14 +51,10 @@ SSTATS=../simple_stats/sstats
 ACLOCAL_AMFLAGS=-I m4 --install
 
 EXTRA_DIST=COPYING COPYING.LESSER \
-	submodules/context-alloc/COPYING \
-	submodules/context-alloc/COPYING.LESSER \
-	submodules/context-alloc/src/context-alloc.h \
-	submodules/context-alloc/src/context-alloc.c
-	submodules/context-alloc/util/oom-injecting-malloc.h \
-	submodules/context-alloc/util/oom-injecting-malloc.c \
 	submodules/libecheck/COPYING \
 	submodules/libecheck/COPYING.LESSER \
+	submodules/libecheck/src/eembed.h \
+	submodules/libecheck/src/eembed.c \
 	submodules/libecheck/src/echeck.h \
 	submodules/libecheck/src/echeck.c
 
@@ -53,7 +62,7 @@ DEMOS=$(bin_PROGRAMS)
 bin_PROGRAMS=demo-ehht demo-ehht-as-array
 
 demo_ehht_SOURCES=demos/leveldb_util_hash.c demos/djb2_hash.c \
- demos/jumphash.c demos/demo-ehht.c \
+ demos/jumphash.c demos/demo-ehht.c tests/ehht-report.c \
  src/ehht.h tests/ehht-report.h
 demo_ehht_LDADD=libehht.la
 demo_ehht_CFLAGS=$(AM_CFLAGS) -I tests/
@@ -73,6 +82,20 @@ check_PROGRAMS=\
  test_flyweight \
  test_out_of_memory
 
+line-cov: check
+	lcov    --checksum \
+		--capture \
+		--base-directory . \
+		--directory src \
+		--output-file coverage.info
+
+html-report: line-cov
+	mkdir -pv ./coverage_html
+	genhtml coverage.info --output-directory coverage_html
+
+coverage: html-report
+	$(BROWSER) ./coverage_html/src/index.html
+
 
 tidy:
 	$(LINDENT) \
@@ -82,9 +105,10 @@ tidy:
 		-T uint16_t -T int16_t \
 		-T uint32_t -T int32_t \
 		-T uint64_t -T int64_t \
-		-T ehht_s \
-		-T ehht_key_s \
-		-T ehht_keys_s \
+		-T ehht \
+		-T ehht_key \
+		-T ehht_keys \
+		-T ehht_log \
 		`find src tests demos -name '*.h' -o -name '*.c'`
 
 demo: $(DEMOS)
@@ -101,13 +125,9 @@ spotless:
 	pushd src && rm -rf `cat ../.gitignore | sed -e 's/#.*//'`; popd
 	pushd tests && rm -rf `cat ../.gitignore | sed -e 's/#.*//'`; popd
 	pushd demos && rm -rf `cat ../.gitignore | sed -e 's/#.*//'`; popd
-	pushd submodules/context-alloc && \
-		rm -rf `cat .gitignore | sed -e 's/#.*//'`; \
-		popd
 	pushd submodules/libecheck && \
 		rm -rf `cat .gitignore | sed -e 's/#.*//'`; \
 		popd
-
 
 vg-test_ehht_new: test_ehht_new
 	./libtool --mode=execute valgrind -q ./test_ehht_new
@@ -125,6 +145,7 @@ vg-test_ehht_keys: test_ehht_keys
 	./libtool --mode=execute valgrind -q ./test_ehht_keys
 
 vg-test_ehht_resize: test_ehht_resize
+	ASAN_OPTIONS='allocator_may_return_null=1' \
 	./libtool --mode=execute valgrind -q ./test_ehht_resize
 
 vg-test_ehht_collision_resize: test_ehht_collision_resize
@@ -149,19 +170,18 @@ valgrind: \
 
 
 libehht_la_SOURCES=$(include_HEADERS) \
-		submodules/context-alloc/src/context-alloc.c \
+		submodules/libecheck/src/eembed.c \
 		src/ehht.c
 
-include_HEADERS=src/ehht.h \
-		submodules/context-alloc/src/context-alloc.h
+include_HEADERS=src/ehht.h submodules/libecheck/src/eembed.h
 
 TESTS=$(check_PROGRAMS)
 
 T_COMMON_SOURCES=\
  submodules/libecheck/src/echeck.h \
  submodules/libecheck/src/echeck.c \
- submodules/context-alloc/util/oom-injecting-malloc.h \
- submodules/context-alloc/util/oom-injecting-malloc.c \
+ tests/ehht-report.h \
+ tests/ehht-report.c \
  tests/test-ehht.h \
  $(include_HEADERS)
 T_COMMON_LDADD=libehht.la

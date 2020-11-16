@@ -14,38 +14,14 @@
 #define Ehht_report_end_C_functions
 #endif
 
-#include "../src/ehht.h"
-#include <stdlib.h>
+#include "ehht.h"
 
 Ehht_report_begin_C_functions
 #undef Ehht_report_begin_C_functions
 /** reports table's key.hashcode values distributed over sizes_len buckets
  * returns total items across all buckets  */
-size_t ehht_distribution_report(struct ehht_s *table, size_t *sizes,
-				size_t sizes_len)
-{
-	struct ehht_keys_s *keys;
-	int copy_keys;
-	size_t i, bucket;
-
-	for (i = 0; i < sizes_len; ++i) {
-		sizes[i] = 0;
-	}
-
-	copy_keys = 0;
-	keys = table->keys(table, copy_keys);
-	if (!keys) {
-		exit(EXIT_FAILURE);
-	}
-	for (i = 0; i < keys->len; ++i) {
-		bucket = ehht_bucket_for_key(table, keys->keys[i].str,
-					     keys->keys[i].len);
-		++sizes[bucket];
-	}
-	table->free_keys(table, keys);
-
-	return i;
-}
+size_t ehht_distribution_report(struct ehht *table, size_t *sizes,
+				size_t sizes_len);
 
 Ehht_report_end_C_functions
 #undef Ehht_report_end_C_functions
