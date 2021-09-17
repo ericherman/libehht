@@ -9,7 +9,7 @@ BROWSER=firefox
 lib_LTLIBRARIES=libehht.la
 
 CSTD_CFLAGS=-std=c89 -Wno-long-long
-NOISY_CFLAGS=-Wall -Wextra -pedantic -Werror
+NOISY_CFLAGS=-Wall -Wextra -pedantic -Wcast-qual -Wc++-compat -Werror
 
 if DEBUG
 # ASAN_OPTIONS='allocator_may_return_null=1'

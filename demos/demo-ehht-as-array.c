@@ -28,7 +28,7 @@ int to_array(struct ehht_key key, void *val, void *ctx)
 	struct kva *kva;
 	char *str;
 
-	kva = ctx;
+	kva = (struct kva *)ctx;
 
 	str = strdup(key.str);
 	if (strlen(str) != key.len) {
@@ -47,8 +47,8 @@ int to_array(struct ehht_key key, void *val, void *ctx)
 int comp_key_lens(const void *a, const void *b)
 {
 	const struct kv *l, *r;
-	l = a;
-	r = b;
+	l = (const struct kv *)a;
+	r = (const struct kv *)b;
 
 	if (l->key.len == r->key.len) {
 		return 0;
@@ -81,10 +81,10 @@ int main(void)
 		exit(EXIT_FAILURE);
 	}
 
-	kva = malloc(sizeof(struct kva));
+	kva = (struct kva *)malloc(sizeof(struct kva));
 	kva->len = 1 + table->size(table);
 	kva->pos = 0;
-	kva->kvs = calloc(sizeof(struct kv), kva->len);
+	kva->kvs = (struct kv *)calloc(sizeof(struct kv), kva->len);
 
 	table->for_each(table, to_array, kva);
 
@@ -101,7 +101,10 @@ int main(void)
 
 	if (MAKE_VALGRIND_HAPPY) {
 		for (i = 0; i < kva->pos; ++i) {
-			free((char *)kva->kvs[i].key.str);
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wcast-qual"
+			free((void *)kva->kvs[i].key.str);
+#pragma GCC diagnostic pop
 		}
 		free(kva->kvs);
 		free(kva);

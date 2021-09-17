@@ -22,6 +22,7 @@ unsigned test_ehht_keys(void)
 	size_t j = 0;
 	size_t num_buckets = 0;
 	size_t len = 0;
+	size_t size = 0;
 	size_t *found = NULL;
 	const char *e_keys[] = { "foo", "bar", "whiz", "bang", NULL };
 
@@ -46,8 +47,8 @@ unsigned test_ehht_keys(void)
 			table->put(table, e_keys[i], len, NULL, &err);
 			failures += check_int(err, 0);
 		}
-
-		found = ea->calloc(ea, sizeof(size_t), table->size(table));
+		size = sizeof(size_t *);
+		found = (size_t *)ea->calloc(ea, size, table->size(table));
 		check_ptr_not_null_m(found, "could not allocate found array");
 		if (!found) {
 			++failures;

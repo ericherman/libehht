@@ -65,7 +65,7 @@ unsigned test_ehht_put_get_remove(void)
 	}
 	old_val = table->put(table, key, eembed_strlen(key), "bar", &err);
 	failures += check_int(err, 0);
-	failures += check_str_m((const char *)old_val, val, "ehht_put over");
+	failures += check_str_m((char *)old_val, (char *)val, "ehht_put over");
 
 	val = table->get(table, "baz", eembed_strlen("baz"));
 	failures +=

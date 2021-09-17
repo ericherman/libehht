@@ -21,6 +21,7 @@ unsigned test_ehht_buckets_resize(void)
 	size_t report[10];
 	const size_t buf_len = 24;
 	char buf[24];
+	const size_t msg_len = 40;
 	char msg[40];
 	int err = 0;
 	const size_t logbuf_len = 250;
@@ -30,6 +31,7 @@ unsigned test_ehht_buckets_resize(void)
 	struct eembed_log *log = NULL;
 
 	if (!EEMBED_HOSTED) {
+		eembed_memset(bytes, 0x00, bytes_len);
 		ea = eembed_bytes_allocator(bytes, bytes_len);
 		if (check_ptr_not_null(ea)) {
 			return 1;
@@ -37,8 +39,9 @@ unsigned test_ehht_buckets_resize(void)
 		eembed_global_allocator = ea;
 	}
 
-	msg[0] = '\0';
-	buf[0] = '\0';
+	eembed_memset(msg, 0x00, msg_len);
+	eembed_memset(buf, 0x00, buf_len);
+	eembed_memset(logbuf, 0x00, logbuf_len);
 	log = eembed_char_buf_log_init(&slog, &str_buf, logbuf, logbuf_len);
 	if (check_ptr_not_null(log)) {
 		++failures;

@@ -48,21 +48,21 @@ unsigned test_flyweight(void)
 	}
 
 	keysize = (bytes_len / 8) - 10;
-	key1 = real->calloc(real, sizeof(char), (keysize + 1));
+	key1 = (char *)real->calloc(real, sizeof(char), (keysize + 1));
 	if (check_ptr_not_null(key1)) {
 		++failures;
 		goto end_test_flyweight;
 	}
 	eembed_memset(key1, 'A', keysize);
 
-	key2 = real->calloc(real, sizeof(char), (keysize + 1));
+	key2 = (char *)real->calloc(real, sizeof(char), (keysize + 1));
 	if (check_ptr_not_null(key2)) {
 		++failures;
 		goto end_test_flyweight;
 	}
 	eembed_memset(key2, 'B', keysize);
 
-	key3 = real->calloc(real, sizeof(char), (keysize + 1));
+	key3 = (char *)real->calloc(real, sizeof(char), (keysize + 1));
 	if (check_ptr_not_null(key3)) {
 		++failures;
 		goto end_test_flyweight;
