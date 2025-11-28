@@ -84,7 +84,7 @@ int main(void)
 	kva = (struct kva *)malloc(sizeof(struct kva));
 	kva->len = 1 + table->size(table);
 	kva->pos = 0;
-	kva->kvs = (struct kv *)calloc(sizeof(struct kv), kva->len);
+	kva->kvs = (struct kv *)calloc(kva->len, sizeof(struct kv));
 
 	table->for_each(table, to_array, kva);
 
