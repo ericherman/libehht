@@ -357,7 +357,7 @@ static size_t ehht_to_string(struct ehht *ht, char *buf, size_t buf_len)
 {
 	struct eembed_str_buf str_buf = { NULL, 0 };
 	struct eembed_log log =
-	    { NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL };
+	    { NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL };
 	struct eembed_log *slog = NULL;
 
 	slog = eembed_char_buf_log_init(&log, &str_buf, buf, buf_len);
